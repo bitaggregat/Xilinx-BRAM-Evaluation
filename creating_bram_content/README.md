@@ -25,6 +25,8 @@ such as:
 
 Using a known text sample as bram content was very helpful for debugging the hardware design.
 
+## Usage
+
 Example call:  
 
 ```bash
