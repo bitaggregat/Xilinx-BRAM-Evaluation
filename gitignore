@@ -102,3 +102,8 @@ build/*
 **/*.bak*/
 **/*_0/
 !**/src/*_0/*.xci
+#########
+#Python files
+#########
+__pycache__/
+*.pyc
