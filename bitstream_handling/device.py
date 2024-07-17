@@ -10,7 +10,7 @@ from pyftdi.ftdi import Ftdi
 from pyftdi.serialext import serial_for_url
 from pyftdi.serialext.protocol_ftdi import Serial
 
-from copenFPGALoader import CopenFPGALoaderConn
+from bitstream_handling.copenFPGALoader import CopenFPGALoaderConn
 
 
 @dataclass(slots=True)

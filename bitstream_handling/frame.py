@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 # TODO implement this in cpython for more speed
-from position import XC7BitPosition
+from bitstream_handling.position import XC7BitPosition
 
 
 def int_to_np_bool_array(word: int) -> np.ndarray:

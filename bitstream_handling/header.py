@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-from config_packet import ConfigPacket, ConfigWord, PacketType, OPCode, Register
+from bitstream_handling.config_packet import ConfigPacket, ConfigWord, PacketType, OPCode, Register
 
 '''
 These are preset headers/init and footer/suffix packets which are needed for writing bitstreams

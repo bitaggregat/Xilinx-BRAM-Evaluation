@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Dict, Tuple, Union
 
-from position import XC7BitPosition, SegBitPosition, XC7ElementPosition, XilinxCoord
+from bitstream_handling.position import XC7BitPosition, SegBitPosition, XC7ElementPosition, XilinxCoord
 
 
 

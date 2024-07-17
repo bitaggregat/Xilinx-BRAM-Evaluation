@@ -4,10 +4,10 @@ from functools import reduce
 from pathlib import Path
 from typing import List, Dict, Union, Sequence
 
-from frame import Frame, frames_from_bits
-from frame_addr import FrameAddressGenerator, EvoRegionAddrDomain
-from header import *
-from position import XC7BitPosition
+from bitstream_handling.frame import Frame, frames_from_bits
+from bitstream_handling.frame_addr import FrameAddressGenerator, EvoRegionAddrDomain
+from bitstream_handling.header import *
+from bitstream_handling.position import XC7BitPosition
 
 def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str) -> bytes:
 		

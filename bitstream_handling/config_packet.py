@@ -5,7 +5,7 @@ from typing import List, Union
 
 import numpy as np
 
-from word import Word
+from bitstream_handling.word import Word
 
 
 class OPCode(Enum):
