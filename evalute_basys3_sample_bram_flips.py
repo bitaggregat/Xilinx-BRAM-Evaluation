@@ -8,25 +8,14 @@ import sys
 import random
 
 
-#elem_pos1 = XC7ElementPosition(19, 150, 20, 0x00C00000)
-elem_pos2 = XC7ElementPosition(19, 150, 81, 0x00400300)
+def initialize_bram(bram_frame_batch_start_addr: str, base_bs: str|Path, bramless_partial_bs: str|Path, bram_partial_bs: str|Path) -> None:
 
-
-temp_ram18_y0_in_use = TemplateFasmLeafFeature.from_temp_str("BRAM_L.RAMB18_Y0.IN_USE 27_99 27_100")
-temp_ram18_y1_in_use = TemplateFasmLeafFeature.from_temp_str("BRAM_L.RAMB18_Y1.IN_USE 27_220 27_221")
-
-ram18_y0_in_use = temp_ram18_y0_in_use.to_fasm_leaf_feature(elem_pos2)
-ram18_y1_in_use = temp_ram18_y1_in_use.to_fasm_leaf_feature(elem_pos2)
-
-
-if __name__ == "__main__":
-    in_bs_path = "bw_bram_wrap_partial.bit"#sys.argv[1]
-    out_bs_path = "read_bram_modified.bit"#sys.argv[2]
-
-    with open(in_bs_path, mode="rb") as f:
+    # Open partial bitstream that will be manipulated
+    with open(bram_partial_bs, mode="rb") as f:
         bs_bytes =f.read()
 
-        new_bitstream = remove_bram_init_packets( bs_bytes)
+        new_bitstream = remove_bram_init_packets(bs_bytes, bram_frame_batch_start_addr)
+
 
         # bsh = XC7BSHandler.from_bytes(bs_bytes, "basys3_part.json")
         # relevant_frames = [
@@ -53,24 +42,30 @@ if __name__ == "__main__":
         # with open(out_bs_path, mode="wb") as f2:
         #     f2.write(bsh.partial_evo_bytes())
 
-        with Basys3.from_available() as board:
-            board.flash_bs_file_copenFPGALoader(
-                "read_bram.bit",
-                partial=False
+    with Basys3.from_available() as board:
+        board.flash_bs_file_copenFPGALoader(
+            base_bs,
+            partial=False
+    )
+
+    with Basys3.from_available() as board:
+        board.flash_bs_file_copenFPGALoader(
+            bramless_partial_bs,
+            partial=True
         )
 
-        with Basys3.from_available() as board:
-            board.flash_bs_file_copenFPGALoader(
-                "bw_return_0_partial.bit",
-                partial=True
-            )
+    with open("temp", mode="wb") as tfile:
+        tfile.write(new_bitstream)
+    with Basys3.from_available() as board:
+        board.flash_bs_bytes_copenFPGALoader(
+            new_bitstream,
+            partial=True
+        )
 
-        with open("temp", mode="wb") as tfile:
-            tfile.write(new_bitstream)
-        with Basys3.from_available() as board:
-            board.flash_bs_bytes_copenFPGALoader(
-                new_bitstream,
-                partial=True
-            )
-        print("")
 
+if __name__ == "__main__":
+    # TODO better argparsing
+
+    base_bs = sys.argv[1]
+    bramless_partial_bs = sys.argv[2]
+    bram_partial_bs = sys.argv[3]

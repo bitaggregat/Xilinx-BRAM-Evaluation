@@ -9,7 +9,7 @@ from frame_addr import FrameAddressGenerator, EvoRegionAddrDomain
 from header import *
 from position import XC7BitPosition
 
-def remove_bram_init_packets(bs_bytes: bytes) -> bytes:
+def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str) -> bytes:
 		
 	synch_word_idx = bs_bytes.find(bytes.fromhex("AA995566"))
 	header = bs_bytes[:synch_word_idx + 4]
@@ -31,8 +31,9 @@ def remove_bram_init_packets(bs_bytes: bytes) -> bytes:
 	skip = 0
 	new_packets = list()
 
+	hex_bram_frame_batch_start_addr = bytes.fromhex(bram_frame_batch_start_addr)
 	for packet in cfg_packets:
-		if packet.config_word.register == Register.FAR and packet.payload == b'\x00\xc0\x00\x80':
+		if packet.config_word.register == Register.FAR and packet.payload == hex_bram_frame_batch_start_addr:
 			skip = 4
 		if skip:
 			skip -= 1
