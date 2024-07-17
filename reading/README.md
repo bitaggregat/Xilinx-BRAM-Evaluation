@@ -8,13 +8,13 @@ It also uses a "custom protocol" that is in accordance with [TODO insert link]()
 Example call:  
 
 ```bash
-python read_bram_via_ftdi.py -d 210183A89AC3
+python read_bram_ftdi.py -d 210183A89AC3
 ```
 
 Help output (used by calling with ```-h```):  
 
 ```bash
-usage: read_basys3_bram.py [-h] [-d DEVICE] [-s]
+usage: read_bram_ftdi.py [-h] [-d DEVICE] [-s]
 
 Script that reads bram data via UART and does some evalutation on it.
 
