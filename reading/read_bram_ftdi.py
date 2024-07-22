@@ -15,7 +15,7 @@ from typing import Tuple, List
 parser = argparse.ArgumentParser(
     description="Script that reads bram data via UART and does some evalutation on it."
 )
-parser.add_argument("-d", "--device", help="Serial number of device.")
+parser.add_argument("-d", "--device", help="Serial number of device.", default="210183A89AC3")
 parser.add_argument(
     "-s",
     "--show_device",
@@ -102,18 +102,19 @@ if __name__ == "__main__":
         while True:
             temp_data, temp_parity, header = read_batch(port)
 
-            if header != b"\x00\x00;" and b";" in header:
+            if header != b"\x00\x00;":# and b";" in header:
                 data += temp_data
                 parity += temp_parity.hex()[1]
             else:
                 break
 
-        print(data.hex())
+        #print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
-        print(parity)
+        
         print(f"Length of data {len(data)}")
         print("Data bytes evaluation:\n")
         print(evaluate_readout(data.hex(), args["previous_value"]))
+        print(f"{len(evaluate_readout(data.hex(), args['previous_value']))} bytes have flips")
         print("Parity bytes evaluation:\n")
         print(evaluate_readout(parity, args["previous_value"]))
     else:

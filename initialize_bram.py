@@ -110,11 +110,13 @@ def initialize_bram(
     # with open("temp", mode="wb") as tfile:
     #    tfile.write(new_bitstream)
 
-    # Flash modified partial bs
-    # This will connect BRAM to power again
-    # But it will not initiate the BRAM with values
-    with Basys3.from_available() as board:
-        board.flash_bs_bytes_copenFPGALoader(new_bitstream, partial=True)
+    # Increase number of flashing procedures for different results
+    for _ in range(1):
+        # Flash modified partial bs
+        # This will connect BRAM to power again
+        # But it will not initiate the BRAM with values
+        with Basys3.from_available() as board:
+            board.flash_bs_bytes_copenFPGALoader(new_bitstream, partial=True)
 
 
 if __name__ == "__main__":
