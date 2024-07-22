@@ -33,7 +33,11 @@ def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str) 
 
 	hex_bram_frame_batch_start_addr = bytes.fromhex(bram_frame_batch_start_addr)
 	for packet in cfg_packets:
+		if packet.config_word.register == Register.FAR:
+			#print(packet)
+			pass
 		if packet.config_word.register == Register.FAR and packet.payload == hex_bram_frame_batch_start_addr:
+			print(f"Packet {packet} was dropped")
 			skip = 4
 		if skip:
 			skip -= 1
@@ -42,6 +46,7 @@ def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str) 
 
 	new_bitstream = b''
 	for packet in new_packets:
+		#print(packet)
 		new_bitstream += packet.bytes
 
 	return sw_header(len(new_bitstream)) + new_bitstream
