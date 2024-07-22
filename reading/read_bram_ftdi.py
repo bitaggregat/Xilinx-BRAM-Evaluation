@@ -10,7 +10,7 @@ import pyftdi.ftdi
 import serial
 import argparse
 
-from typing import Tuple
+from typing import Tuple, List
 
 parser = argparse.ArgumentParser(
     description="Script that reads bram data via UART and does some evalutation on it."
@@ -22,6 +22,12 @@ parser.add_argument(
     help="Show currently connected ftdi devices. NOTE: Devices occupied by Vivados Hardware Manager may not be available.",
     required=False,
     action="store_true",
+)
+parser.add_argument(
+    "-v",
+    "--previous_value",
+    help="Value that was previously written to the BRAM (before it was depowered). Either ff or 00",
+    required=True
 )
 # Start byte/ byte swap?
 #
@@ -38,6 +44,16 @@ bram_size = 8192
 counter = 0
 synchro = False
 check_puf = False
+
+
+def evaluate_readout(data: str, previous_value: str) -> List[Tuple[str, int]]:
+    if len(previous_value) != 2:
+        raise Exception("Wrong length of expected data. Please enter two hex digits")
+    return [
+        (data[i : i + 2], i / 2)
+        for i in range(0, len(data), 2)
+        if data[i : i + 2] != previous_value
+    ]
 
 
 def find_transmission_start(port) -> Tuple[bytes, bytes]:
@@ -92,10 +108,14 @@ if __name__ == "__main__":
             else:
                 break
 
-        print(data)
+        print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
-        print(bytes.fromhex(parity))
-        print(len(data))
+        print(parity)
+        print(f"Length of data {len(data)}")
+        print("Data bytes evaluation:\n")
+        print(evaluate_readout(data.hex(), args["previous_value"]))
+        print("Parity bytes evaluation:\n")
+        print(evaluate_readout(parity, args["previous_value"]))
     else:
         print(
             "No Serial Number specified. Call with '-s' to see possible serial numbers."
