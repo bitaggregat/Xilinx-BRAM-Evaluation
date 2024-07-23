@@ -105,5 +105,13 @@ build/*
 #########
 #Python files
 #########
-**/__pycache__/
-*.pyc
+!*.py
+!*.sh
+#########
+#Project specific
+#########
+!*.fasm
+!*.png
+!*.md
+!*.bit
+!copenFPGALoader/build/copenFPGALoader.so
