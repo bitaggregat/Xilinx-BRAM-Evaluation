@@ -122,7 +122,7 @@ Measurements were done on:
 
 #### Practical Approach
 
-- Step 1 is contained in [Vivado project TODO]()
+- Step 1 is contained in [a vivado project](/vivado_project/README.md) of this repository
 - Step 2 - 5 can be done by calling ```initialize_bram.py```
 - Step 6 can be done via ```read_bram_ftdi.py```
 
