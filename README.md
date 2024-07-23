@@ -90,7 +90,7 @@ Measurements were done on:
 
 ## Notes on Process
 
-### XC7 Brams
+### XC7 BRAMs
 
 - One BRAM Tile can store 36608 bits (4096 Data Bytes + 480 Parity Bytes)
 - Parity Bytes can also be used as additional data bytes
