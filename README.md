@@ -5,18 +5,26 @@
 SRAMs can have an initial value different from 0 when being switched on.  
 These initial values can potentially used to implement a PUF.  
 This Readme sums up what has been done/found out/tested about possible SRAM PUFs on XC7 FPGAs.  
+The procedure used for our tests includes manipulation of bitstreams (bs) and is documented here aswell.
 
 ## Current Status
 
-Following the instructions of the [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf) led to some flipped bits in the SRAM. The results are documented in the table below.
+Following the instructions of the [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf) led to some flipped bits in the SRAM (BRAM Blocks). The results are documented below.
 
 ## Measured Stats
 
 ### Basys3 (xc7a35tcpg236-1)
 
-These measurements were done on our local basys3 board. (sticker on the downside of the board: **DA89AC3**)
+These measurements were done on our local basys3 board. (sticker on the downside of the board: **DA89AC3**).  
+Measurements were done on:
 
-|Tile and Slice|BRAM value before power outage|% of flipped bits % in data|% of flipped bits in parity|other|
+- 3 x 36K BRAM Blocks
+- All 3 BRAM Blocks were within the same row of the FPGA
+- Parity and Data bits were used
+- Each BRAM Block was measured 4 times (named Read 1, Read 2 ...)
+- "-" stands for "no bitlfip"
+
+|Tile and Slice|BRAM value before power outage|% of flipped bits in data|% of flipped bits in parity|other|
 |--------------|------------------------------|---------------------------|---------------------------|-----|
 |BRAM_X30Y35_RAMB_X1Y6|ff|0|0|-|
 |BRAM_X30Y35_RAMB_X1Y6|00|0.00024606299212598425|0|-|
@@ -95,8 +103,8 @@ These measurements were done on our local basys3 board. (sticker on the downside
 
 **NOTES**:
 
-- ```initialize_bram.py``` uses a "custom bitstream editor".
-- using the custom editor with a python debugger is ideal for inspecting details about the bs
+- ```initialize_bram.py``` uses a "custom bitstream editor" (see bitstream_handling/README.md).
+- using the custom editor with a python debugger is ideal for inspecting details about the bitstream
 - TODO helper script ```analyze_bitstream.py``` to automatize use cases of the editor code base
 
 ### How To
@@ -107,7 +115,7 @@ These measurements were done on our local basys3 board. (sticker on the downside
 
 1. Create a partial design in Vivado (fill BRAM with either 0 or f)
 2. Flash "Read BRAM Design" config as full bitstream
-3. Flash "Non BRAM Design" config as partial bitstream
+3. Flash "Non BRAM Design" config as partial bitstream (this will disconnect BRAM from power)
 4. Modify "Read BRAM Design" partial bitstream such that BRAM will be initiated but without values
 5. Flash modified partial bitstream
 6. Readout BRAM via UART
