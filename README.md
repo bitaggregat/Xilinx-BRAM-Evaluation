@@ -30,8 +30,8 @@ Measurements were done on:
 |BRAM_X30Y35_RAMB_X1Y6|00|0.00024606299212598425|0|-|
 |BRAM_X30Y35_RAMB_X1Y7|ff|0|0|-|
 |BRAM_X30Y35_RAMB_X1Y7|00|0.0002768208661417323|0|-|
-|BRAM_X30Y35_RAMB_X1Y7|ff|0|0|-|
-|BRAM_X30Y35_RAMB_X1Y7|00|0.00024606299212598425|0|-|
+|BRAM_X30Y35_RAMB_X1Y8|ff|0|0|-|
+|BRAM_X30Y35_RAMB_X1Y8|00|0.00024606299212598425|0|-|
 |BRAM_X30Y35_RAMB_X1Y6|00|~0.005580357142857143|0|initializing BRAM without values 100 times consecutively|
 
 #### BRAM_X30Y35_RAMB_X1Y6
@@ -75,8 +75,9 @@ Measurements were done on:
 
 ### Problem
 
-- The amount of flipped bits is low normally on the basys3
+- The amount of flipped bits is low on the basys3. This is in accordance with newer generation zed boards mentioned in the paper.
 - Flashing the partial bitstream that reactivates the bram (without initializing it's values) increases the amount of flipped bits by a great amount
+- Flashing the partial bitstream multiples times was not mentioned in the paper and could be a new insight.
 
 #### <a name="link1"></a> Initializing BRAM without values multiple times
 
