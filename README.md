@@ -79,6 +79,7 @@ Measurements were done on:
 - The amount of flipped bits is low on the basys3. This is in accordance with newer generation zed boards mentioned in the paper.
 - Flashing the partial bitstream that reactivates the bram (without initializing it's values) increases the amount of flipped bits by a great amount
 - Flashing the partial bitstream multiples times was not mentioned in the paper and could be a new insight.
+- Flipped bits seem very volatile (this became very clear during ticket review)
 
 #### <a name="link1"></a> Initializing BRAM without values multiple times
 
@@ -134,3 +135,9 @@ Note: All these scripts named above can be called with ```-h``` for usage inform
 
 - A wait time can be inserted between Step 3 and 5
 - Repeating Step 5 multiple times yields interesting results [see previous section](#link1)
+
+### Possible Future TODOs
+
+- automatize reset/enable switch
+- generate stats with 1000 samples
+- find out how volatile flipped bits are under condition that bram is reactivated multiple times before redout
