@@ -68,3 +68,16 @@ The table below explains the content of the pregenerated bitstreams.
 | ```read_BRAM_X30Y35_RAMB_X1Y6_ff_partial.bit``` | pb | Partial bitstream,<br> reactivates bram and initializes it with 1's,<br> uses RAM block X1X6|
 | ```read_BRAM_X30Y35_RAMB_X1Y7_ff_partial.bit``` | pb | Same as ```read_BRAM_X30Y35_RAMB_X1Y6_ff_partial.bit```<br> but uses RAM block X1X7|
 | ```read_BRAM_X30Y35_RAMB_X1Y6_ff_partial.bit``` | pb | Same as ```read_BRAM_X30Y35_RAMB_X1Y8_ff_partial.bit```<br> but uses RAM block X1X8|
+
+## Explanation
+
+What will the script do?:
+
+- automatically starts JTAG connection to basys3
+- flashes full bitstream with UART + bram interface + bram initialization (either 00 or ff)
+- flashes a partial bramless bitstream in the same region as the previous bram
+- the bram is now disconnected from the power because it is no longer used
+- optional: (waits)
+- takes partial bitstream that **would** reinitialize bram, and removes bram initialization values from said bitstream
+- flashes second modified partial bitstream
+- the bram is now in reactivated but wasn't reinitialized with values
