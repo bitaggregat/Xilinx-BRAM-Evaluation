@@ -30,3 +30,11 @@ options:
 ## Dependencies
 
 - [pyftdi](https://eblot.github.io/pyftdi/)
+
+## Switches and LEDS
+
+![](switches_and_leds.jpg)
+
+- Reads will only follow if the **enable** switch is switched on.  
+- When doing multiple measurements, the **reset** switch should be toggled once between every measurement.  
+- It is also recommended to only switch on the **enable** switch once the reading script has already started.
