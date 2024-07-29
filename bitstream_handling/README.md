@@ -10,3 +10,4 @@ The source code of the modified openFPGALoader version was not included in this 
 TODO: Mirror openFPGALoader and reproduce modifications done to support partial bistreams  
 Instead a binary of the modified openFPGALoader is currently available under ```copenFPGALoader/```.
 
+**Note**: [See openFPGALoaders install instructions](https://trabucayre.github.io/openFPGALoader/guide/install.html) if theres any missing dependencies for copenFPGALoader.
