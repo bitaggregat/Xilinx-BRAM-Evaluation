@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-nb",
     "--bramless_bs",
-    help="Path to Bitstream file that initializes Target Region with a design that does not use BRAM blocks.\n"
+    help="Path to partial bramless Bitstream file that initializes Target Region with a design that does not use BRAM blocks.\n"
     "This cuts the power to the previously initiated BRAM Block(s)",
     required=True,
 )
