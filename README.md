@@ -23,6 +23,7 @@ Measurements were done on:
 - Parity and Data bits were used
 - Each BRAM Block was measured 4 times (named Read 1, Read 2 ...)
 - "-" stands for "no bitlfip"
+- Indexes of data in bram are measured in **bytes**
 
 |Tile and Slice|BRAM value before power outage|% of flipped bits in data|% of flipped bits in parity|other|
 |--------------|------------------------------|---------------------------|---------------------------|-----|
@@ -34,9 +35,9 @@ Measurements were done on:
 |BRAM_X30Y35_RAMB_X1Y8|00|0.00024606299212598425|0|-|
 |BRAM_X30Y35_RAMB_X1Y6|00|~0.005580357142857143|0|initializing BRAM without values 100 times consecutively|
 
-#### BRAM_X30Y35_RAMB_X1Y6
+#### BRAM_X30Y35_RAMB_X1Y6 (previous value 00)
 
-|Position|Read 1|Read 2|Read 3|Read 4|
+|Byte Position|Read 1|Read 2|Read 3|Read 4|
 |-|-|-|-|-|
 |3607|c0|c0|c0|c0|
 |3615|-|-|-|40|
@@ -48,9 +49,9 @@ Measurements were done on:
 |4063|-|-|-|80|
 |4095|c0|c0|c0|c0|
 
-#### BRAM_X30Y35_RAMB_X1Y7
+#### BRAM_X30Y35_RAMB_X1Y7 (previous value 00)
 
-|Position|Read 1 |All other Reads|
+|Byte Position|Read 1 |All other Reads|
 |-|-|-|
 |131|40|40|
 |419|c0|c0|
@@ -59,9 +60,9 @@ Measurements were done on:
 |3438|**82**|80|
 |4095|c0|c0|
 
-#### BRAM_X30Y35_RAMB_X1Y8
+#### BRAM_X30Y35_RAMB_X1Y8 (previous value 00)
 
-|Position|Read 1|Read 2|Read 3|Read 4|
+|Byte Position|Read 1|Read 2|Read 3|Read 4|
 |-|-|-|-|-|
 |1370|02|02|02|02|
 |1371|**82**|**80**|**02**|**82**|
