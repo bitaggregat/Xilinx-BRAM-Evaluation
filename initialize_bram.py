@@ -20,14 +20,14 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-nb",
     "--bramless_bs",
-    help="Bitstream that initializes Target Region with a design that does not use BRAM blocks.\n"
+    help="Path to Bitstream file that initializes Target Region with a design that does not use BRAM blocks.\n"
     "This cuts the power to the previously initiated BRAM Block(s)",
     required=True,
 )
 parser.add_argument(
     "-fb",
     "--bram_full_bs",
-    help="Bitstream that initializes Target Region with a design that uses BRAM blocks, initializes their values "
+    help="Path to Bitstream file that initializes Target Region with a design that uses BRAM blocks, initializes their values "
     "and initializes a communication interface/protocol IP in another region of the FPGA.\n"
     "This cuts the power to the previously initiated BRAM Block(s)",
     required=True,
@@ -35,7 +35,7 @@ parser.add_argument(
 parser.add_argument(
     "-pb",
     "--bram_partial_bs",
-    help='Partial version of "bram_full_bs".'
+    help='Partial version of "bram_full_bs" (path to partial bitstream).'
     'NOTE: BOTH "--bram_full_bs" AND "--bram_partial_bs" are required.',
     required=True,
 )
