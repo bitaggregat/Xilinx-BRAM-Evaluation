@@ -27,7 +27,7 @@ parser.add_argument(
     "-v",
     "--previous_value",
     help="Value that was previously written to the BRAM (before it was depowered). Either ff or 00",
-    required=True
+    default="00"
 )
 # Start byte/ byte swap?
 #
@@ -87,14 +87,24 @@ if __name__ == "__main__":
         print("Devices:")
         for dev in devices:
             print(f"\t{dev[0].description}: {dev[0].sn}")
+        exit(0)
 
     if args["device"] is not None:
         # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
-        port = pyftdi.serialext.serial_for_url(
-            f'ftdi://ftdi:2232:{args["device"]}/2',
-            baudrate=9600,
-            parity=serial.PARITY_EVEN,
-        )
+        if args["device"] == "A503VSXV":
+            # This specific UART Adapter uses a different ftdi chip and port than dev boards
+            # Making this more 'generic' could be a future TODO
+            port = pyftdi.serialext.serial_for_url(
+                f'ftdi://ftdi:232r:{args["device"]}/1',
+                baudrate=9600,
+                parity=serial.PARITY_EVEN,
+            )
+        else:
+            port = pyftdi.serialext.serial_for_url(
+                f'ftdi://ftdi:2232:{args["device"]}/2',
+                baudrate=9600,
+                parity=serial.PARITY_EVEN,
+            )
 
         data, temp_parity = find_transmission_start(port)
         parity = temp_parity.hex()[1]
