@@ -9,48 +9,86 @@ from bitstream_handling.frame_addr import FrameAddressGenerator, EvoRegionAddrDo
 from bitstream_handling.header import *
 from bitstream_handling.position import XC7BitPosition
 
-def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str) -> bytes:
-		
-	synch_word_idx = bs_bytes.find(bytes.fromhex("AA995566"))
-	header = bs_bytes[:synch_word_idx + 4]
+def remove_bram_init_packets(bs_bytes: bytes, bram_frame_batch_start_addr: str, arch: str, use_header: bool = True) -> bytes:
+	"""
+	bram_frame_batch_start_addr : str
+		Frames are send in batches. Only the first address of a batch is transmitted. 
+		This parameter declares an address whoose batch will be removed from the bitstream
+	use_header : bool
+		A header, containing addtional information like bitstream length will be prepended
+		Note: This is currently only supported for the basys3 fpga
+		Note: The file suffix for headless bitstreams is '.bin'
+		Note: The file suffix for bitstreams with head is '.bit'
+	"""
 
+	sync_sequences = list()
+	
 	init_packets = list()
 	temp_frames = list()
 	suffix_packets = list()
+	cfg_packet_badges = list()
 
-	cfg_packet_gen = PacketGenerator(bs_bytes[synch_word_idx + 4:])
+	# This skips to the end of the header:
+	bs_bytes = bs_bytes[bs_bytes.find(bytes.fromhex("FFFFFFFF")):]
+	while True:
+		synch_word_idx = bs_bytes.find(bytes.fromhex("AA995566"))
+		# Append header and bus sync
+		sync_sequences.append(bs_bytes[:synch_word_idx + 4])
+		bs_bytes = bs_bytes[synch_word_idx + 4:]
 
-	cfg_packets = list()
+		cfg_packet_gen = PacketGenerator(bs_bytes)
 
-	cfg_packet = next(cfg_packet_gen)
+		cfg_packets = list()
 
-	while cfg_packet is not None:
-		cfg_packets.append(cfg_packet)
 		cfg_packet = next(cfg_packet_gen)
 
-	skip = 0
-	new_packets = list()
+		while cfg_packet is not None:
+			cfg_packets.append(cfg_packet)
+			cfg_packet = next(cfg_packet_gen)
+
+		if cfg_packet_gen.expected_resynchronize:
+			cfg_packet_badges.append(cfg_packets)
+			bs_bytes = bs_bytes[cfg_packet_gen.idx:]
+		else:
+			cfg_packet_badges.append(cfg_packets)
+			break
+
+	
+	new_packet_badges = list()
 
 	hex_bram_frame_batch_start_addr = bytes.fromhex(bram_frame_batch_start_addr)
-	for packet in cfg_packets:
-		if packet.config_word.register == Register.FAR:
-			#print(packet)
-			pass
-		if packet.config_word.register == Register.FAR and packet.payload == hex_bram_frame_batch_start_addr:
-			print(f"Packet {packet} was dropped")
-			skip = 4
-		if skip:
-			skip -= 1
-		else:
-			new_packets.append(packet)
+	for cfg_packets in cfg_packet_badges:
+		new_packets = list()
+		skip = 0		
+		for packet in cfg_packets:
+			if packet.config_word.register == Register.FAR:
+				#print(packet)
+				pass
+			if packet.config_word.register == Register.FAR and packet.payload == hex_bram_frame_batch_start_addr:
+				print(f"Packet {packet} was dropped")
+				if arch == "XCUS":
+					skip = 5
+				elif arch == "XC7":
+					skip = 4
+				else:
+					raise Exception(f"Xilinx FPGA architecture {arch} unknown")
+			if skip:
+				skip -= 1
+			else:
+				new_packets.append(packet)
+		new_packet_badges.append(new_packets)
+		
 
 	new_bitstream = b''
-	for packet in new_packets:
-		#print(packet)
-		new_bitstream += packet.bytes
-
-	return sw_header(len(new_bitstream)) + new_bitstream
-
+	for sync_seq, new_packets in zip(sync_sequences, new_packet_badges):
+		new_bitstream += sync_seq
+		for packet in new_packets:
+			#print(packet)
+			new_bitstream += packet.bytes
+	if use_header:
+		return sw_header(len(new_bitstream)) + new_bitstream
+	else:
+		return new_bitstream
 
 @dataclass(slots=True, init=True)
 class XC7BSHandler:
@@ -503,6 +541,7 @@ class PacketGenerator(object):
 		self.idx = 0
 		self.bs_bytes = bs_bytes
 		self.max_idx = len(bs_bytes)
+		self.expected_resynchronize = False
 
 	def __iter__(self):
 		return self
@@ -511,6 +550,13 @@ class PacketGenerator(object):
 
 		if self.idx < self.max_idx:
 			cfgw_chunk = self.bs_bytes[self.idx: self.idx + 4]
+
+			# This is the case in ultra scale zynq fpgas
+			# The bus will resynchronize after a sequence of ff's and the sync word
+			# Higher level classes or functions should create a new package generator in this case
+			if cfgw_chunk == b'\xff\xff\xff\xff':
+				self.expected_resynchronize = True
+				return None
 			self.idx += 4
 
 			config_word = ConfigWord.from_bytes(cfgw_chunk)
