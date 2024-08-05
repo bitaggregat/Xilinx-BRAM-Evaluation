@@ -30,7 +30,7 @@ def sw_header(payload_footer_len: int, part: bytes = bytes.fromhex("376133357463
 				'0001'  # 1 byte
 				'61'  # a
 				'0004'  # number of bytes of design name
-				'c0bea000'  # Design name, can be changed to anything (always include a trailing 00 though)
+				'00000000'  # Design name, can be changed to anything (always include a trailing 00 though)
 			)
 			+ bytes.fromhex("62") + part_len + part + b'\x00'  # Device name length and name
 			+ bytes.fromhex("63") + b'\x00\x05\x44\x61\x74\x65\x00'  # Insert date here if needed

@@ -70,7 +70,7 @@ def initialize_bram(
 
         # Create modified partial bitstream (
         # BS will connect bram to power but doesn't reinitialize bram with values
-        new_bitstream = remove_bram_init_packets(bs_bytes, bram_frame_batch_start_addr)
+        new_bitstream = remove_bram_init_packets(bs_bytes, bram_frame_batch_start_addr, arch="XC7")
 
         # bsh = XC7BSHandler.from_bytes(bs_bytes, "basys3_part.json")
         # relevant_frames = [
@@ -120,6 +120,7 @@ def initialize_bram(
 
 
 if __name__ == "__main__":
+
     # Transfer args to variables (kinda redundant..., but makes refactoring easier)
     args = vars(parser.parse_args())
     bram_full_bs = args["bram_full_bs"]
@@ -127,6 +128,7 @@ if __name__ == "__main__":
     bram_partial_bs = args["bram_partial_bs"]
     base_bram_addr = args["first_bram_frame_address"]
     wait_time = args["wait_time"]
+    print("Note this script supports currently only the basys3")
 
     initialize_bram(
         base_bram_addr,
