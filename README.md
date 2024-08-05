@@ -1,15 +1,35 @@
-# Documentation on XC7 FPGA SRAM PUFs
+# Documentation on FPGA BRAMs for PUFs
 
 ## General
 
-SRAMs can have an initial value different from 0 when being switched on.  
-These initial values can potentially used to implement a PUF.  
-This Readme sums up what has been done/found out/tested about possible SRAM PUFs on XC7 FPGAs.  
-The procedure used for our tests includes manipulation of bitstreams (bs) and is documented here aswell.
+- BRAMs can have an initial value different from 0 when being switched on.  
+- Initial values can potentially used to implement a PUF.  
+- This Readme sums up what has been done/found out/tested about possible BRAM PUFs on Xilinx FPGAs.  
+- The procedure used for tests includes manipulation of bs and is documented here aswell.
+- Instructions came originally from [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf)
 
-## Current Status
+## BRAM
 
-Following the instructions of the [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf) led to some flipped bits in the SRAM (BRAM Blocks). The results are documented below.
+### XC7
+
+- 36K BRAM Blocks
+- 32K Data Bits and 4K Parity Bits
+- Parity Bits can be used as extra Data Bits
+- 2 x 18K Slices in BRAM Block
+- BRAM Blocks in same column can be cascaded
+- 10 BRAM Blocks in one column
+- Multiple primitives
+- Prioritize 36K primitive
+
+### XCUS
+
+- Same size as XC7
+- More extra features and primitives
+- Sleep feature that allows to save BRAM content while "sleeping"
+
+## Bitstream
+
+
 
 ## Measured Stats
 
@@ -95,9 +115,6 @@ Measurements were done on:
 
 ### XC7 BRAMs
 
-- One BRAM Tile can store 36608 bits (4096 Data Bytes + 480 Parity Bytes)
-- Parity Bytes can also be used as additional data bytes
-- Helper Scripts exist:
 
 |Name|Use case|
 |-|-|
@@ -136,8 +153,26 @@ Note: All these scripts named above can be called with ```-h``` for usage inform
 - A wait time can be inserted between Step 3 and 5
 - Repeating Step 5 multiple times yields interesting results [see previous section](#link1)
 
-### Possible Future TODOs
+## Future Work / TODOs
 
-- automatize reset/enable switch
-- generate stats with 1000 samples
-- find out how volatile flipped bits are under condition that bram is reactivated multiple times before redout
+This section contains TODOs that have currently been deemed not irrelevant, but might become relevant again in the future:
+
+### XC7 BRAM bitflips and multiple flashing procedures
+
+- XC7 BRAMs on basys3 had very few bitflips
+- More bits flip under the condition that the manipulated bitstream is flashed multiple times to the FPGA
+- May be usable if a sufficient number of flashing procedures is done
+- Extensive statistic would be needed in order to verify the following questions:
+  - How unique are flipped bits obtained through this procedure?
+  - How reliable is this procedure?
+  - How many flashing procedures (and time) are needed in order to make it reliable?
+  - Why does this work?
+  - Can these multiple flashing procedures be replaced by one single flashing procedure (e.g. one bitstream that sends the same instruction 100x)
+
+
+
+## Glossary
+
+**XC7**: Xilinx 7-Series
+**XCUS**: Xilinx UltraScale (and UltraScale+)
+**bs/BS**: Bitstream
