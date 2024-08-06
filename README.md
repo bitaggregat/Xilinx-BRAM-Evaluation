@@ -51,13 +51,73 @@
   - bs handling on [FASMs](https://github.com/chipsalliance/fasm) level
 - More information about this library [here](/initialize_bram/bitstream_handling/README.md)
 
+## Approach
+
+### XC7 BRAMs
+
+
+|Name|Use case|
+|-|-|
+|```initialize_bram.py```|Takes previously prepared bram bitstreams, modifies and flashes the latter such that bram is depowered, then repowered for reading|
+|```read_bram_ftdi.py```|Reads out bram via ftdi uart. Uses a custom protocol to identify beginning of readout and parity bram bits (which are just glorified additional bram bits)|
+
+**NOTES**:
+
+- ```initialize_bram.py``` uses a "custom bitstream editor" (see bitstream_handling/README.md).
+- using the custom editor with a python debugger is ideal for inspecting details about the bitstream
+- TODO helper script ```analyze_bitstream.py``` to automatize use cases of the editor code base
+
+### Terms
+
+|Term|Definition|
+|-|-|
+|**Target partial region**| A statically defined partial region used for designs.|
+|**"Read BRAM" full Design**| A Hardware design that contains a UART and a BRAM Block that is readout. Fills the BRAM with either 0 or f. The BRAM Block is routed in the target partial region.|
+|**BRAMless partial Design**| A partial design that returns either 0 or f via LUTs. It is located in the target partial region and can replace the BRAM Block.|
+|**"Read BRAM" partial Design**| Partial version of "Read BRAM" full design. Contains only the BRAM part, not the UART.|
+|**"Read BRAM" full bitstream**| Bistream of "Read BRAM" full Design|
+|**BRAMless partial bitstream**| Bitstream of BRAMless partial Design|
+|**"Read BRAM" partial bitstream**| Bitstream of "Read BRAM" partial Design|
+|**Manipulated bitstream**| A modified version of "Read BRAM" partial bitstream. Removes Configuration Packages that write values to the BRAM, leaving the BRAM with its initial "random" values.|
+
+### General Approach
+
+#general-approach
+
+![Visualization of Readout Design](bram_partial.drawio.png)
+
+1. Create "Read BRAM" full Design, BRAMless partial Design and "Read BRAM" partial Design in a Vivado project and synthethize bitstreams
+2. Flash "Read BRAM" full bitstream
+3. Flash BRAMless partial bitstream (this will disconnect BRAM from the power grid)
+4. Optional: Wait for specific amount of time or/and expose FPGA to high temperatures
+5. Modify "Read BRAM" partial bitstream in order to create a manipulated bitstream
+6. Flash manipulated bitstream
+7. Readout BRAM via UART
+
+### Practical Approach
+
+Scripts have been written in order to ease and partially automatize the steps mentioned in [General Approach](#general-approach).  
+Sadly tools do not always support all FPGA devices, which is why the instructions and tools may differ depending on the used device.  
+
+#### Basys3 (xc7a35tcpg236-1)
+
+- Step 1 is contained in [a vivado project](/vivado_project/README.md) of this repository
+- Step 2 - 5 can be done by calling [```initialize_bram.py```](initialize_bram/initialize_bram.md)
+- Step 6 can be done via [```read_bram_ftdi.py```](reading/README.md)
+
+Note: All these scripts named above can be called with ```-h``` for usage information.
+
+#### te0802
+
+WIP
+
 ## Measured Stats
 
 ### XC7 Measurements
 
 Measurements on XC7 devices were currently only done on the Basys3.
 
-#### Basys3 (xc7a35tcpg236-1)
+#### Basys3 (xc7a35tcpg236-1) Measurements
 
 These measurements were done on our local basys3 board. (sticker on the downside of the board: **DA89AC3**).  
 Measurements were done on:
@@ -120,10 +180,9 @@ Measurements were done on:
 
 ### XCUS Measurements
 
-#### te0802
+#### te0802 Measurements
 
 - WIP
-
 
 ### Problem
 
@@ -142,47 +201,8 @@ Measurements were done on:
 - There seems to be a correlation between amount of times the bram was activated and randomness of the bram content
 - Tests using a heat gun showed that this phenomenon is **NOT** temperature related
 
-## Notes on Process
-
-### XC7 BRAMs
 
 
-|Name|Use case|
-|-|-|
-|```initialize_bram.py```|Takes previously prepared bram bitstreams, modifies and flashes the latter such that bram is depowered, then repowered for reading|
-|```read_bram_ftdi.py```|Reads out bram via ftdi uart. Uses a custom protocol to identify beginning of readout and parity bram bits (which are just glorified additional bram bits)|
-
-**NOTES**:
-
-- ```initialize_bram.py``` uses a "custom bitstream editor" (see bitstream_handling/README.md).
-- using the custom editor with a python debugger is ideal for inspecting details about the bitstream
-- TODO helper script ```analyze_bitstream.py``` to automatize use cases of the editor code base
-
-### How To
-
-#### General Approach
-
-![Visualization of Readout Design](bram_partial.drawio.png)
-
-1. Create a partial design in Vivado (fill BRAM with either 0 or f)
-2. Flash "Read BRAM Design" config as full bitstream
-3. Flash "Non BRAM Design" config as partial bitstream (this will disconnect BRAM from power)
-4. Modify "Read BRAM Design" partial bitstream such that BRAM will be initiated but without values
-5. Flash modified partial bitstream
-6. Readout BRAM via UART
-
-#### Practical Approach
-
-- Step 1 is contained in [a vivado project](/vivado_project/README.md) of this repository
-- Step 2 - 5 can be done by calling ```initialize_bram.py```
-- Step 6 can be done via ```read_bram_ftdi.py```
-
-Note: All these scripts named above can be called with ```-h``` for usage information.
-
-#### Additions
-
-- A wait time can be inserted between Step 3 and 5
-- Repeating Step 5 multiple times yields interesting results [see previous section](#link1)
 
 ## Future Work / TODOs
 
@@ -202,6 +222,16 @@ This section contains TODOs that have currently been deemed not irrelevant, but 
 
 ## Glossary
 
-**XC7**: Xilinx 7-Series  
-**XCUS**: Xilinx UltraScale (and UltraScale+)  
-**bs/BS**: Bitstream
+|Term/Macro|Definition|
+|-|-|
+|**XC7**| Xilinx 7-Series|
+|**XCUS**| Xilinx UltraScale (and UltraScale+)|
+|**bs/BS**| Bitstream|
+|**Target partial region**| A statically defined partial region used for designs.|
+|**"Read BRAM" full Design**| A Hardware design that contains a UART and a BRAM Block that is readout. Fills the BRAM with either 0 or f. The BRAM Block is routed in the target partial region.|
+|**BRAMless partial Design**| A partial design that returns either 0 or f via LUTs. It is located in the target partial region and can replace the BRAM Block.|
+|**"Read BRAM" partial Design**| Partial version of "Read BRAM" full design. Contains only the BRAM part, not the UART.|
+|**"Read BRAM" full bitstream**| Bistream of "Read BRAM" full Design|
+|**BRAMless partial bitstream**| Bitstream of BRAMless partial Design|
+|**"Read BRAM" partial bitstream**| Bitstream of "Read BRAM" partial Design|
+|**Manipulated bitstream**| A modified version of "Read BRAM" partial bitstream. Removes Configuration Packages that write values to the BRAM, leaving the BRAM with its initial "random" values.|
