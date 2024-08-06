@@ -55,7 +55,6 @@
 
 ### XC7 BRAMs
 
-
 |Name|Use case|
 |-|-|
 |```initialize_bram.py```|Takes previously prepared bram bitstreams, modifies and flashes the latter such that bram is depowered, then repowered for reading|
@@ -184,10 +183,15 @@ Measurements were done on:
 
 - WIP
 
-### Problem
+## Observations
+
+### XC7 Observations
 
 - The amount of flipped bits is low on the basys3. This is in accordance with newer generation zed boards mentioned in the paper.
-- Flashing the partial bitstream that reactivates the bram (without initializing it's values) increases the amount of flipped bits by a great amount
+- Tests were also repeated once with a heat gun
+- Tests were also repeated using a wait time of 30 seconds.
+- Neither temperature change nor increased wait time had an influence on the amount of flipped bits
+- Flashing the partial bitstream that reactivates the bram (without initializing it's values) multiple times increases the amount of flipped bits by a great amount
 - Flashing the partial bitstream multiples times was not mentioned in the paper and could be a new insight.
 - Flipped bits seem very volatile (this became very clear during ticket review)
 
@@ -199,10 +203,15 @@ Measurements were done on:
 - e.g. flashing 100 times led to many ```c0```, ```80``` and ```40```'s
 - flasing 1000 times led to more variety in flipped bytes (e.g ```01```, ```41```, ```82```)
 - There seems to be a correlation between amount of times the bram was activated and randomness of the bram content
-- Tests using a heat gun showed that this phenomenon is **NOT** temperature related
 
+### XCUS Observations
 
+WIP
 
+## Conclusion
+
+- Using XC7 FPGA BRAMs for PUF is either hardly possible or will atleast require alot of extra work
+- Neither temperature change nor increased wait time had an influence on the amount of flipped bits in XC7 FPGAs
 
 ## Future Work / TODOs
 
