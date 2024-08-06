@@ -29,6 +29,11 @@ parser.add_argument(
     help="Value that was previously written to the BRAM (before it was depowered). Either ff or 00",
     default="00"
 )
+parser.add_argument(
+    "-o",
+    "--output_file",
+    help="Path to file where read output shall be saved"
+)
 # Start byte/ byte swap?
 #
 
@@ -90,6 +95,8 @@ if __name__ == "__main__":
         exit(0)
 
     if args["device"] is not None:
+        
+
         # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
         if args["device"] == "A503VSXV":
             # This specific UART Adapter uses a different ftdi chip and port than dev boards
@@ -121,6 +128,11 @@ if __name__ == "__main__":
         #print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
         
+        if args["output_file"] is not None:
+            with open(args["output_file"], mode="w") as f:
+                f.write(data.hex())
+                f.write("\n")
+                f.write(parity)
         print(f"Length of data {len(data)}")
         print("Data bytes evaluation:\n")
         print(evaluate_readout(data.hex(), args["previous_value"]))
