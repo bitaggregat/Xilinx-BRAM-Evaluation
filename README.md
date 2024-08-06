@@ -2,10 +2,11 @@
 
 ## General
 
-- BRAMs can have an initial value different from 0 when being switched on.  
-- Initial values can potentially used to implement a PUF.  
-- This Readme sums up what has been done/found out/tested about possible BRAM PUFs on Xilinx FPGAs.  
+- BRAMs can have an initial value different from 0 after being switched on.  
+- Initial values can potentially used to implement a PUF, a BRAM PUF.  
+- This Readme sums up what has been done/found out/tested about possible BRAM PUFs on Xilinx FPGAs.
 - The procedure used for tests includes manipulation of bs and is documented here aswell.
+- The procedure + measurements will often be referred as "BRAM experiment" in this document
 - Instructions came originally from [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf)
 
 ## BRAM
@@ -29,7 +30,25 @@
 
 ## Bitstream
 
+### Why is Bitstream Manipulation needed?
 
+- Getting the BRAM experiment involves bs manipulation
+- Explaining in detail what the bitstream is composed of, goes beyond the scope of this document
+- In nutshell:
+  - Bitstream is composed of "Configuration Packages"
+  - Configuration Package := Write/Read + Target Register + Payload
+- There exists a specific set of Configuration Packages that write values to the BRAM, which overwrites the initial that are needed for a PUF
+- Removing/dropping these packages from the bs is essential
+
+### Bitstream Handler
+
+- ```initialize_bram/bitstream_handling``` contains codebase that allows to unpack and handle Configuration Packages
+- This codebase can be used like a python library
+- It is currently used by scripts in ```initiliaze_bram/```
+- Only a fraction of this python library is currently used
+- Unused but available features are:
+  - bs handling on configuration bits level
+  - bs handling on [FASMs](https://github.com/chipsalliance/fasm) level
 
 ## Measured Stats
 
