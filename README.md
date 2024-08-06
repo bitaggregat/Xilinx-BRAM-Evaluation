@@ -11,7 +11,7 @@
 
 ## BRAM
 
-### XC7
+### XC7 FPGAs
 
 - 36K BRAM Blocks
 - 32K Data Bits and 4K Parity Bits
@@ -22,7 +22,7 @@
 - Multiple primitives
 - Prioritize 36K primitive
 
-### XCUS
+### XCUS FPGAs
 
 - Same size as XC7
 - More extra features and primitives
@@ -49,10 +49,15 @@
 - Unused but available features are:
   - bs handling on configuration bits level
   - bs handling on [FASMs](https://github.com/chipsalliance/fasm) level
+- More information about this library [here](/initialize_bram/bitstream_handling/README.md)
 
 ## Measured Stats
 
-### Basys3 (xc7a35tcpg236-1)
+### XC7 Measurements
+
+Measurements on XC7 devices were currently only done on the Basys3.
+
+#### Basys3 (xc7a35tcpg236-1)
 
 These measurements were done on our local basys3 board. (sticker on the downside of the board: **DA89AC3**).  
 Measurements were done on:
@@ -112,6 +117,13 @@ Measurements were done on:
 |3959|-|80|-|-|
 |4075|40|40|40|40|
 |4091|-|40|-|-|
+
+### XCUS Measurements
+
+#### te0802
+
+- WIP
+
 
 ### Problem
 
@@ -188,10 +200,8 @@ This section contains TODOs that have currently been deemed not irrelevant, but 
   - Why does this work?
   - Can these multiple flashing procedures be replaced by one single flashing procedure (e.g. one bitstream that sends the same instruction 100x)
 
-
-
 ## Glossary
 
-**XC7**: Xilinx 7-Series
-**XCUS**: Xilinx UltraScale (and UltraScale+)
+**XC7**: Xilinx 7-Series  
+**XCUS**: Xilinx UltraScale (and UltraScale+)  
 **bs/BS**: Bitstream
