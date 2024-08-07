@@ -50,5 +50,5 @@ if __name__ == "__main__":
             bs_bytes, base_bram_addr, arch=architecture, use_header=False
         )
 
-        with open(output_partial_bs + ".bin", mode="wb") as out_file:
+        with open(output_partial_bs, mode="wb") as out_file:
             out_file.write(modified_bs_bytes)
