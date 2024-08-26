@@ -29,12 +29,17 @@ parser.add_argument(
     default="01040200",
 )
 parser.add_argument(
-    "-s",
+    "-ar",
     "--architecture",
     help="Xilinx FPGA architecture used.",
     choices=["XC7", "XCUS"],
 )
-
+parser.add_argument(
+    "-s",
+    "--show_address_candidates",
+    help="Shows all FAR write value. One of them can then be used as '-a'",
+    action="store_true",
+)
 
 if __name__ == "__main__":
     # Transfer args to variables (kinda redundant..., but makes refactoring easier)
@@ -43,12 +48,20 @@ if __name__ == "__main__":
     bram_partial_bs = args["bram_partial_bs"]
     base_bram_addr = args["first_bram_frame_address"]
     architecture = args["architecture"]
+    show_address_candidates = args["show_address_candidates"]
 
     with open(bram_partial_bs, mode="rb") as f:
         bs_bytes = f.read()
-        modified_bs_bytes = remove_bram_init_packets(
-            bs_bytes, base_bram_addr, arch=architecture, use_header=False
-        )
 
-        with open(output_partial_bs, mode="wb") as out_file:
-            out_file.write(modified_bs_bytes)
+        if show_address_candidates:
+            modified_bs_bytes = remove_bram_init_packets(
+                bs_bytes, "ffffffff", arch=architecture, use_header=False, show=True
+            )
+            exit(0)
+        else:
+            modified_bs_bytes = remove_bram_init_packets(
+                bs_bytes, base_bram_addr, arch=architecture, use_header=False
+            )
+
+            with open(output_partial_bs, mode="wb") as out_file:
+                out_file.write(modified_bs_bytes)
