@@ -39,7 +39,7 @@ def add_dir_to_bin_list(
         measurement_count: Number of measurement files in directory
     """
     for i in range(measurement_count):
-        with open(path + str(i)) as f:
+        with open(Path(path,str(i)), mode="rb") as f:
             read_bytes = f.read()
             add_to_bin_list(bin_list, read_bytes)
 
@@ -71,24 +71,27 @@ def create_histogram(
     plt.xlim(0, len(bin_list))
     fig, ax = plt.subplots()
     if mode == "0-to-1":
-        ax.bar(xaxis, bin_list, "g-")
+        ax.bar(xaxis, bin_list, color="g")
         plt.ylabel("Times bits flipped from 0 to 1", color="g")
 
     if mode == "1-to-0":
-        ax.bar(xaxis, bin_list, "b-")
+        ax.bar(xaxis, bin_list, color="b")
         plt.ylabel("Times bits flipped from 1 to 0", color="b")
 
     if mode == "both" and bin_list2 is not None:
         if len(bin_list) != len(bin_list2):
             raise Exception("Error: bin_list and bin_list2 have different lengths")
         else:
-            ax.bar(xaxis, bin_list, "g-")
+            ax.bar(xaxis, bin_list, color="g")
             ax.set_ylabel("Times bits flipped from 0 to 1", color="g")
             ax2 = ax.twinx()
-            ax2.bar(xaxis, -bin_list2, "b-")
+            ax2.bar(xaxis, [-i for i in bin_list2], color="b")
             ax2.set_ylabel("Times bits flipped from 1 to 0", color="b")
             ax2.yaxis.set_major_formatter(major_formatter)
-    plt.ylabel("Times bit flipped")
+            ax.set_ylim(top=max(bin_list), bottom=-max(bin_list2))
+            ax2.set_ylim(top=max(bin_list), bottom=-max(bin_list2))
+            ax2.set_xlim(left=0,right=len(bin_list))
+    ax.set_xlim(left=0,right=len(bin_list))
     plt.xlabel("Bit Index in BRAM")
 
     if display:
@@ -103,13 +106,13 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument(
     "-o",
-    "--output-file",
+    "--output_file",
     help="Path where of plot png will be saved.\n"
     "When no path provided, plot will be displayed instead.",
 )
 parser.add_argument(
     "-pm",
-    "--parity-mode",
+    "--parity_mode",
     help="Type of measurement data that will be plotted. "
     "Mix will plot parity and data bits in a single plot",
     choices=["parity", "data", "mix"],
@@ -117,7 +120,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-fm",
-    "--flip-mode",
+    "--flip_mode",
     help="Value of the BRAM previous to power reset. "
     "Use data where bits flipped from 0 to 1, 1 to 0 or plot both measurements in a single plot.",
     choices=["0-to-1", "1-to-0", "both"],
@@ -125,7 +128,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-mb",
-    "--multiple-blocks",
+    "--multiple_blocks",
     help="Will expect '--path' to be a directory containing multiple BRAM directories."
     "e.g.:\n"
     "path\n"
@@ -174,15 +177,15 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
 
-    parity_mode = args["parity-mode"]
+    parity_mode = args["parity_mode"]
     bin_list_dict = dict()
 
-    if args["flip-mode"] == "both":
+    if args["flip_mode"] == "both":
         flip_modes = ["0-to-1", "1-to-0"]
     else:
-        flip_modes = args["flip-mode"]
+        flip_modes = args["flip_mode"]
 
     for fm in flip_modes:
         bin_list_dict[fm] = dict()
@@ -210,24 +213,26 @@ if __name__ == "__main__":
                 add_dir_to_bin_list(
                     bin_list_dict[flip_mode][parity_mode],
                     Path(dir, flip_mode, parity_mode),
+                    measurement_count=args["count"]
                 )
 
     if parity_mode == "mix":
         # TODO mix parity and data bits
         exit(1)
-    if len(bin_list_dict) == 2:
-        create_histogram(
-            bin_list_dict["0-to-1"],
-            mode=args["flip-mode"],
-            bin_list2=bin_list_dict["1-to-0"],
-            display=args["output-file"] is None,
-            png_path=args["output-file"]
-        )
     else:
-        create_histogram(
-            bin_list_dict[bin_list_dict.keys()[0]],
-            mode=args["flip-mode"],
-            display=args["output-file"] is None,
-            png_path=args["output-file"]
-        )
-    
+        if len(bin_list_dict) == 2:
+            create_histogram(
+                bin_list_dict["0-to-1"][parity_mode],
+                mode=args["flip_mode"],
+                bin_list2=bin_list_dict["1-to-0"][parity_mode],
+                display=args["output_file"] is None,
+                png_path=args["output_file"]
+            )
+        else:
+            create_histogram(
+                bin_list_dict[bin_list_dict.keys()[0]][parity_mode],
+                mode=args["flip_mode"],
+                display=args["output_file"] is None,
+                png_path=args["output_file"]
+            )
+        
