@@ -31,8 +31,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "-o",
-    "--output_file",
-    help="Path to file where read output shall be saved"
+    "--output_path",
+    help="Path where read output files shall be saved"
 )
 # Start byte/ byte swap?
 #
@@ -128,8 +128,8 @@ if __name__ == "__main__":
         #print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
         
-        if args["output_file"] is not None:
-            with open(args["output_file"], mode="w") as f:
+        if args["output_path"] is not None:
+            with open(args["output_path"], mode="w") as f:
                 f.write(data.hex())
                 f.write("\n")
                 f.write(parity)
