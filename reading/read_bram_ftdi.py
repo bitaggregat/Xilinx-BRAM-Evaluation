@@ -9,6 +9,8 @@ import pyftdi.serialext
 import pyftdi.ftdi
 import serial
 import argparse
+import os
+from pathlib import Path
 
 from typing import Tuple, List
 
@@ -83,6 +85,29 @@ def read_batch(port) -> Tuple[bytes, bytes, bytes]:
     parity = port.read(1)
     return data, parity, header
 
+def prepare_paths(input_path: str) -> Tuple[Path, Path]:
+    """
+    Expects path of form: .../1
+    Returns: (.../data_reads/1, .../parity_reads/1
+    """
+    given_path = Path(input_path)
+    base_path = Path(*given_path.parts[:-1])
+    new_paths = (
+        Path(base_path, "data_reads"),
+        Path(base_path, "parity_reads")
+    )
+
+    file_name = given_path.parts[-1]
+    for path in new_paths:
+        if path.exists():
+            continue
+        else:
+            path.mkdir(parents=True)
+    
+    return (
+        Path(path, file_name)
+        for path in new_paths
+    )
 
 if __name__ == "__main__":
     args = vars(parser.parse_args())
@@ -128,11 +153,15 @@ if __name__ == "__main__":
         #print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
         
+
         if args["output_path"] is not None:
-            with open(args["output_path"], mode="w") as f:
+            data_path, parity_path = prepare_paths(args["output_path"])
+
+            with open(data_path, mode="w") as f:
                 f.write(data.hex())
-                f.write("\n")
+            with open(parity_path, mode="w") as f:
                 f.write(parity)
+                
         print(f"Length of data {len(data)}")
         print("Data bytes evaluation:\n")
         print(evaluate_readout(data.hex(), args["previous_value"]))
