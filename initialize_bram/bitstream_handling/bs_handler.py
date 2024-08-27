@@ -9,6 +9,31 @@ from bitstream_handling.frame_addr import FrameAddressGenerator, EvoRegionAddrDo
 from bitstream_handling.header import *
 from bitstream_handling.position import XC7BitPosition
 
+def find_bram_frame_batch_start_addr(packets: List[ConfigPacket], arch: str, show: bool = False) -> str:
+    """
+    Iterates through list of ConfigPackets and guesses via heuristic the frame address whose
+    frame configures bram content.
+
+        Returns:
+                hex string of frame address
+    """
+    candidates = [
+        packet.payload_bytes.hex()
+        for packet in packets
+        if packet.config_word.register == Register.FAR
+    ]
+
+    excluded_frame_addrs = []
+    
+    if arch == "XCUS+":
+        excluded_frame_addrs.append(candidates[-1])
+
+    if show:
+        for frm_addr in candidates:
+            print(frm_addr)
+    
+    guessed_frm_addr = max([int(frm_addr, 16) for frm_addr in candidates if frm_addr not in excluded_frame_addrs ])
+    return f"{guessed_frm_addr:08x}"
 
 def remove_bram_init_packets(
     bs_bytes: bytes,
@@ -60,22 +85,35 @@ def remove_bram_init_packets(
             cfg_packet_badges.append(cfg_packets)
             break
 
-    new_packet_badges = list()
+    
 
+    if show or bram_frame_batch_start_addr == "heuristic":
+        all_cfg_packets = [
+            cfg_packet 
+            for cfg_packets in cfg_packet_badges
+            for cfg_packet in cfg_packets
+        ]
+
+        if bram_frame_batch_start_addr == "heuristic":
+            bram_frame_batch_start_addr = find_bram_frame_batch_start_addr(all_cfg_packets, arch, show=show)
+        else:
+            # Just show, don't overwrite
+            print(f"Suggested bram badge frame addr: {find_bram_frame_batch_start_addr(all_cfg_packets, arch, show=show)}")
+
+
+    new_packet_badges = list()
     hex_bram_frame_batch_start_addr = bytes.fromhex(bram_frame_batch_start_addr)
+
     for cfg_packets in cfg_packet_badges:
         new_packets = list()
         skip = 0
         for packet in cfg_packets:
-            if packet.config_word.register == Register.FAR:
-                if show:
-                    print(packet)
             if (
                 packet.config_word.register == Register.FAR
                 and packet.payload == hex_bram_frame_batch_start_addr
             ):
                 print(f"Packet {packet} was dropped")
-                if arch == "XCUS":
+                if arch == "XCUS+":
                     skip = 5
                 elif arch == "XC7":
                     skip = 4

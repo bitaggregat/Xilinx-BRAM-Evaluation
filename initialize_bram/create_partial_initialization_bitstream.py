@@ -25,14 +25,16 @@ parser.add_argument(
     "-a",
     "--first_bram_frame_address",
     help="Address of the first frame with bram content as hex string. This can vary depending on the region the partial design is located in.\n"
-    "-Can be looked up by unpacking '--bram_partial_bs'.\n",
-    default="01040200",
+    "-Can be looked up by calling this script with '-s'.\n"
+    "Pass 'heuristic' in order to let the script decide which address is the bram batch frame address\n"
+    "ATTENTION: It is recommended to use '-s' to verify when using 'heuristic'",
+    default="heuristic",
 )
 parser.add_argument(
     "-ar",
     "--architecture",
     help="Xilinx FPGA architecture used.",
-    choices=["XC7", "XCUS"],
+    choices=["XC7", "XCUS+"],
 )
 parser.add_argument(
     "-s",
@@ -53,15 +55,11 @@ if __name__ == "__main__":
     with open(bram_partial_bs, mode="rb") as f:
         bs_bytes = f.read()
 
-        if show_address_candidates:
-            modified_bs_bytes = remove_bram_init_packets(
-                bs_bytes, "ffffffff", arch=architecture, use_header=False, show=True
-            )
-            exit(0)
-        else:
-            modified_bs_bytes = remove_bram_init_packets(
-                bs_bytes, base_bram_addr, arch=architecture, use_header=False
-            )
-
-            with open(output_partial_bs, mode="wb") as out_file:
-                out_file.write(modified_bs_bytes)
+        if show_address_candidates and base_bram_addr is None:
+            base_bram_addr = "ffffffff"
+                
+        modified_bs_bytes = remove_bram_init_packets(
+            bs_bytes, base_bram_addr, arch=architecture, use_header=False, show=show_address_candidates
+        )
+        with open(output_partial_bs, mode="wb") as out_file:
+            out_file.write(modified_bs_bytes)
