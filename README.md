@@ -41,6 +41,11 @@
   - Configuration Package := Write/Read + Target Register + Payload
 - There exists a specific set of Configuration Packages that write values to the BRAM, which overwrites the initial that are needed for a PUF
 - Removing/dropping these packages from the bs is essential
+- Partial Bitstreams are needed
+  - The device writes 0 as a default value to the BRAM on startup
+    - Using the process described above with full bitstreams would therefore not work
+    - This was verified once in this project ([click for further information](/initialize_bram/full_bitstream_initialization/full_bitsream_initialization.md))
+  - Partial bitstreams can be loaded without fully restarting the device
 
 ### Bitstream Handler
 
