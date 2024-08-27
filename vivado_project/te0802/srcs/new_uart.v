@@ -32,14 +32,10 @@ module new_uart_tx(
     );
 
     //波特率选择
-    localparam  bps300   = 17'd16_6667;
-    localparam  bps600   = 17'd8_3333;
-    localparam  bps1200  = 17'd4_1667;
-    localparam  bps2400  = 17'd2_0833;
-    localparam  bps4800  = 17'd1_0417;
-    localparam  bps9600  = 17'd5208;
-    localparam  bps19200 = 17'd2604;
-    localparam  bps38400 = 17'd1302;
+    // These are adapted to a clock frequency of 400 MHz
+    // Change them if clk changes
+    localparam  bps9600  = 17'd4_1667;//17'd5208;
+    localparam  bps115200 = 17'd3472;
     //波特率计数器
     reg [17:0]  bps_mode;
     reg [17:0]  bps_cnt; //最慢的bps300模式需要18位计数器
@@ -65,15 +61,9 @@ module new_uart_tx(
     //波特率选择
     always@(*)begin
     case(bps_sel)
-        0: bps_mode = bps600;   
-        1: bps_mode = bps1200;  
-        2: bps_mode = bps2400; 
-        3: bps_mode = bps4800;  
-        4: bps_mode = bps9600;  
-        5: bps_mode = bps19200; 
-        6: bps_mode = bps38400;
-        7: bps_mode = bps300; 
-        default : bps_mode = bps600; 
+        0: bps_mode = bps9600;
+        1: bps_mode = bps115200; 
+        default : bps_mode = bps9600; 
     endcase
     end  
 

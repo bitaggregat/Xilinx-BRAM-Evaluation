@@ -41,7 +41,28 @@ set_property PACKAGE_PIN P2 [get_ports send_enable]
 
 
 create_pblock pblock_1
-add_cells_to_pblock [get_pblocks pblock_1] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_1] -add {SLICE_X22Y60:SLICE_X24Y89}
 resize_pblock [get_pblocks pblock_1] -add {RAMB18_X2Y24:RAMB18_X2Y35}
 resize_pblock [get_pblocks pblock_1] -add {RAMB36_X2Y12:RAMB36_X2Y17}
+set_property SNAPPING_MODE ON [get_pblocks pblock_1]
+
+#set_property PROHIBIT true [get_bels RAMB36_X2Y14/RAMBFIFO36E2]
+
+set_property PROHIBIT true [get_sites SLICE_X22Y60]
+set_property PROHIBIT true [get_sites SLICE_X23Y60]
+set_property PROHIBIT true [get_sites SLICE_X24Y60]
+create_pblock pblock_2
+add_cells_to_pblock [get_pblocks pblock_2] [get_cells -quiet [list bram_wrap]]
+resize_pblock [get_pblocks pblock_2] -add {SLICE_X11Y60:SLICE_X13Y89}
+resize_pblock [get_pblocks pblock_2] -add {RAMB18_X1Y24:RAMB18_X1Y35}
+resize_pblock [get_pblocks pblock_2] -add {RAMB36_X1Y12:RAMB36_X1Y17}
+set_property SNAPPING_MODE ON [get_pblocks pblock_2]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y14]
+set_property PROHIBIT true [get_sites RAMB36_X1Y15]
+set_property PROHIBIT true [get_sites RAMB36_X1Y16]
+set_property PROHIBIT true [get_sites RAMB36_X1Y17]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y13]
+
