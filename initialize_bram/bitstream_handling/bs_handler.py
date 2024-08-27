@@ -663,7 +663,7 @@ class PacketGenerator(object):
         if self.idx < self.max_idx:
             cfgw_chunk = self.bs_bytes[self.idx : self.idx + 4]
 
-            # This is the case in ultra scale zynq fpgas
+            # This is the case in ultrascale+ zynq fpgas
             # The bus will resynchronize after a sequence of ff's and the sync word
             # Higher level classes or functions should create a new package generator in this case
             if cfgw_chunk == b"\xff\xff\xff\xff":

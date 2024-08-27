@@ -65,7 +65,7 @@ Measurements were done on:
 |4075|40|40|40|40|
 |4091|-|40|-|-|
 
-### XCUS Measurements
+### XCUS+ Measurements
 
 #### te0802 Measurements
 
@@ -92,6 +92,6 @@ Measurements were done on:
 - flasing 1000 times led to more variety in flipped bytes (e.g ```01```, ```41```, ```82```)
 - There seems to be a correlation between amount of times the bram was activated and randomness of the bram content
 
-### XCUS Observations
+### XCUS+ Observations
 
 WIP

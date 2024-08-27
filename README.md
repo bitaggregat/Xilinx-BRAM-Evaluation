@@ -24,7 +24,7 @@
 - Multiple primitives
 - Prioritize 36K primitive
 
-### XCUS FPGAs
+### XCUS+ (Zynq) FPGAs
 
 - Same size as XC7
 - More extra features and primitives
@@ -83,8 +83,6 @@
 
 ### General Approach
 
-#general-approach
-
 ![Visualization of Readout Design](bram_partial.drawio.png)
 
 1. Create "Read BRAM" full Design, BRAMless partial Design and "Read BRAM" partial Design in a Vivado project and synthethize bitstreams
@@ -97,7 +95,7 @@
 
 ### Practical Approach
 
-Scripts have been written in order to ease and partially automatize the steps mentioned in [General Approach](#general-approach).  
+Scripts have been written in order to ease and partially automatize the steps mentioned in [General Approach](###General Approach).  
 Sadly tools do not always support all FPGA devices, which is why the instructions and tools may differ depending on the used device.  
 
 #### Basys3 (xc7a35tcpg236-1)
@@ -153,7 +151,8 @@ This section contains TODOs that have currently been deemed not irrelevant, but 
 |Term/Macro|Definition|
 |-|-|
 |**XC7**| Xilinx 7-Series|
-|**XCUS**| Xilinx UltraScale (and UltraScale+)|
+|**XCUS**| Xilinx UltraScale|
+|**XCUS+**| Xilinx UltraScale+|
 |**bs/BS**| Bitstream|
 |**Target partial region**| A statically defined partial region used for designs.|
 |**"Read BRAM" full Design**| A Hardware design that contains a UART and a BRAM Block that is readout. Fills the BRAM with either 0 or f. The BRAM Block is routed in the target partial region.|
