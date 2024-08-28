@@ -80,7 +80,7 @@ module new_uart_tx(
     always@(posedge CLK_50M or negedge rst_n)
     if(~rst_n)
         n_cnt_flag <= 1'b0;
-    else if(n_cnt == 'd11 && bps_cnt == bps_mode-1)
+    else if(n_cnt == 'd10 && bps_cnt == bps_mode-1)
         n_cnt_flag <= 1'b0; 
     else if(req)
         n_cnt_flag <= 1'b1;
@@ -109,8 +109,8 @@ module new_uart_tx(
         7: TX = din_reg[5];
         8: TX = din_reg[6]; 
         9: TX = din_reg[7];
-        10: TX = check; //校验
-        11: TX = 1'b1; //stop
+        //10: TX = check; //校验
+        10: TX = 1'b1; //stop
         default TX = 1'b1;
     endcase
     else

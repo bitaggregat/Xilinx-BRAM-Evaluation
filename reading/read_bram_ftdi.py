@@ -129,13 +129,13 @@ if __name__ == "__main__":
             port = pyftdi.serialext.serial_for_url(
                 f'ftdi://ftdi:232r:{args["device"]}/1',
                 baudrate=115200,
-                parity=serial.PARITY_EVEN,
+                parity=serial.PARITY_NONE,
             )
         else:
             port = pyftdi.serialext.serial_for_url(
                 f'ftdi://ftdi:2232:{args["device"]}/2',
                 baudrate=115200,
-                parity=serial.PARITY_EVEN,
+                parity=serial.PARITY_NONE,
             )
 
         data, temp_parity = find_transmission_start(port)
