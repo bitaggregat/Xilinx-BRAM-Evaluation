@@ -23,7 +23,6 @@ module read_bram(
     input           sys_clk_p,
     input           rst,
     input           uart_rxd,
-    input           test_switch,
     output          uart_txd,
     output [7:0]    led
     );
