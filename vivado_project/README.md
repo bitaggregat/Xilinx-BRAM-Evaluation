@@ -18,3 +18,7 @@ The following files are modified versions of files from a [third party repositor
 
 - srcs/new_uart.v
 - srcs/read_bram.v
+
+The following file is from another [third party repository ](https://github.com/matt-alencar/fpga-uart-tx-rx/tree/master)
+
+- srcs/uart_rx.v

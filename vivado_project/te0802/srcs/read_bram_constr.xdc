@@ -1,8 +1,13 @@
 set_property PACKAGE_PIN P3 [get_ports rst]
 set_property IOSTANDARD LVCMOS18 [get_ports rst]
 
+#set_property IOSTANDARD LVCMOS18 [get_ports test_switch]
+#set_property PACKAGE_PIN P2 [get_ports test_switch]
+
 set_property PACKAGE_PIN F7 [get_ports uart_txd]
 set_property IOSTANDARD LVCMOS18 [get_ports uart_txd]
+set_property PACKAGE_PIN E6 [get_ports uart_rxd]
+set_property IOSTANDARD LVCMOS18 [get_ports uart_rxd]
 set_property IOSTANDARD LVCMOS18 [get_ports sys_clk_p]
 set_property PACKAGE_PIN J3 [get_ports sys_clk_p]
 #set_property IOSTANDARD LVCMOS18 [get_ports maxihpm0_lpd_aclk]
@@ -26,8 +31,7 @@ set_property PACKAGE_PIN M2 [get_ports {led[2]}]
 set_property PACKAGE_PIN N2 [get_ports {led[1]}]
 set_property PACKAGE_PIN P1 [get_ports {led[0]}]
 
-set_property IOSTANDARD LVCMOS18 [get_ports send_enable]
-set_property PACKAGE_PIN P2 [get_ports send_enable]
+
 
 
 #set_property PROHIBIT true [get_bels RAMB36_X1Y7/RAMBFIFO36E1]

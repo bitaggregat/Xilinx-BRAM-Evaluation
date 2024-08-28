@@ -68,8 +68,8 @@ module new_uart_tx(
     end  
 
     //波特率计数器
-    always@(posedge CLK_50M or negedge rst_n)
-    if(~rst_n)
+    always@(posedge CLK_50M or posedge rst_n)
+    if(rst_n)
         bps_cnt <= 'd0;
     else if(bps_cnt == bps_mode-1) 
         bps_cnt <= 'd0;
@@ -77,16 +77,16 @@ module new_uart_tx(
         bps_cnt <= bps_cnt + 1'b1;
 
     //线性序列机
-    always@(posedge CLK_50M or negedge rst_n)
-    if(~rst_n)
+    always@(posedge CLK_50M or posedge rst_n)
+    if(rst_n)
         n_cnt_flag <= 1'b0;
     else if(n_cnt == 'd10 && bps_cnt == bps_mode-1)
         n_cnt_flag <= 1'b0; 
     else if(req)
         n_cnt_flag <= 1'b1;
 
-    always@(posedge CLK_50M or negedge rst_n)	
-    if(~rst_n)
+    always@(posedge CLK_50M or posedge rst_n)	
+    if(rst_n)
         n_cnt <= 'd0;
     else if(n_cnt_flag) begin
         if(bps_cnt == bps_mode-1)

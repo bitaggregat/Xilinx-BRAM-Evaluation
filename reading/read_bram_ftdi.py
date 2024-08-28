@@ -64,6 +64,11 @@ def evaluate_readout(data: str, previous_value: str) -> List[Tuple[str, int]]:
 
 
 def find_transmission_start(port) -> Tuple[bytes, bytes]:
+
+    # Write anything to reset device state 
+    # -> Necessary because the received data is sometimes bugged after partial reconfig
+    port.write(b"\x00")
+
     last_two_bytes = [None, None]
     while True:
         temp_byte = port.read(1)
@@ -137,6 +142,7 @@ if __name__ == "__main__":
                 baudrate=115200,
                 parity=serial.PARITY_NONE,
             )
+
 
         data, temp_parity = find_transmission_start(port)
         parity = temp_parity.hex()[1]

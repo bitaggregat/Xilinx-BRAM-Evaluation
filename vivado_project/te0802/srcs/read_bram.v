@@ -22,7 +22,8 @@
 module read_bram(
     input           sys_clk_p,
     input           rst,
-    input           send_enable,
+    input           uart_rxd,
+    input           test_switch,
     output          uart_txd,
     output [7:0]    led
     );
@@ -41,6 +42,7 @@ module read_bram(
     reg [7:0]   r_led           ;
     reg         batch_done      ;
     reg [35:0]  bram_batch      ;
+    reg         reset_state     ; // State verifies if reset is currently being handled
 
     /*****************************Wire************************************/
     wire        w_clk           ;
@@ -48,15 +50,18 @@ module read_bram(
     wire        w_uart_busy     ;
     wire [35:0] w_bram_dout     ;
     wire [7:0]  w_uart_txdata   ;
+    wire        rx_received     ;
+    wire        send_enable     ;
 
     /*************************Combinational Logic************************/
-    assign w_resetn         =   ~rst        ;
-    assign w_uart_txdata    =   r_bram_dout ;
-    assign led              =   r_led       ;
+    assign w_resetn         =   (~rst || reset_state)   ;
+    assign w_uart_txdata    =   r_bram_dout             ;
+    assign led              =   r_led                   ;
+    assign send_enable      =   1'b1                    ;
 
     /****************************Processing*****************************/
     always @(posedge w_clk) begin
-        if(!w_resetn) begin
+        if(w_resetn) begin
             r_exec_state <= IDLE;
         end else begin
             r_exec_state <= r_next_state;
@@ -68,6 +73,19 @@ module read_bram(
                 READ = 2'b01,
                 SEND = 2'b10,
                 NEXT = 2'b11;
+                
+    parameter   NO_RESET = 1'b0,
+                RESETTING = 1'b1;
+    parameter TICKS_PER_BIT        = 35;
+    parameter TICKS_PER_BIT_SIZE   = 12;
+                
+    /*****************************TX as simple reset signal section*******/
+    always@(posedge rx_received)begin
+    case(reset_state)
+        NO_RESET: reset_state = RESETTING;
+        RESETTING: reset_state = NO_RESET;
+    endcase
+    end
     
     always@(posedge w_clk)begin
     case(r_exec_state)
@@ -82,7 +100,7 @@ module read_bram(
     always@(posedge w_clk)begin
     case(r_exec_state)
         IDLE: begin
-            r_led <= 8'b11000000;
+            r_led <= 8'b10000000;
             r_bram_addr <= 9'd0;
             r_bram_flag <= 1'b0;
             count_in_batch <= 1'd0;
@@ -90,7 +108,7 @@ module read_bram(
             r_bram_cnt <= 2'd0;
         end
         READ: begin
-            r_led <= 8'b00110000;
+            r_led <= 8'b01000000;
             if(!r_bram_flag)begin
                 r_bram_flag <= 1'b1;
                 r_bram_cnt <= 2'd0;
@@ -103,7 +121,7 @@ module read_bram(
             end
         end
         SEND: begin
-            r_led <= 8'b00001100;
+            r_led <= 8'b11000000;
             r_uart_enable <= 1'b1;
             // Custom protocol
             // Helps us knowing where first byte of bram starts
@@ -122,7 +140,7 @@ module read_bram(
             end
         end
         NEXT: begin
-            r_led <= 8'b00000011;
+            r_led <= 8'b00100000;
             if(r_bram_addr!=WRITE_DEPTH && !w_uart_busy && batch_done)begin
                 // Case:
                 // Data and parity byte have been send,
@@ -161,6 +179,18 @@ module read_bram(
         .busy(w_uart_busy),
         .TX(uart_txd)
     );
+    
+    uart_rx 
+    #(
+		.TICKS_PER_BIT(TICKS_PER_BIT),
+		.TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+	) rx (	
+		.i_clk(w_clk),
+		.i_din(uart_rxd),
+		.i_enable(1'b1),
+		.o_recvdata(rx_received)
+	);
+
 
     bram_read_test bram_wrap(
     .clka(w_clk),
