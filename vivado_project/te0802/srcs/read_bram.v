@@ -41,7 +41,6 @@ module read_bram(
     reg [7:0]   r_led           ;
     reg         batch_done      ;
     reg [35:0]  bram_batch      ;
-    reg         reset_state     ; // State verifies if reset is currently being handled
 
     /*****************************Wire************************************/
     wire        w_clk           ;
@@ -53,14 +52,14 @@ module read_bram(
     wire        send_enable     ;
 
     /*************************Combinational Logic************************/
-    assign w_resetn         =   (~rst || reset_state)   ;
+    assign w_resetn         =   ~rst                    ;
     assign w_uart_txdata    =   r_bram_dout             ;
     assign led              =   r_led                   ;
     assign send_enable      =   1'b1                    ;
 
     /****************************Processing*****************************/
     always @(posedge w_clk) begin
-        if(w_resetn) begin
+        if(w_resetn || rx_received) begin
             r_exec_state <= IDLE;
         end else begin
             r_exec_state <= r_next_state;
@@ -78,13 +77,6 @@ module read_bram(
     parameter TICKS_PER_BIT        = 35;
     parameter TICKS_PER_BIT_SIZE   = 12;
                 
-    /*****************************TX as simple reset signal section*******/
-    always@(posedge rx_received)begin
-    case(reset_state)
-        NO_RESET: reset_state = RESETTING;
-        RESETTING: reset_state = NO_RESET;
-    endcase
-    end
     
     always@(posedge w_clk)begin
     case(r_exec_state)
