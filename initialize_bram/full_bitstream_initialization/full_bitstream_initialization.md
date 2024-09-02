@@ -12,7 +12,7 @@ The details are found below.
 ### Bitstream manipulation
 
 - full bitstream that fills bram with ff was used (read_BRAM_X16Y65_RAMB36_X2Y14_ff_full.bit)
-- byteman was used with following command:
+- byteman was used to turn the binary bitstream (.bit) into bitasm (human readable Bitstream Frame Format) with following command:
 
 ```bash
 ./Binaries/Linux-x86/byteman Xilinx UltraScale+ -assembly read_BRAM_X16Y65_RAMB36_X2Y14_ff_full.bit temp.bitasm
