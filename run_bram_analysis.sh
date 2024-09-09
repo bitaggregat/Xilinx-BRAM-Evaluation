@@ -16,6 +16,7 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 elif [ "$#" -ne 8 ]; then
     echo "Wrong number of arguments ${#}!\n"
     echo "$help"
+    exit 0
 else
     vivado_path=$1
     vivado_project_path=$2
@@ -28,7 +29,7 @@ else
 fi
 
 # Initiate path variables that depend on args
-project_xpr=$(ls vivado_projects/project_1 | grep .xpr)
+project_xpr="${vivado_project_path}/$(ls "$vivado_project_path" | grep .xpr)"
 
 # NOTE: The paths below depend on the order of child implementation runs in vivado
 #       Changing the implementation run in the dynamic eXchange wizard will change those dependencies
@@ -36,7 +37,7 @@ run_dir=$(ls "${vivado_project_path}" | grep .runs)
 full_bs_with_initial_value_00="${vivado_project_path}/${run_dir}/child_0_impl_1/read_bram.bit"
 full_bs_with_initial_value_ff="${vivado_project_path}/${run_dir}/child_1_impl_1/read_bram.bit"
 bramless_partial_bs="${vivado_project_path}/${run_dir}/child_2_impl_1/bram_wrap_return_0_partial.bit"
-partial_bram_bs="${vivado_project_path}/${run_dir}/child_0_impl_1/bram_wrap_bram_wrap_ff_partial.bit"
+partial_bram_bs="${vivado_project_path}/${run_dir}/child_1_impl_1/bram_wrap_bram_wrap_ff_partial.bit"
 modified_bs="temp_bs.bin"
 from_root="$(pwd)"
 
@@ -46,6 +47,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     ram_block="RAMB36_X${bram_row_x_position}Y${current_bram_y_position}"
 
     # Create bitstreams using predefined tcl script
+    #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
     "${vivado_path}" -mode batch -source synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
 
     # create modified bs:
@@ -71,6 +73,9 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     done
     
     # Save bitstreams for debugging
+    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
+        mkdir "${output_path}/${pblock}/${ram_block}/bs"
+    fi
     cp "$full_bs_with_initial_value_00" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
     cp "$full_bs_with_initial_value_ff" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
     cp "$bramless_partial_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"

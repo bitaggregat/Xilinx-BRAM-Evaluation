@@ -21,6 +21,7 @@ open_project $project_xpr
 update_compile_order -fileset sources_1
 open_run synth_1 -name synth_1 -pr_config [current_pr_configuration]
 
+
 # Assign partial design to pblock
 add_cells_to_pblock [get_pblocks $pblock] [get_cells -quiet [list bram_wrap]]
 # Prohibit all bram blocks for given row $x
@@ -41,3 +42,4 @@ launch_runs impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1 -jobs 8
 wait_on_run impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1
 # generate bitstreams
 launch_runs impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1 -to_step write_bitstream -jobs 8
+wait_on_run impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1
