@@ -69,7 +69,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs";
+        mkdir -p "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs";
     fi
 
     temperature_file_path="${output_path}/${pblock}/${ram_block}/${ram_block}_temperature.txt";
@@ -123,8 +123,12 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         
         # measure temperature
         tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
-        # Catch penultimate line of output (contains temperture values)
-        tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1 >> "${temperature_file_path}"
+        # Catch penultimate line of output (contains temperature values)
+        temperature_str="Vivado%"
+        while [[ "${temperature_str}" == *"Vivado%"* ]]; do
+            temperature_str=$(tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1);
+        done
+        echo "${temperature_str}" >> "${temperature_file_path}";
     done
     
     # Save bitstreams for debugging
