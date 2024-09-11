@@ -1,5 +1,69 @@
 #!/usr/bin/env bash
 
+# Function definitions:
+
+
+#######################################
+# Constantly checks output of parallel tmux terminal
+# The terminal is expected to run a vivado interpreter
+# The function loops until the current vivado command has finished
+# Globals:
+#   None
+# Arguments:
+#   None
+#######################################
+function wait_for_tmux_vivado(){
+    vivado_output=''
+    while [ "${vivado_output}" != "Vivado%" ]; do
+        sleep 0.01s
+        # Get last line of capture
+        vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1);
+    done
+} 
+
+#######################################
+# Measures temperature from vivado terminal in tmux
+# Appends measure to file
+# Globals:
+#   None
+# Arguments:
+#   temperature file: path to file where new temperature measurement is appended 
+#######################################
+function measure_temperature(){
+    tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
+    # Catch penultimate line of output (contains temperature values)
+    temperature_str="Vivado%"
+    while [[ "${temperature_str}" == *"Vivado%"* ]]; do
+        temperature_str=$(tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1);
+    done
+    echo "${temperature_str}" >> "${1}";
+}
+
+#######################################
+# Flashes bitstreams to fpga via vivado terminal in tmux
+# This prepares the bram for a measurement
+# Globals:
+#   None
+# Arguments:
+#   full bs: Configures fpga with uart and fills bram with either 00 or ff
+#   bramless_partial_bs: Reconfigures fpga to deactivate bram
+#   modified_bs: Reactivates bram but without values
+#######################################
+function flash_bitstreams(){
+    tmux send-keys "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    wait_for_tmux_vivado
+    tmux send-keys "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    wait_for_tmux_vivado
+    tmux send-keys "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    wait_for_tmux_vivado
+}
+
+#######################################
+#######################################
+# MAIN START:
+#######################################
+#######################################
+
 # Kill previous vivado session if necessary
 tmux kill-session -t vivado
 
@@ -17,7 +81,7 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo "$help"
     exit 0
 elif [ "$#" -ne 8 ]; then
-    echo "Wrong number of arguments ${#}!\n"
+    echo "Wrong number of arguments ${#}!"
     echo "$help"
     exit 0
 else
@@ -57,11 +121,7 @@ tmux send-keys -t vivado "connect_hw_server" C-m
 tmux send-keys -t vivado "current_hw_target \"localhost:3121/xilinx_tcf/Digilent/25163300869FA\"" C-m
 tmux send-keys -t vivado "open_hw_target" C-m
 # Wait for preparation script to finish
-vivado_output=''
-while [ "${vivado_output}" != "Vivado%" ]; do
-    # Get last line of capture
-    vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1);
-done
+wait_for_tmux_vivado
 
 # Iterate over all BRAM Blocks between bram36_min and max_y (inclusive)
 for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_position"); do
@@ -72,6 +132,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         mkdir -p "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs";
     fi
 
+    # Create temperature file
     temperature_file_path="${output_path}/${pblock}/${ram_block}/${ram_block}_temperature.txt";
     if [ ! -f "${temperature_file_path}" ]; then
         touch "${temperature_file_path}";
@@ -87,48 +148,21 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     # With previous value 00:
     for read in $(seq 0 "$reads"); do
         # BRAM init
-        tmux send-keys "set_property PROGRAM.FILE ${full_bs_with_initial_value_00} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-        tmux send-keys "set_property PROGRAM.FILE ${bramless_partial_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-        tmux send-keys "set_property PROGRAM.FILE ${from_root}/${modified_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-
-        # Wait for flashing to finish
-        vivado_output=''
-        while [ "${vivado_output}" != "Vivado%" ]; do
-            # Get last line of capture
-            vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1)
-        done
+        flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
+        # Readout process
         python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "00" -o "${output_path}/${pblock}/${ram_block}/0-to-f/${read}";
         
-        # measure temperature
-        tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
-        # Catch penultimate line of output (contains temperture values)
-        tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1 >> "${temperature_file_path}"
+        measure_temperature "${temperature_file_path}";
     done
 
     # With previous value ff:
     for read in $(seq 0 "$reads"); do
-        # BRAM init + readout process
-        # BRAM init
-        tmux send-keys "set_property PROGRAM.FILE ${full_bs_with_initial_value_ff} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-        tmux send-keys "set_property PROGRAM.FILE ${bramless_partial_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-        tmux send-keys "set_property PROGRAM.FILE ${from_root}/${modified_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
-
-        # Wait for flashing to finish
-        vivado_output=''
-        while [ "${vivado_output}" != "Vivado%" ]; do
-            # Get last line of capture
-            vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1)
-        done
+        # BRAM init 
+        flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
+        # Readout process
         python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "ff" -o "${output_path}/${pblock}/${ram_block}/f-to-0/${read}";
         
-        # measure temperature
-        tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
-        # Catch penultimate line of output (contains temperature values)
-        temperature_str="Vivado%"
-        while [[ "${temperature_str}" == *"Vivado%"* ]]; do
-            temperature_str=$(tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1);
-        done
-        echo "${temperature_str}" >> "${temperature_file_path}";
+        measure_temperature "${temperature_file_path}";
     done
     
     # Save bitstreams for debugging
