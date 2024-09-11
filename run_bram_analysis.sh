@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Kill previous vivado session if necessary
+tmux kill-session -t vivado
+
 # Help output:
 read -r -d '' help <<EOM
 Script that automatizes BRAM readout of FPGA device.
@@ -41,35 +44,87 @@ partial_bram_bs="${vivado_project_path}/${run_dir}/child_1_impl_1/bram_wrap_bram
 modified_bs="temp_bs.bin"
 from_root="$(pwd)"
 
+# Initialize tmux vivado session, used for:
+# - flashing bs
+# - measuring temperature
+# without open/close hw manager overhead
+tmux new-session -d -s vivado
+# Open vivado interactive terminal in tmux
+tmux send-keys -t vivado "${vivado_path} -mode tcl" C-m
+# TODO describe bram measurement
+tmux send-keys -t vivado "open_hw_manager" C-m
+tmux send-keys -t vivado "connect_hw_server" C-m
+tmux send-keys -t vivado "current_hw_target \"localhost:3121/xilinx_tcf/Digilent/25163300869FA\"" C-m
+tmux send-keys -t vivado "open_hw_target" C-m
+# Wait for preparation script to finish
+vivado_output=''
+while [ "${vivado_output}" != "Vivado%" ]; do
+    # Get last line of capture
+    vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1);
+done
 
 # Iterate over all BRAM Blocks between bram36_min and max_y (inclusive)
 for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_position"); do
     ram_block="RAMB36_X${bram_row_x_position}Y${current_bram_y_position}"
 
-    # Create bitstreams using predefined tcl script
-    #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
-    "${vivado_path}" -mode batch -source synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
-
-    # create modified bs:
-    python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+"
-
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs"
+        mkdir "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs";
     fi
+
+    temperature_file_path="${output_path}/${pblock}/${ram_block}/${ram_block}_temperature.txt";
+    if [ ! -f "${temperature_file_path}" ]; then
+        touch "${temperature_file_path}";
+    fi
+
+    # Create bitstreams using predefined tcl script
+    #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
+    "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
+
+    # create modified bs:
+    python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
 
     # With previous value 00:
     for read in $(seq 0 "$reads"); do
-        # BRAM init + readout process
-        "${vivado_path}" -mode batch -source "initialize_bram/flash_bitstreams.tcl" -tclargs "localhost:3121/xilinx_tcf/Digilent/25163300869FA" "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
+        # BRAM init
+        tmux send-keys "set_property PROGRAM.FILE ${full_bs_with_initial_value_00} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+        tmux send-keys "set_property PROGRAM.FILE ${bramless_partial_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+        tmux send-keys "set_property PROGRAM.FILE ${from_root}/${modified_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+
+        # Wait for flashing to finish
+        vivado_output=''
+        while [ "${vivado_output}" != "Vivado%" ]; do
+            # Get last line of capture
+            vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1)
+        done
         python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "00" -o "${output_path}/${pblock}/${ram_block}/0-to-f/${read}";
+        
+        # measure temperature
+        tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
+        # Catch penultimate line of output (contains temperture values)
+        tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1 >> "${temperature_file_path}"
     done
 
     # With previous value ff:
     for read in $(seq 0 "$reads"); do
         # BRAM init + readout process
-        "${vivado_path}" -mode batch -source "initialize_bram/flash_bitstreams.tcl" -tclargs "localhost:3121/xilinx_tcf/Digilent/25163300869FA" "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
+        # BRAM init
+        tmux send-keys "set_property PROGRAM.FILE ${full_bs_with_initial_value_ff} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+        tmux send-keys "set_property PROGRAM.FILE ${bramless_partial_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+        tmux send-keys "set_property PROGRAM.FILE ${from_root}/${modified_bs} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+
+        # Wait for flashing to finish
+        vivado_output=''
+        while [ "${vivado_output}" != "Vivado%" ]; do
+            # Get last line of capture
+            vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1)
+        done
         python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "ff" -o "${output_path}/${pblock}/${ram_block}/f-to-0/${read}";
+        
+        # measure temperature
+        tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
+        # Catch penultimate line of output (contains temperture values)
+        tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1 >> "${temperature_file_path}"
     done
     
     # Save bitstreams for debugging
@@ -83,6 +138,9 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     cp "$modified_bs" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bit"
 
 done
+
+tmux send-keys "source tcl/clean_up_vivado.tcl" C-m
+tmux kill-session -t vivado
 
 # Remove modified bs
 rm "${modified_bs}"
