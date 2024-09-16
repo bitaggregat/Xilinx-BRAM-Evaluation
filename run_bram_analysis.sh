@@ -129,13 +129,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
-        mkdir -p "${output_path}/${pblock}/${ram_block}/0-to-f" "${output_path}/${pblock}/${ram_block}/f-to-0" "${output_path}/${pblock}/${ram_block}/bs";
-    fi
-
-    # Create temperature file
-    temperature_file_path="${output_path}/${pblock}/${ram_block}/${ram_block}_temperature.txt";
-    if [ ! -f "${temperature_file_path}" ]; then
-        touch "${temperature_file_path}";
+        mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_00" "${output_path}/${pblock}/${ram_block}/previous_value_ff" "${output_path}/${pblock}/${ram_block}/bs";
     fi
 
     # Create bitstreams using predefined tcl script
@@ -145,22 +139,34 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     # create modified bs:
     python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
 
+    # Create temperature file for "previous_value_00"
+    temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_00/temperature.txt";
+    if [ ! -f "${temperature_file_path}" ]; then
+        touch "${temperature_file_path}";
+    fi
+
     # With previous value 00:
     for read in $(seq 0 "$reads"); do
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
         # Readout process
-        python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "00" -o "${output_path}/${pblock}/${ram_block}/0-to-f/${read}";
+        python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00/${read}";
         
         measure_temperature "${temperature_file_path}";
     done
+
+    # Create temperature file for "previous_value_ff"
+    temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_ff/temperature.txt";
+    if [ ! -f "${temperature_file_path}" ]; then
+        touch "${temperature_file_path}";
+    fi
 
     # With previous value ff:
     for read in $(seq 0 "$reads"); do
         # BRAM init 
         flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
         # Readout process
-        python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "ff" -o "${output_path}/${pblock}/${ram_block}/f-to-0/${read}";
+        python "reading/read_bram_ftdi.py" -d "A503VSXV" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff/${read}";
         
         measure_temperature "${temperature_file_path}";
     done
