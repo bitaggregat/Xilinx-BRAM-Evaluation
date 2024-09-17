@@ -163,10 +163,10 @@ if __name__ == "__main__":
         if args["output_path"] is not None:
             data_path, parity_path = prepare_paths(args["output_path"])
 
-            with open(data_path, mode="w") as f:
-                f.write(data.hex())
-            with open(parity_path, mode="w") as f:
-                f.write(parity)
+            with open(data_path, mode="wb") as f:
+                f.write(data)
+            with open(parity_path, mode="wb") as f:
+                f.write(bytes.fromhex(parity))
                 
         print(f"Length of data {len(data)}")
         print("Data bytes evaluation:\n")
