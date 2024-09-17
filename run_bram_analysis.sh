@@ -33,7 +33,7 @@ function measure_temperature(){
     tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
     # Catch penultimate line of output (contains temperature values)
     temperature_str="Vivado%"
-    while [[ "${temperature_str}" == *"Vivado%"* ]]; do
+    while [[ "${temperature_str}" == *"Vivado%"* ]] || [[ ${#temperature_str} -gt 9 ]]; do
         temperature_str=$(tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1);
     done
     echo "${temperature_str}" >> "${1}";
