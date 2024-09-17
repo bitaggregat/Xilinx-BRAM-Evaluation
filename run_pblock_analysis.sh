@@ -23,7 +23,9 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 fi
 
-for config_file in $(seq "1" "$#"); do
+for config_file in "$@" 
+do
+    echo "${config_file}"
     source "${config_file}"
-    source run_bram_analysis "${vivado_path}" "${vivado_project_path}" "${pblock}" "${bram_row_x_position}" "${bram36_min_y_position}" "${bram36_max_y_position}" "${reads}" "${output_path}"
+    source run_bram_analysis.sh "${vivado_path}" "${vivado_project_path}" "${pblock}" "${bram_row_x_position}" "${bram36_min_y_position}" "${bram36_max_y_position}" "${reads}" "${output_path}"
 done
