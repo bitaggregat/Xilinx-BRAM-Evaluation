@@ -146,7 +146,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     fi
 
     # With previous value 00:
-    for read in $(seq 0 "$reads"); do
+    for read in $(seq 1 "$reads"); do
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
         # Readout process
@@ -162,7 +162,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     fi
 
     # With previous value ff:
-    for read in $(seq 0 "$reads"); do
+    for read in $(seq 1 "$reads"); do
         # BRAM init 
         flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}";
         # Readout process
