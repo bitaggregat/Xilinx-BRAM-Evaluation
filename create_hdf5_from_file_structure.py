@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict
 import datetime
 import argparse
+import numpy as np
 
 # General:
 # Sometimes experiments may fail and/or are interrupted
@@ -35,12 +36,11 @@ def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group
             for measurement in f.readlines()
         ]
 
-        parent.create_dataset("temperature" ,values, dtype=f)
+        parent.create_dataset("temperature" , (len(values),), dtype="f", data=values)
 
-
-def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str, binary: bool = False) -> None:
+def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str, binary: bool = False) -> None:
     '''
-    Adds bram reads as a dataset to <bram_name>/<0-to-f or f-to-0> group
+    Adds bram reads as a dataset to group
 
     Parameters:
         path: Path to directory that contains multiple bram reads
@@ -48,14 +48,12 @@ def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name:
         name: Name of the dataset (should be either "data" or "parity")
         binary: Is read saved in binary or ASCII?
     '''
-    bram_data_group = parent.create_group(group_name)
-
     # Sort files numerically ascending: [0, 1, 2, ..., 10, ...]
     # This is done to avoid: [0, 1, 10, 100, 1000, 2, 20,...] 
     files_sorted_by_index = sorted(
         [
             file_path for file_path in path.iterdir()
-            if file_path.is_file() and file_path.name != "temperature.txt"
+            if file_path.is_file()
         ],
         key=lambda x: int(x.stem)
     )
@@ -69,12 +67,36 @@ def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name:
     # Quality control
     assert all([len(read) == seq_length for read in read_data])
 
-    bram_data_group.create_dataset("measurements", read_data, dtype=h5py.string_dtype(length=seq_length))
+    parent.create_dataset(dataset_name, (len(read_data),), dtype=h5py.string_dtype(length=seq_length), data=read_data)
+
+def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str, binary: bool = False) -> None:
+    '''
+    Adds multiple datasets based on content in "previous_value_00" or "previous_value_ff" dir
+
+    Parameters:
+        path: Path to directory that contains dirs parity and data
+        parent: Parent group of dataset
+        name: Name of the group (should be either "previous_value_00" or "previous_value_ff")
+        binary: Is read saved in binary or ASCII?
+    '''
+    bram_data_group = parent.create_group(group_name)
+
+    # Add parity dataset if available
+    parity_path = Path(path, "parity_reads") 
+    if parity_path.exists() and parity_path.is_dir():
+        add_bram_dataset(parity_path, bram_data_group, "parity_reads", binary)
+
+
+    # Add data dataset if available
+    data_path = Path(path, "data_reads") 
+    if data_path.exists() and data_path.is_dir():
+        add_bram_dataset(data_path, bram_data_group, "data_reads", binary)
+
 
     # Add temperature if available
     temperature_path = Path(path, "temperature.txt") 
     if temperature_path.exists() and temperature_path.is_file():
-        add_temperature_dataset(Path(path, "temperature.txt"), bram_data_group)
+        add_temperature_dataset(temperature_path, bram_data_group)
 
 
 def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
@@ -84,26 +106,26 @@ def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
         if file_path.is_file()
     ]
 
-    bitstream_group = parent.create_group("bitstreams")
+    bitstream_group = parent.create_group("bitstreams", track_order=True)
 
     # Add five bitstreams as attributes
     for bs in bs_files:
         match bs.stem.split("_"):
             case [*_, "partial", "bram", "bs"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["partial_bram_bs"] = f.read()
+                    bitstream_group.attrs["partial_bram_bs"] = np.void(f.read())
             case [*_, "modified", "partial"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["modified_partial"] = f.read()
+                    bitstream_group.attrs["modified_partial"] = np.void(f.read())
             case [*_, "ff"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["ff"] = f.read()
+                    bitstream_group.attrs["ff"] = np.void(f.read())
             case [*_, "00"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["00"] = f.read()
+                    bitstream_group.attrs["00"] = np.void(f.read())
             case [*_, "bramless", "partial"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["bramless_partial"] = f.read()
+                    bitstream_group.attrs["bramless_partial"] = np.void(f.read())
     
 
 def add_bram_group(path: Path, parent: h5py._hl.group.Group, binary: bool = False) -> None:
@@ -154,23 +176,28 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group, binary: bool = Fa
 parser = argparse.ArgumentParser("Script converts read bram data structured in directories, to hdf5")
 parser.add_argument(
     "-r", "--root_dir",
-    help="Base directory of read data"
+    help="Base directory of read data",
+    required=True
 )
 parser.add_argument(
     "-f", "--fpga",
-    help="Name of fpga used for experiment"
+    help="Name of fpga used for experiment",
+    required=True
 )
 parser.add_argument(
     "-c", "--commit",
-    help="Latest commit used for experiment"
+    help="Latest commit used for experiment",
+    required=True
 )
 parser.add_argument(
     "-j", "--jtag_sn",
-    help="Serial number of jtag interface that was used to flash fpga"
+    help="Serial number of jtag interface that was used to flash fpga",
+    required=True
 )
 parser.add_argument(
     "-u", "--uart_sn",
-    help="Serial number of uart adapter that was used to read bram"
+    help="Serial number of uart adapter that was used to read bram",
+    required=True
 )
 parser.add_argument(
     "-b", "--binary_files",
@@ -180,13 +207,16 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    date = str(datetime.datetime())
-    with open(f"{args["root_dir"]}_{date}.hdf5", "w") as f:
+    date = str(datetime.datetime.now())
+    meta_data = vars(args)
+    root_path = Path(meta_data["root_dir"])
+    print(f"{root_path}_{date}.hdf5")
+    with h5py.File(f"{root_path}_{date}.hdf5", "w") as f:
         root_group = f.create_group("base")
         
-        meta_data = vars(args)
-        root_path = Path(meta_data["root_dir"])
-        use_binary_files = meta_data["binary_fils"]
+        
+        
+        use_binary_files = meta_data["binary_files"]
         meta_data.pop("root_dir")
         meta_data.pop("binary_files")
 
