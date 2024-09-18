@@ -41,6 +41,7 @@ class BramBlock(dataclass):
     name: str
     read_sessions: Dict[str, ReadSession]
 
+    @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "BramBlock":
         read_sessions = {
             key: ReadSession.from_hdf5(hdf5_group[key])
@@ -57,6 +58,7 @@ class PBlock(dataclass):
     name: str
     bram_blocks: Dict[str, BramBlock]
 
+    @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "PBlock":
         bram_blocks = {
             key: BramBlock.from_hdf5(hdf5_group[key])
@@ -73,27 +75,34 @@ class Board(dataclass):
     uart_adapter_sn: str
     jtag_sn: str
     date: str
-    pblocks: List[PBlock]
+    pblocks: Dict[str, PBlock]
 
+    @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "Board":
         kw_args = {
             attr_name: hdf5_group.attrs[attr_name]
             for attr_name in ["name", "fpga", "uart_adapter_sn", "jtag_sn", "date"]
         }
 
-        pblocks = [
-            PBlock.from_hdf5(hdf5_group[key]) for key in hdf5_group if "pblock" in key
-        ]
+        pblocks = {
+            key: PBlock.from_hdf5(hdf5_group[key]) 
+            for key in hdf5_group 
+            if "pblock" in key
+        }
         kw_args["pblocks"] = pblocks
 
         return cls(**kw_args)
 
 
 class Experiment(dataclass):
-    boards: List[Board]
+    boards: Dict[str, Board]
     commit: str
 
+    @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, commit: str) -> "Experiment":
-        boards = [Board.from_hdf5(board) for board in hdf5_group["boards"]]
+        boards = {
+            board: Board.from_hdf5(board) 
+            for board in hdf5_group["boards"]
+        }
 
         return cls(boards, commit)
