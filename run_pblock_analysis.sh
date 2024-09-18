@@ -55,6 +55,7 @@ function flash_bitstreams(){
     wait_for_tmux_vivado
     tmux send-keys "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
+    echo "waiting for ${4:-0}s"
     sleep "${4:-0}"s
     tmux send-keys "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado

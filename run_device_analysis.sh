@@ -19,11 +19,11 @@ function write_board_meta_data_json(){
         touch "${board_meta_data_path}"
         {
             printf "{\n"
-            printf "\tboard_name:%s,\n" "${2}"
-            printf "\tfpga:%s,\n" "${3}" 
-            printf "\tuart_sn:%s,\n" "${4}" 
-            printf "\tprogramming_interface:%s,\n" "${5}"
-            printf "\tdate:%s\n" "$(date)"
+            printf "\t\"board_name\":\"%s\",\n" "${2}"
+            printf "\t\"fpga\":\"%s\",\n" "${3}" 
+            printf "\t\"uart_sn\":\"%s\",\n" "${4}" 
+            printf "\t\"programming_interface\":\"%s\",\n" "${5}"
+            printf "\t\"date\":\"%s\"\n" "$(date +"%F-%T")"
             printf "}"
         } >> "${board_meta_data_path}"
     fi
@@ -46,7 +46,7 @@ function write_experiment_meta_data_json(){
         touch "${experiment_meta_data_path}"
         {
             printf "{\n"
-            printf "\tcommit:%s\n" "$(git rev-parse HEAD)"
+            printf "\t\"commit\":\"%s\"\n" "$(git rev-parse HEAD)"
             printf "}"
         } >> "${experiment_meta_data_path}"
     fi
@@ -88,12 +88,13 @@ do
     write_experiment_meta_data_json "${output_path}"
 
     # Create directory for board (if not available)
-    if [ ! -d "${output_path}/boards/${board}" ]; then
-        mkdir -p "${output_path}/boards/${board}"
+    if [ ! -d "${output_path}/boards/${board_name}" ]; then
+        mkdir -p "${output_path}/boards/${board_name}"
     fi
     # Create meta data for board
-    write_board_meta_data_json "${output_path}/${board}"
-    source run_bram_analysis.sh "${vivado_path}" "${vivado_project_path}" \
+    write_board_meta_data_json "${output_path}/boards/${board_name}" "${board_name}" "${fpga}" "${uart_sn}" "${programming_interface}"
+    source run_pblock_analysis.sh "${vivado_path}" "${vivado_project_path}" \
     "${pblock}" "${bram_row_x_position}" "${bram36_min_y_position}" "${bram36_max_y_position}" \
-    "${reads}" "${output_path}/boards/${board}" "${uart_sn}" "${programming_interface}"
+    "${reads}" "${output_path}/boards/${board_name}" "${uart_sn}" "${programming_interface}" \
+    "${use_previous_value_ff}" "${wait_time}"
 done
