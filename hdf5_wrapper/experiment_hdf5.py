@@ -42,14 +42,13 @@ class BramBlock(dataclass):
     read_sessions: Dict[str, ReadSession]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "BramBlock":
+    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, name: str) -> "BramBlock":
         read_sessions = {
             key: ReadSession.from_hdf5(hdf5_group[key])
             for key in hdf5_group
             # Skip bs directory
             if key != "bs"
         }
-        name = hdf5_group.attrs["name"]
 
         return cls(name, read_sessions)
 
@@ -59,21 +58,20 @@ class PBlock(dataclass):
     bram_blocks: Dict[str, BramBlock]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "PBlock":
+    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, name: str) -> "PBlock":
         bram_blocks = {
-            key: BramBlock.from_hdf5(hdf5_group[key])
+            key: BramBlock.from_hdf5(hdf5_group[key], key)
             for key in hdf5_group
             if "RAMB36" in key
         }
-        name = hdf5_group.attrs["name"]
         return cls(name, bram_blocks)
 
 
 class Board(dataclass):
-    name: str
+    board_name: str
     fpga: str
-    uart_adapter_sn: str
-    jtag_sn: str
+    uart_sn: str
+    programming_interface_sn: str
     date: str
     pblocks: Dict[str, PBlock]
 
@@ -81,11 +79,11 @@ class Board(dataclass):
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "Board":
         kw_args = {
             attr_name: hdf5_group.attrs[attr_name]
-            for attr_name in ["name", "fpga", "uart_adapter_sn", "jtag_sn", "date"]
+            for attr_name in ["board_name", "fpga", "uart_sn", "programming_interface", "date"]
         }
 
         pblocks = {
-            key: PBlock.from_hdf5(hdf5_group[key]) 
+            key: PBlock.from_hdf5(hdf5_group[key], key) 
             for key in hdf5_group 
             if "pblock" in key
         }
