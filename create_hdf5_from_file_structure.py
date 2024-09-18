@@ -38,7 +38,7 @@ def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group
 
         parent.create_dataset("temperature" , (len(values),), dtype="f", data=values)
 
-def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str, binary: bool = False) -> None:
+def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str) -> None:
     '''
     Adds bram reads as a dataset to group
 
@@ -46,7 +46,6 @@ def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str
         path: Path to directory that contains multiple bram reads
         parent: Parent group of dataset
         name: Name of the dataset (should be either "data" or "parity")
-        binary: Is read saved in binary or ASCII?
     '''
     # Sort files numerically ascending: [0, 1, 2, ..., 10, ...]
     # This is done to avoid: [0, 1, 10, 100, 1000, 2, 20,...] 
@@ -60,7 +59,7 @@ def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str
 
     read_data = []
     for file in files_sorted_by_index:
-        with open(file, mode=("rb" if binary else "r")) as f:
+        with open(file, mode="rb") as f:
             read_data.append(f.read())
     seq_length =  len(read_data[0])
     
@@ -69,7 +68,7 @@ def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str
 
     parent.create_dataset(dataset_name, (len(read_data),), dtype=h5py.string_dtype(length=seq_length), data=read_data)
 
-def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str, binary: bool = False) -> None:
+def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str) -> None:
     '''
     Adds multiple datasets based on content in "previous_value_00" or "previous_value_ff" dir
 
@@ -77,20 +76,19 @@ def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name:
         path: Path to directory that contains dirs parity and data
         parent: Parent group of dataset
         name: Name of the group (should be either "previous_value_00" or "previous_value_ff")
-        binary: Is read saved in binary or ASCII?
     '''
     bram_data_group = parent.create_group(group_name)
 
     # Add parity dataset if available
     parity_path = Path(path, "parity_reads") 
     if parity_path.exists() and parity_path.is_dir():
-        add_bram_dataset(parity_path, bram_data_group, "parity_reads", binary)
+        add_bram_dataset(parity_path, bram_data_group, "parity_reads")
 
 
     # Add data dataset if available
     data_path = Path(path, "data_reads") 
     if data_path.exists() and data_path.is_dir():
-        add_bram_dataset(data_path, bram_data_group, "data_reads", binary)
+        add_bram_dataset(data_path, bram_data_group, "data_reads")
 
 
     # Add temperature if available
@@ -128,7 +126,7 @@ def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
                     bitstream_group.attrs["bramless_partial"] = np.void(f.read())
     
 
-def add_bram_group(path: Path, parent: h5py._hl.group.Group, binary: bool = False) -> None:
+def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
     '''
     Adds measurement Data from single BRAM experiment as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
@@ -137,7 +135,6 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group, binary: bool = Fals
     Parameters:
         path: Path to BRAM measurements in (Linux)filesystem
         parent: Parent group of new group
-        binary: True if measurements were done in binary
     '''
 
     bram_name = path.parts[-1]
@@ -151,13 +148,13 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group, binary: bool = Fals
     
     for expected_path in expected_paths:
         if expected_path.exists() and expected_path.is_dir():
-            add_bram_dataset_group(expected_path, bram_group, expected_path.parts[-1], binary)
+            add_bram_dataset_group(expected_path, bram_group, expected_path.parts[-1])
     
     bs_path = Path(path, "bs")
     if bs_path.exists() and bs_path.is_dir():
         add_bitstream_group(bs_path, bram_group)
 
-def add_pblock_group(path: Path, parent: h5py._hl.group.Group, binary: bool = False) -> None:
+def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
     '''
     Adds all bram data directories from a given pblock directory
     '''
@@ -171,7 +168,9 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group, binary: bool = Fa
     ]
 
     for bram_dir in bram_dirs:
-        add_bram_group(bram_dir, pblock_group, binary)
+        add_bram_group(bram_dir, pblock_group)
+
+def add_board_group(path: Path, parent: h5py._hl.group.Group)
 
 parser = argparse.ArgumentParser("Script converts read bram data structured in directories, to hdf5")
 parser.add_argument(
@@ -199,11 +198,6 @@ parser.add_argument(
     help="Serial number of uart adapter that was used to read bram",
     required=True
 )
-parser.add_argument(
-    "-b", "--binary_files",
-    help="Read data was saved in binary files.",
-    action="store_true"
-)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -215,10 +209,7 @@ if __name__ == "__main__":
         root_group = f.create_group("base")
         
         
-        
-        use_binary_files = meta_data["binary_files"]
         meta_data.pop("root_dir")
-        meta_data.pop("binary_files")
 
         add_meta_data(root_group, meta_data)
 
@@ -229,5 +220,5 @@ if __name__ == "__main__":
         ]
 
         for pblock_dir in pblock_dirs:
-            add_pblock_group(pblock_dir, root_group, use_binary_files)
+            add_pblock_group(pblock_dir, root_group)
         
