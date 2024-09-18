@@ -1,6 +1,7 @@
 import h5py
 from pathlib import Path
 from typing import Dict
+import json
 import datetime
 import argparse
 import numpy as np
@@ -18,6 +19,14 @@ def add_meta_data(parent: h5py._hl.group.Group, meta_data: Dict[str, str]) -> No
     for key, value in meta_data.items():
         parent.attrs[key] = value
 
+def add_meta_data_from_json(parent: h5py._hl.group.Group, json_path: Path) -> None:
+    '''
+    Loads meta data from a json file
+    Saves meta data as attributes of parent group
+    '''
+    with open(json_path, mode="r") as f:
+        json_dict = json.load(f)
+        add_meta_data(parent, json_dict)
 
 def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group) -> None:
     '''
@@ -170,32 +179,44 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
     for bram_dir in bram_dirs:
         add_bram_group(bram_dir, pblock_group)
 
-def add_board_group(path: Path, parent: h5py._hl.group.Group)
+def add_single_board_group(path: Path, parent: h5py._hl.group.Group) -> None:
+    '''
+    Adds content of a board directory
+    '''
+    board_group = parent.create_group(path.parts[-1])
+
+    # Add meta data from expected json file
+    meta_data_json_path = Path(path, "meta_data.json")
+    if meta_data_json_path.exists() and meta_data_json_path.is_file():
+        add_meta_data_from_json(board_group, meta_data_json_path)
+
+    # Iterate through all pblocks in given base directory
+    pblock_dirs = [
+        sub_path for sub_path in path.iterdir()
+        if sub_path.is_dir() and "pblock" in sub_path.parts[-1]
+    ]
+
+    for pblock_dir in pblock_dirs:
+        add_pblock_group(pblock_dir, board_group)
+
+def add_boards_group(path: Path, parent: h5py._hl.group.Group) -> None:
+    '''
+    Adds all board directories from a given boards directory
+    '''
+    boards_group = parent.create_group("boards")
+
+    board_dirs = [
+        sub_path for sub_path in path.iterdir()
+        if sub_path.is_dir()
+    ]
+
+    for board_dir in board_dirs:
+        add_single_board_group(board_dir, boards_group)
 
 parser = argparse.ArgumentParser("Script converts read bram data structured in directories, to hdf5")
 parser.add_argument(
     "-r", "--root_dir",
     help="Base directory of read data",
-    required=True
-)
-parser.add_argument(
-    "-f", "--fpga",
-    help="Name of fpga used for experiment",
-    required=True
-)
-parser.add_argument(
-    "-c", "--commit",
-    help="Latest commit used for experiment",
-    required=True
-)
-parser.add_argument(
-    "-j", "--jtag_sn",
-    help="Serial number of jtag interface that was used to flash fpga",
-    required=True
-)
-parser.add_argument(
-    "-u", "--uart_sn",
-    help="Serial number of uart adapter that was used to read bram",
     required=True
 )
 
@@ -208,17 +229,8 @@ if __name__ == "__main__":
     with h5py.File(f"{root_path}_{date}.hdf5", "w") as f:
         root_group = f.create_group("base")
         
-        
         meta_data.pop("root_dir")
 
         add_meta_data(root_group, meta_data)
 
-        # Iterate through all pblocks in given base directory
-        pblock_dirs = [
-            sub_path for sub_path in root_path.iterdir()
-            if sub_path.is_dir() and "pblock" in sub_path.parts[-1]
-        ]
-
-        for pblock_dir in pblock_dirs:
-            add_pblock_group(pblock_dir, root_group)
         
