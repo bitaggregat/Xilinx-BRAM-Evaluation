@@ -223,14 +223,13 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
     date = str(datetime.datetime.now())
-    meta_data = vars(args)
-    root_path = Path(meta_data["root_dir"])
+    arg_dict = vars(args)
+    root_path = Path(arg_dict["root_dir"])
     print(f"{root_path}_{date}.hdf5")
     with h5py.File(f"{root_path}_{date}.hdf5", "w") as f:
-        root_group = f.create_group("base")
-        
-        meta_data.pop("root_dir")
+        root_group = f
 
-        add_meta_data(root_group, meta_data)
+        add_meta_data_from_json(root_group, Path(root_path, "meta_data.json"))
+        add_boards_group(Path(root_path, "boards"), root_group)
 
         
