@@ -117,5 +117,5 @@ build/*
 !copenFPGALoader/build/copenFPGALoader.so
 !reading/switches_and_leds.jpg
 #########
-*.hdf5
+!*.hdf5
 #########
