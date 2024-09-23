@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Tuple, Dict
 from pathlib import Path
 from scipy.stats import chi2_contingency
 import argparse
@@ -84,7 +84,7 @@ def chi2_result_list(read_sessions: Dict[str, ReadSession]) -> Tuple[list, list]
                     new_one_count_list.append(one_count_list[idx])
             zero_count_list = new_zero_count_list
             one_count_list = new_one_count_list
-            
+
             # len([data.pvalue for data in data_read_chi_square_results if data.pvalue <= 0.1])/len([data.pvalue for data in data_read_chi_square_results])
             temporary_contingency_table = np.array([zero_count_list, one_count_list])
             chi2_result = chi2_contingency(temporary_contingency_table)
@@ -92,21 +92,58 @@ def chi2_result_list(read_sessions: Dict[str, ReadSession]) -> Tuple[list, list]
 
     return data_read_chi_square_results, parity_read_chi_square_results
 
+def chi2_pvalue_percentage_pass(alpha: float, chi2_results: list) -> float:
+    return len(
+        [
+            data.pvalue for data in chi2_results
+            if data.pvalue <= alpha
+        ])/len([
+            data.pvalue for data in chi2_results
+            ]
+            )
+
+def chi2_result_to_hdf5(outpath: Path, data_chi2_results: list, parity_chi2_results: list) -> None:
+    with h5py.File(outpath, "w") as f:
+        parity_group = f.create_group("parity_bits")
+        parity_group.create_dataset(
+            "parity_pvalues",
+            (len(parity_chi2_results,)),
+            dtype="f",
+            data=[result.pvalue for result in parity_chi2_results]
+        )
+        parity_group.attrs["percentage_of_pvalues_passing_alpha_0.05"] = chi2_pvalue_percentage_pass(0.05, parity_chi2_results)
+        parity_group.attrs["percentage_of_pvalues_passing_alpha_0.1"] = chi2_pvalue_percentage_pass(0.1, parity_chi2_results)
+
+        data_group = f.create_group("data_bits")
+        data_group.create_dataset(
+            "data_pvalues", 
+            (len(data_chi2_results,)),
+            dtype="f", 
+            data=[result.pvalue for result in data_chi2_results]
+        )
+        data_group.attrs["percentage_of_pvalues_passing_alpha_0.05"] = chi2_pvalue_percentage_pass(0.05, data_chi2_results)
+        data_group.attrs["percentage_of_pvalues_passing_alpha_0.1"] = chi2_pvalue_percentage_pass(0.1, data_chi2_results)
+
 parser = argparse.ArgumentParser(
     "Script that takes BRAM experiment hdf5 file, unpacks the latter and does a chi squared test over the data\n"
     "The goal is to prove that certain variables do not influence bitflips in the bram"
 )
 parser.add_argument(
-    "--hdf5",
+    "--read_hdf5",
     required=True,
-    help="Path to hdf5 file"
+    help="Path to hdf5 file containing bram reads"
+)
+parser.add_argument(
+    "--out_hdf5",
+    required=True,
+    help="Path where result hdf5 shall be written"
 )
 
 def main():
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    experiment = unpack_from_hdf5(arg_dict["hdf5"])
+    experiment = unpack_from_hdf5(arg_dict["read_hdf5"])
     bram_block = list(
         list(
             list(
@@ -115,10 +152,9 @@ def main():
             .pblocks.values()
         )[0]
         .bram_blocks.values()
-    )[0]
-    # We just assume that the experiment was only performed on a single bram for this script
+    )[0] # We just assume that the experiment was only performed on a single bram for this script
     data_chi2_results, parity_chi2_results = chi2_result_list(bram_block.read_sessions)
-    pass
+    chi2_result_to_hdf5(arg_dict["out_hdf5"], data_chi2_results, parity_chi2_results)
 
 if __name__ == "__main__":
     main()
