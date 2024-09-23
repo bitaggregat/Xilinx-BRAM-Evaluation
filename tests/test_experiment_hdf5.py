@@ -7,7 +7,7 @@ class TestExperiment(unittest.TestCase):
     '''
     Light sample test on Experiment hdf5 classes.
     '''
-    test_hdf5_file_path = Path("test_data", "test.hdf5")
+    test_hdf5_file_path = Path("tests", "test_data", "test.hdf5")
 
     def test_init(self):
 
@@ -43,8 +43,12 @@ class TestExperiment(unittest.TestCase):
 
             for read in bram_block.read_sessions["previous_value_00"].data_reads:
                 self.assertEqual(len(read.raw_read), 4096)
-                self.assertEqual(len(read.bits, 4096 * 8))
+                self.assertEqual(len(read.bits), 4096)
+                for byte in read.bits:
+                    self.assertEqual(len(byte), 8)
             
             for read in bram_block.read_sessions["previous_value_ff"].parity_reads:
                 self.assertEqual(len(read.raw_read), 512)
-                self.assertEqual(len(read.bits), 4096)
+                self.assertEqual(len(read.bits), 512)
+                for byte in read.bits:
+                    self.assertEqual(len(byte), 8)
