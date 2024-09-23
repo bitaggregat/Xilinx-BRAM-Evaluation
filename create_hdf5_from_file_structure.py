@@ -75,7 +75,7 @@ def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str
     # Quality control
     assert all([len(read) == seq_length for read in read_data])
 
-    parent.create_dataset(dataset_name, (len(read_data),), dtype=h5py.string_dtype(length=seq_length), data=read_data)
+    parent.create_dataset(dataset_name, (len(read_data),), dtype=np.void(read_data).dtype, data=np.void(read_data))
 
 def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str) -> None:
     '''

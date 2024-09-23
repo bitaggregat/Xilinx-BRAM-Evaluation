@@ -7,8 +7,8 @@ import h5py
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-
-class Read(dataclass):
+@dataclass
+class Read:
     raw_read: bytes
     bits: np.array = field(init=False)
 
@@ -16,8 +16,8 @@ class Read(dataclass):
         uint8_read = np.frombuffer(self.raw_read, dtype=np.uint8)
         self.bits = np.unpackbits(uint8_read).reshape(len(self.raw_read), 8)
 
-
-class ReadSession(dataclass):
+@dataclass
+class ReadSession:
     data_reads: List[Read]
     parity_reads: List[Read]
     temperatures: List[float]
@@ -25,17 +25,17 @@ class ReadSession(dataclass):
     @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "ReadSession":
         data_read_dataset = hdf5_group["data_reads"]
-        data_reads = [Read(read) for read in data_read_dataset]
+        data_reads = [Read(bytes(read)) for read in data_read_dataset]
 
         parity_read_dataset = hdf5_group["parity_reads"]
-        parity_reads = [Read(read) for read in parity_read_dataset]
+        parity_reads = [Read(bytes(read)) for read in parity_read_dataset]
 
         temperatures = [temperature for temperature in hdf5_group["temperature"]]
 
         return cls(data_reads, parity_reads, temperatures)
 
-
-class BramBlock(dataclass):
+@dataclass
+class BramBlock:
     # Currently not used because it is not needed and only wastes ram
     # bitstreams: bytes
     name: str
@@ -47,13 +47,13 @@ class BramBlock(dataclass):
             key: ReadSession.from_hdf5(hdf5_group[key])
             for key in hdf5_group
             # Skip bs directory
-            if key != "bs"
+            if key != "bitstreams"
         }
 
         return cls(name, read_sessions)
 
-
-class PBlock(dataclass):
+@dataclass
+class PBlock:
     name: str
     bram_blocks: Dict[str, BramBlock]
 
@@ -66,12 +66,12 @@ class PBlock(dataclass):
         }
         return cls(name, bram_blocks)
 
-
-class Board(dataclass):
+@dataclass
+class Board:
     board_name: str
     fpga: str
     uart_sn: str
-    programming_interface_sn: str
+    programming_interface: str
     date: str
     pblocks: Dict[str, PBlock]
 
@@ -91,15 +91,15 @@ class Board(dataclass):
 
         return cls(**kw_args)
 
-
-class Experiment(dataclass):
+@dataclass
+class Experiment:
     boards: Dict[str, Board]
     commit: str
 
     @classmethod
     def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, commit: str) -> "Experiment":
         boards = {
-            board: Board.from_hdf5(board) 
+            board: Board.from_hdf5(hdf5_group["boards"][board]) 
             for board in hdf5_group["boards"]
         }
 
