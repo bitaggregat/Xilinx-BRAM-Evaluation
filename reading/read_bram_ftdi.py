@@ -168,12 +168,12 @@ if __name__ == "__main__":
             with open(parity_path, mode="wb") as f:
                 f.write(bytes.fromhex(parity))
                 
-        print(f"Length of data {len(data)}")
-        print("Data bytes evaluation:\n")
-        print(evaluate_readout(data.hex(), args["previous_value"]))
-        print(f"{len(evaluate_readout(data.hex(), args['previous_value']))} bytes have flips")
-        print("Parity bytes evaluation:\n")
-        print(evaluate_readout(parity, args["previous_value"]))
+        #print(f"Length of data {len(data)}")
+        #print("Data bytes evaluation:\n")
+        #print(evaluate_readout(data.hex(), args["previous_value"]))
+        #print(f"{len(evaluate_readout(data.hex(), args['previous_value']))} bytes have flips")
+        #print("Parity bytes evaluation:\n")
+        #print(evaluate_readout(parity, args["previous_value"]))
     else:
         print(
             "No Serial Number specified. Call with '-s' to see possible serial numbers."
