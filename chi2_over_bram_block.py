@@ -107,7 +107,7 @@ def chi2_pvalue_percentage_pass(alpha: float, chi2_results: list) -> float:
     return len(
         [
             data.pvalue for data in chi2_results
-            if data.pvalue <= alpha
+            if data.pvalue > alpha
         ])/len([
             data.pvalue for data in chi2_results
             ]
