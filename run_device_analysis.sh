@@ -96,5 +96,5 @@ do
     source run_pblock_analysis.sh "${vivado_path}" "${vivado_project_path}" \
     "${pblock}" "${bram_row_x_position}" "${bram36_min_y_position}" "${bram36_max_y_position}" \
     "${reads}" "${output_path}/boards/${board_name}" "${uart_sn}" "${programming_interface}" \
-    "${use_previous_value_ff}" "${wait_time}"
+    "${use_previous_value_ff}" "${wait_time}" > "${output_path}/${pblock}_$(date +"%F-%T").log"
 done
