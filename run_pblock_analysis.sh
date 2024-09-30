@@ -152,36 +152,36 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     if [ ! -f "${temperature_file_path}" ]; then
         touch "${temperature_file_path}";
     fi
+    # Create temperature file for "previous_value_ff"
+    if [ -n "${use_previous_value_ff}" ]; then
+        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff"
+        temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_ff/temperature.txt";
+        if [ ! -f "${temperature_file_path}" ]; then
+            touch "${temperature_file_path}";
+        fi
+    fi
 
-    # With previous value 00:
+    
     for read in $(seq 1 "$reads"); do
+        # With previous value 00:
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
         # Readout process
         python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00/${read}";
         
         measure_temperature "${temperature_file_path}";
-    done
 
-    if [ -n "${use_previous_value_ff}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff"
-
-        # Create temperature file for "previous_value_ff"
-        temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_ff/temperature.txt";
-        if [ ! -f "${temperature_file_path}" ]; then
-            touch "${temperature_file_path}";
-        fi
-
-        # With previous value ff:
-        for read in $(seq 1 "$reads"); do
+        if [ -n "${use_previous_value_ff}" ]; then
+            # With previous value ff:
             # BRAM init 
             flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
             # Readout process
             python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff/${read}";
-            
+                
             measure_temperature "${temperature_file_path}";
-        done
-    fi
+        fi
+
+    done
     
     # Save bitstreams for debugging
     if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
