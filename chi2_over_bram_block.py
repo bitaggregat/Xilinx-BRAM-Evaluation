@@ -135,9 +135,9 @@ def add_percentages_to_bit_group(parent: h5py._hl.group.Group, contingency_table
 
         unstable_bits_flip_percent = [percent for percent in percentage_list if percent != 1 and percent != 0]
         # Meta Data
-        parent.attrs[f"{variable_name}_stable_bits_percentage"] = 1 - len(unstable_bits_flip_percent)/len(percentage_list)
-        parent.attrs[f"{variable_name}_unstable_bits_flip_chance_mean"] = sum(unstable_bits_flip_percent)/len(unstable_bits_flip_percent)
-        parent.attrs[f"{variable_name}_unstable_bits_flip_chance_variance"] = np.var(unstable_bits_flip_percent)
+        parent.attrs[f"Percentage of stable bits ({variable_name})"] = 1 - len(unstable_bits_flip_percent)/len(percentage_list)
+        parent.attrs[f"Mean probability for unstable bits to flip to 1 ({variable_name})"] = sum(unstable_bits_flip_percent)/len(unstable_bits_flip_percent)
+        parent.attrs[f"Variance of probability for unstable bits to flip to 1 ({variable_name})"] = np.var(unstable_bits_flip_percent)
     
 
 
@@ -156,8 +156,8 @@ def add_bit_type_group(parent: h5py._hl.group.Group, read_sessions: Dict[str, Re
         data=[result.pvalue for result in bit_chi2_results]
     )
 
-    bit_group.attrs["percentage_of_pvalues_passing_alpha_0.05"] = chi2_pvalue_percentage_pass(0.05, bit_chi2_results)
-    bit_group.attrs["percentage_of_pvalues_passing_alpha_0.1"] = chi2_pvalue_percentage_pass(0.1, bit_chi2_results)
+    bit_group.attrs["Percentage of bits with pvalue > alpha:=0.05"] = chi2_pvalue_percentage_pass(0.05, bit_chi2_results)
+    bit_group.attrs["Percentage of bits with pvalue > alpha:=0.1"] = chi2_pvalue_percentage_pass(0.1, bit_chi2_results)
 
 def chi2_result_to_hdf5(outpath: Path, read_sessions: Dict[str, ReadSession]) -> None:
 
