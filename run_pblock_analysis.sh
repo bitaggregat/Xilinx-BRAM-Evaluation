@@ -137,25 +137,47 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
-        mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}" "${output_path}/${pblock}/${ram_block}/bs";
+        mkdir -p "${output_path}/${pblock}/${ram_block}";
     fi
 
-    # Create bitstreams using predefined tcl script
-    #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
-    "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
+        
+    # Synthethize and save bitstreams if bs dir does not exist
+    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
+        mkdir "${output_path}/${pblock}/${ram_block}/bs"
 
-    # create modified bs:
-    python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
+        # Create bitstreams using predefined tcl script
+        #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
+        "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
+
+        # create modified bs:
+        python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
+
+        cp "$full_bs_with_initial_value_00" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
+        cp "$full_bs_with_initial_value_ff" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
+        cp "$bramless_partial_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
+        cp "$partial_bram_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
+        cp "$modified_bs" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
+        # Remove temporary bitstream
+        rm "${modified_bs}";
+    fi
+    # Set bitstream paths to experiment directory ones
+    full_bs_with_initial_value_00="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
+    full_bs_with_initial_value_ff="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
+    bramless_partial_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
+    partial_bram_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
+    modified_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
+
 
     # Create temperature file for "previous_value_00"
-    temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}/temperature.txt";
+    mkdir "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}"
+    temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/temperature.txt";
     if [ ! -f "${temperature_file_path_00}" ]; then
         touch "${temperature_file_path_00}";
     fi
     # Create temperature file for "previous_value_ff"
     if [ -n "${use_previous_value_ff}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}"
-        temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}/temperature.txt";
+        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}"
+        temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/temperature.txt";
         if [ ! -f "${temperature_file_path_ff}" ]; then
             touch "${temperature_file_path_ff}";
         fi
@@ -165,37 +187,25 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     for read in $(seq 1 "$reads"); do
         # With previous value 00:
         # BRAM init
-        flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
+        flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${modified_bs}" "${wait_time}";
         # Readout process
-        python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}/${read}";
+        python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}";
         
         measure_temperature "${temperature_file_path_00}";
 
         if [ -n "${use_previous_value_ff}" ]; then
             # With previous value ff:
             # BRAM init 
-            flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
+            flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${modified_bs}" "${wait_time}";
             # Readout process
-            python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}/${read}";
+            python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}";
                 
             measure_temperature "${temperature_file_path_ff}";
         fi
 
     done
-    
-    # Save bitstreams for debugging
-    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/bs"
-    fi
-    cp "$full_bs_with_initial_value_00" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
-    cp "$full_bs_with_initial_value_ff" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
-    cp "$bramless_partial_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
-    cp "$partial_bram_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
-    cp "$modified_bs" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bit"
 done
 
+echo $(tmux capture-pane -pt vivado)
 tmux send-keys "source tcl/clean_up_vivado.tcl" C-m
 tmux kill-session -t vivado
-
-# Remove modified bs
-rm "${modified_bs}"
