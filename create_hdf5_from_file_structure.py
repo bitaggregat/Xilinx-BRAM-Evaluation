@@ -150,12 +150,11 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
 
     bram_group = parent.create_group(bram_name)
 
-    expected_paths = [
-        Path(path, "previous_value_ff"),
-        Path(path, "previous_value_00")
+    sub_paths = [
+        p for p in path.iterdir()
+        if p.parts[-1] != "bs"
     ]
-    
-    for expected_path in expected_paths:
+    for expected_path in sub_paths:
         if expected_path.exists() and expected_path.is_dir():
             add_bram_dataset_group(expected_path, bram_group, expected_path.parts[-1])
     
