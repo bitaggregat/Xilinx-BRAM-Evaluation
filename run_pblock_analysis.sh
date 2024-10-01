@@ -137,7 +137,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
-        mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_00" "${output_path}/${pblock}/${ram_block}/bs";
+        mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}" "${output_path}/${pblock}/${ram_block}/bs";
     fi
 
     # Create bitstreams using predefined tcl script
@@ -148,16 +148,16 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
 
     # Create temperature file for "previous_value_00"
-    temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_00/temperature.txt";
-    if [ ! -f "${temperature_file_path}" ]; then
-        touch "${temperature_file_path}";
+    temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}/temperature.txt";
+    if [ ! -f "${temperature_file_path_00}" ]; then
+        touch "${temperature_file_path_00}";
     fi
     # Create temperature file for "previous_value_ff"
     if [ -n "${use_previous_value_ff}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff"
-        temperature_file_path="${output_path}/${pblock}/${ram_block}/previous_value_ff/temperature.txt";
-        if [ ! -f "${temperature_file_path}" ]; then
-            touch "${temperature_file_path}";
+        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}"
+        temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}/temperature.txt";
+        if [ ! -f "${temperature_file_path_ff}" ]; then
+            touch "${temperature_file_path_ff}";
         fi
     fi
 
@@ -167,18 +167,18 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
         # Readout process
-        python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00/${read}";
+        python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_${wait_time}/${read}";
         
-        measure_temperature "${temperature_file_path}";
+        measure_temperature "${temperature_file_path_00}";
 
         if [ -n "${use_previous_value_ff}" ]; then
             # With previous value ff:
             # BRAM init 
             flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${from_root}/${modified_bs}" "${wait_time}";
             # Readout process
-            python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff/${read}";
+            python "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_${wait_time}/${read}";
                 
-            measure_temperature "${temperature_file_path}";
+            measure_temperature "${temperature_file_path_ff}";
         fi
 
     done
