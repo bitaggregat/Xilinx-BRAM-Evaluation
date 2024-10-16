@@ -5,16 +5,26 @@ Contains infrastructure (Boilerplate classes) that makes managing hdf5 experimen
 import numpy as np
 import h5py
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Self
+from scipy.stats import entropy
+from functools import cached_property, reduce
 
 @dataclass
 class Read:
     raw_read: bytes
-    bits: np.array = field(init=False)
+    bits: np.ndarray = field(init=False)
 
     def __post_init__(self):
         uint8_read = np.frombuffer(self.raw_read, dtype=np.uint8)
         self.bits = np.unpackbits(uint8_read).reshape(len(self.raw_read), 8)
+
+    @cached_property
+    def bits_flatted(self) -> np.ndarray:
+        return self.bits.flatten()
+    
+    @cached_property
+    def entropy(self) -> float:
+        return entropy(self.bits_flatted, base=2)
 
 @dataclass
 class ReadSession:
@@ -23,7 +33,7 @@ class ReadSession:
     temperatures: List[float]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "ReadSession":
+    def from_hdf5(cls, hdf5_group: h5py.Group) -> "ReadSession":
         data_read_dataset = hdf5_group["data_reads"]
         data_reads = [Read(bytes(read)) for read in data_read_dataset]
 
@@ -33,6 +43,15 @@ class ReadSession:
         temperatures = [temperature for temperature in hdf5_group["temperature"]]
 
         return cls(data_reads, parity_reads, temperatures)
+    
+    def __add__(self, other: Self) -> Self:
+        return ReadSession(
+            self.data_reads + other.data_reads,
+            self.parity_reads + other.parity_reads,
+            self.temperatures + other.temperatures
+        )
+    
+
 
 @dataclass
 class BramBlock:
@@ -42,7 +61,7 @@ class BramBlock:
     read_sessions: Dict[str, ReadSession]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, name: str) -> "BramBlock":
+    def from_hdf5(cls, hdf5_group: h5py.Group, name: str) -> "BramBlock":
         read_sessions = {
             key: ReadSession.from_hdf5(hdf5_group[key])
             for key in hdf5_group
@@ -58,17 +77,27 @@ class PBlock:
     bram_blocks: Dict[str, BramBlock]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, name: str) -> "PBlock":
+    def from_hdf5(cls, hdf5_group: h5py.Group, name: str) -> "PBlock":
         bram_blocks = {
             key: BramBlock.from_hdf5(hdf5_group[key], key)
             for key in hdf5_group
             if "RAMB36" in key
         }
         return cls(name, bram_blocks)
+    
+    def flatten(self) -> Dict[str, ReadSession]:
+        "Merges read sessions of all brams for each keyword"
+        return {
+            read_session_key: reduce(lambda x, y: x+y, [
+                bram_block.read_sessions[read_session_key]
+                for bram_block in self.bram_blocks.values()
+            ])
+            for read_session_key in self.bram_blocks.values()[0].read_sessions
+        }
 
 @dataclass
 class Board:
-    board_name: str
+    name: str
     fpga: str
     uart_sn: str
     programming_interface: str
@@ -76,7 +105,7 @@ class Board:
     pblocks: Dict[str, PBlock]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group) -> "Board":
+    def from_hdf5(cls, hdf5_group: h5py.Group) -> "Board":
         kw_args = {
             attr_name: hdf5_group.attrs[attr_name]
             for attr_name in ["board_name", "fpga", "uart_sn", "programming_interface", "date"]
@@ -90,6 +119,16 @@ class Board:
         kw_args["pblocks"] = pblocks
 
         return cls(**kw_args)
+    
+    def flatten(self) -> Dict[str, ReadSession]:
+        "Merges read sessions of all brams of all pblocks for each keyword"
+        return {
+            read_session_key: reduce(lambda x, y: x+y, [
+                pblock.flatte()
+                for pblock in self.pblocks.values()
+            ])
+            for read_session_key in self.pblocks.values()[0].flatten()
+        }
 
 @dataclass
 class Experiment:
@@ -97,7 +136,7 @@ class Experiment:
     commit: str
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py._hl.group.Group, commit: str) -> "Experiment":
+    def from_hdf5(cls, hdf5_group: h5py.Group, commit: str) -> "Experiment":
         boards = {
             board: Board.from_hdf5(hdf5_group["boards"][board]) 
             for board in hdf5_group["boards"]
