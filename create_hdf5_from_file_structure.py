@@ -12,14 +12,14 @@ import numpy as np
 # We therefore do not assume that all subconstituents of 
 #   a BRAM experiment are always available
 
-def add_meta_data(parent: h5py._hl.group.Group, meta_data: Dict[str, str]) -> None:
+def add_meta_data(parent: h5py.Group, meta_data: Dict[str, str]) -> None:
     '''
     Adds relevant meta data to hdf5 groupe
     '''
     for key, value in meta_data.items():
         parent.attrs[key] = value
 
-def add_meta_data_from_json(parent: h5py._hl.group.Group, json_path: Path) -> None:
+def add_meta_data_from_json(parent: h5py.Group, json_path: Path) -> None:
     '''
     Loads meta data from a json file
     Saves meta data as attributes of parent group
@@ -28,7 +28,7 @@ def add_meta_data_from_json(parent: h5py._hl.group.Group, json_path: Path) -> No
         json_dict = json.load(f)
         add_meta_data(parent, json_dict)
 
-def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group) -> None:
+def add_temperature_dataset(temperature_file: Path, parent: h5py.Group) -> None:
     '''
     Adds temperature data set to <bram_name>/<0-to-f or f-to-0> group
 
@@ -47,7 +47,7 @@ def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group
 
         parent.create_dataset("temperature" , (len(values),), dtype="f", data=values)
 
-def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str) -> None:
+def add_bram_dataset(path: Path, parent: h5py.Group, dataset_name: str) -> None:
     '''
     Adds bram reads as a dataset to group
 
@@ -77,7 +77,7 @@ def add_bram_dataset(path: Path, parent: h5py._hl.group.Group, dataset_name: str
 
     parent.create_dataset(dataset_name, (len(read_data),), dtype=np.void(read_data).dtype, data=np.void(read_data))
 
-def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name: str) -> None:
+def add_bram_dataset_group(path: Path, parent: h5py.Group, group_name: str) -> None:
     '''
     Adds multiple datasets based on content in "previous_value_00" or "previous_value_ff" dir
 
@@ -106,7 +106,7 @@ def add_bram_dataset_group(path: Path, parent: h5py._hl.group.Group, group_name:
         add_temperature_dataset(temperature_path, bram_data_group)
 
 
-def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
 
     bs_files = [
         file_path for file_path in path.iterdir()
@@ -135,7 +135,7 @@ def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
                     bitstream_group.attrs["bramless_partial"] = np.void(f.read())
     
 
-def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_bram_group(path: Path, parent: h5py.Group) -> None:
     '''
     Adds measurement Data from single BRAM experiment as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
@@ -162,7 +162,7 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
     if bs_path.exists() and bs_path.is_dir():
         add_bitstream_group(bs_path, bram_group)
 
-def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_pblock_group(path: Path, parent: h5py.Group) -> None:
     '''
     Adds all bram data directories from a given pblock directory
     '''
@@ -178,7 +178,7 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
     for bram_dir in bram_dirs:
         add_bram_group(bram_dir, pblock_group)
 
-def add_single_board_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_single_board_group(path: Path, parent: h5py.Group) -> None:
     '''
     Adds content of a board directory
     '''
@@ -198,7 +198,7 @@ def add_single_board_group(path: Path, parent: h5py._hl.group.Group) -> None:
     for pblock_dir in pblock_dirs:
         add_pblock_group(pblock_dir, board_group)
 
-def add_boards_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_boards_group(path: Path, parent: h5py.Group) -> None:
     '''
     Adds all board directories from a given boards directory
     '''
