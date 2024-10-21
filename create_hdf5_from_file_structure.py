@@ -212,6 +212,19 @@ def add_boards_group(path: Path, parent: h5py.Group) -> None:
     for board_dir in board_dirs:
         add_single_board_group(board_dir, boards_group)
 
+def derivate_read_session_names(hdf5_file: h5py.Group) -> None:
+    """
+    Parameters:
+        hdf5_file: File AFTER experiment data has been written to it 
+                   (after add_boards_group has already been called)
+    """
+    read_session_names = [ 
+        read_session for read_session in 
+        list(list(list(hdf5_file["boards"].values())[0].values())[0].values())[0].keys()
+        if read_session != "bitstreams"
+    ]
+    hdf5_file.create_dataset("read_session_names", (len(read_session_names),), data=read_session_names)
+
 parser = argparse.ArgumentParser("Script converts read bram data structured in directories, to hdf5")
 parser.add_argument(
     "-r", "--root_dir",
@@ -230,5 +243,6 @@ if __name__ == "__main__":
 
         add_meta_data_from_json(root_group, Path(root_path, "meta_data.json"))
         add_boards_group(Path(root_path, "boards"), root_group)
+        derivate_read_session_names(f)
 
         
