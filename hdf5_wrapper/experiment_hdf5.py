@@ -97,7 +97,7 @@ class PBlock:
 
 @dataclass
 class Board:
-    name: str
+    board_name: str
     fpga: str
     uart_sn: str
     programming_interface: str
@@ -134,6 +134,7 @@ class Board:
 class Experiment:
     boards: Dict[str, Board]
     commit: str
+    read_session_names: list[str]
 
     @classmethod
     def from_hdf5(cls, hdf5_group: h5py.Group, commit: str) -> "Experiment":
@@ -141,5 +142,6 @@ class Experiment:
             board: Board.from_hdf5(hdf5_group["boards"][board]) 
             for board in hdf5_group["boards"]
         }
+        read_session_names = [binary_str.decode() for binary_str in hdf5_group["read_session_names"]]
 
-        return cls(boards, commit)
+        return cls(boards, commit, read_session_names)
