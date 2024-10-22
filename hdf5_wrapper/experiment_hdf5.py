@@ -9,7 +9,7 @@ from typing import List, Dict, Self
 from scipy.stats import entropy
 from functools import cached_property, reduce
 
-@dataclass
+@dataclass(frozen=True)
 class Read:
     raw_read: bytes
     bits: np.ndarray = field(init=False)
@@ -27,7 +27,7 @@ class Read:
         value, counts = np.unique(self.bits_flatted, return_counts=True)
         return entropy(counts, base=2)
 
-@dataclass
+@dataclass(frozen=True)
 class ReadSession:
     data_reads: List[Read]
     parity_reads: List[Read]
@@ -54,7 +54,7 @@ class ReadSession:
     
 
 
-@dataclass
+@dataclass(frozen=True)
 class BramBlock:
     # Currently not used because it is not needed and only wastes ram
     # bitstreams: bytes
@@ -72,7 +72,7 @@ class BramBlock:
 
         return cls(name, read_sessions)
 
-@dataclass
+@dataclass(frozen=True)
 class PBlock:
     name: str
     bram_blocks: Dict[str, BramBlock]
@@ -96,7 +96,7 @@ class PBlock:
             for read_session_key in self.bram_blocks.values()[0].read_sessions
         }
 
-@dataclass
+@dataclass(forsen=True)
 class Board:
     board_name: str
     fpga: str
@@ -131,7 +131,7 @@ class Board:
             for read_session_key in self.pblocks.values()[0].flatten()
         }
 
-@dataclass
+@dataclass(frozen=True)
 class Experiment:
     boards: Dict[str, Board]
     commit: str
