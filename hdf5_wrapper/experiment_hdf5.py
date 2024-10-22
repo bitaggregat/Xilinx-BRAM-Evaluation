@@ -24,7 +24,8 @@ class Read:
     
     @cached_property
     def entropy(self) -> float:
-        return entropy(self.bits_flatted, base=2)
+        value, counts = np.unique(self.bits_flatted, return_counts=True)
+        return entropy(counts, base=2)
 
 @dataclass
 class ReadSession:
