@@ -20,11 +20,9 @@ class StatisticMethod:
     }
 
 def entropy_list(reads: list[Read]) -> list[float]:
-    # TODO Test
     return [read.entropy for read in reads]
 
 def intradistance_bootstrap(reads: list[Read]) -> list[float]:
-    # TODO Test
     distance_values = list()
     for _ in range(len(reads)):
         idx1 = random.randrange(0, len(reads))
@@ -34,7 +32,6 @@ def intradistance_bootstrap(reads: list[Read]) -> list[float]:
     return distance_values
 
 def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int) -> list[float]:
-    # TODO Test
     self_choices = [
         choice.bits_flatted for choice in
         random.choices(reads, k=k)

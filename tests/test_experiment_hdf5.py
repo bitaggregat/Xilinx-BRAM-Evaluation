@@ -1,7 +1,8 @@
 import unittest
+import numpy as np
 import h5py
 from pathlib import Path
-from hdf5_wrapper import Experiment
+from hdf5_wrapper import Experiment, Read
 
 class TestExperiment(unittest.TestCase):
     '''
@@ -52,3 +53,72 @@ class TestExperiment(unittest.TestCase):
                 self.assertEqual(len(read.bits), 512)
                 for byte in read.bits:
                     self.assertEqual(len(byte), 8)
+
+class TestRead(unittest.TestCase):
+    reads_homogene_00 = [
+        Read(b'\x00\x00\x00'),
+        Read(b'\x00\x00\x00'),
+    ]
+    reads_homogene_ff = [
+        Read(b'\xff\xff\xff'),
+        Read(b'\xff\xff\xff')
+    ]
+    reads_heterogene = [
+        Read(b'\xff\x00\xff'),
+        Read(b'\x00\xff\x00')
+    ]
+    reads_heterogene_similar = [
+        Read(b'\xff\xff\xff'),
+        Read(b'\xf0\x0f\xf0')
+    ]
+
+    def test_bits_flatted(self) -> None:
+        self.assertEqual(
+            [read.bits_flatted for read in self.reads_homogene_00],
+            [
+                np.array([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ]),
+                np.array([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            ]
+        )
+
+        self.assertEqual(
+            [read.bits_flatted for read in self.reads_heterogene_similar],
+            [
+                np.array([
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1]
+                ]),
+                np.array([
+                    [1, 1, 1, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 0, 0, 0, 0]
+                ])
+            ]
+        )
+
+    def test_entropy(self) -> None:
+        self.assertEqual(
+            [read.entropy for read in self.reads_homogene_00],
+            [0, 0]
+        )
+        self.assertEqual(
+            [read.entropy for read in self.reads_homogene_ff],
+            [0, 0]
+        )
+        self.assertEqual(
+            [read.entropy for read in self.reads_heterogene_similar],
+            [0, 1]
+        )
+        self.assertEqual(
+            [read.entropy for read in self.reads_heterogene],
+            [0.9182958340544894, 0.9182958340544894]
+        )
