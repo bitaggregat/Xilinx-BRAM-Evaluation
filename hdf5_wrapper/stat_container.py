@@ -1,252 +1,322 @@
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from itertools import combinations
-from typing import Any, Callable, Self
+from typing import Any, Callable, Self, Type
 import h5py
-from .experiment_hdf5 import ReadSession, BramBlock, PBlock, Board, Experiment
-from .stats import entropy_list, intradistance_bootstrap, interdistance_bootstrap, StatisticMethod
-from .stat_container_base import StatAggregator, HDF5Convertible
+from .experiment_hdf5 import Read, ReadSession, ExperimentContainer
+from .hdf5_convertible import HDF5Convertible
+from .stats import (
+    MetaStatistic,
+    Statistic,
+    SimpleStatistic,
+    ComparisonStatistic,
+    InterdistanceStatistic,
+    IntradistanceStatistic,
+    EntropyStatistic,
+)
 
-def generate_meta_stats(values: list[float], prefix: str = "") -> dict[str, float]:
-    # TODO TEst
+
+@dataclass
+class MultiReadSessionMetaStatistic(HDF5Convertible):
     """
-    Arguments:
-        prefix: string that is prefix in every key of created dict
+    Gathers MetaStatistic's of different ReadSessions
+    Main objectif:
+    -> encapsulating the unification of MetaStatistic's and their handling in hdf5
     """
-    return {
-        f"{prefix} {method_name}": method(values)
-        for method_name, method in StatisticMethod.statistic_methods.items()
-    }
 
-@dataclass(init=False)
-class ReadSessionStat:
-    # TODO Test
-    description: str
-    generation_func: Callable
-    data_read_stat: Any
-    parity_read_stat: Any
+    data_meta_statistics: dict[str, MetaStatistic]
+    parity_meta_statistics: dict[str, MetaStatistic]
+    _read_session_names: list[str]
+    _hdf5_group_name: str = field(init=False, default="Meta Statistic")
 
-    def __init__(self, description: str, generation_func: Callable, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, k: int = None) -> None:
-        self.description = description
-        self.generation_func = generation_func
-        if read_session is not None:
-            if k is not None:
-                self.data_read_stat = self.generation_func(read_session.data_reads, k)
-                self.parity_read_stat = self.generation_func(read_session.parity_reads, k)
-            else:        
-                self.data_read_stat = self.generation_func(read_session.data_reads)
-                self.parity_read_stat = self.generation_func(read_session.parity_reads)
-        elif data_read_stat is None or parity_read_stat is None:
-            raise Exception("Either read_session or data_read_stat and parity_read_stat have to be not None")
-        else:
-            self.data_read_stat = data_read_stat
-            self.parity_read_stat = parity_read_stat
+    def __post_init__(self) -> None:
+        # Simple check to help securing the produced datas correctness
+        # This may cost some extra time, but it is worth it because correctness is our highest priority
+        if (
+            any(
+                [
+                    read_session_name not in self.data_meta_statistics
+                    for read_session_name in self._read_session_names
+                ]
+            )
+            or any(
+                [
+                    read_session_name not in self.parity_meta_statistics
+                    for read_session_name in self._read_session_names
+                ]
+            )
+            or len(self.parity_meta_statistics) != len(self._read_session_names)
+        ):
+            raise Exception(
+                "Unequal Read Session Names found please inspect via debugger"
+            )
 
-@dataclass(init=False)
-class ReadSessionListStat(ReadSessionStat):
-    # TODO Test
-    data_read_stat: list[float]
-    parity_read_stat: list[float]
-    _meta_stats: dict[str, float] = field(init=False, default_factory=dict, repr=False)
+    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
+        parity_meta_stat_rows = list()
+        data_meta_stat_rows = list()
+        row_header = list()
+        for read_session_name in self._read_session_names:
+            # Add meta_stats to list for overview dataset in super group
+            parity_meta_stat_rows += [
+                self.parity_meta_statistics[read_session_name].stats[statistic_method]
+                for statistic_method in MetaStatistic.statistic_method_names
+            ]
+            data_meta_stat_rows += [
+                self.data_meta_statistics[read_session_name].stats[statistic_method]
+                for statistic_method in MetaStatistic.statistic_method_names
+            ]
+            row_header.append(read_session_name)
 
-    def __init__(self, description: str, generation_func: Callable, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, k: int = None) -> None:
-        super().__init__(description, generation_func, read_session, data_read_stat, parity_read_stat, k)
-        self._meta_stats = dict()
+        parity_meta_ds = parent.create_dataset(
+            "Parity Meta Stats",
+            (len(row_header), len(MetaStatistic.statistic_methods)),
+            dtype="f8",
+            data=parity_meta_stat_rows,
+        )
+        parity_meta_ds.attrs["Column Header"] = MetaStatistic.statistic_method_names
+        parity_meta_ds.attrs["Row Header"] = row_header
+
+        data_meta_ds = parent.create_dataset(
+            "Data Meta Stats",
+            (len(row_header), len(MetaStatistic.statistic_methods)),
+            dtype="f8",
+            data=data_meta_stat_rows,
+        )
+        data_meta_ds.attrs["Column Header"] = MetaStatistic.statistic_method_names
+        data_meta_ds.attrs["Row Header"] = row_header
+
+
+@dataclass
+class MultiReadSessionStatistic(HDF5Convertible):
+    """
+    Gathers Statistics of different ReadSessions but same "Statistic"-type
+    - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00" and "previous_value_ff"
+    """
+
+    statistics: dict[str, Statistic]
+    statistic_type: Type[Statistic]
+    _read_session_names: list[str]
+
+    def __post_init__(self) -> None:
+        if any(
+            [
+                not isinstance(statistic, self.statistic_type)
+                for statistic in self.statistics.values()
+            ]
+        ):
+            raise Exception(f"Statistic's are not all of type: {self.statistic_type}")
+        self._hdf5_group_name = self.statistic_type._hdf5_group_name
 
     @property
-    def meta_stats(self) -> dict[str, float]:
-        return {
-            **self._meta_stats, 
-            **generate_meta_stats(self.data_read_stat, "Data"),
-            **generate_meta_stats(self.parity_read_stat, "Parity")
-        }
+    def meta_stats(self) -> MultiReadSessionMetaStatistic:
+        parity_meta_stats = dict()
+        data_meta_stats = dict()
 
-    def __add__(self, other: Self) -> Self:
-        if self.description != other.description or self.generation_func != other.generation_func:
-            raise Exception(f"Can't add ReadSessionsStats with different generation_func's: {self.generation_func} and {other.generation_func}")
-        
-        return ReadSessionListStat(
-            self.description,
-            self.generation_func,
-            None,
-            self.data_read_stat + other.data_read_stat,
-            self.parity_read_stat + other.parity_read_stat
+        for read_session_name in self._read_session_names:
+            parity_meta_stats[read_session_name] = self.statistics[
+                read_session_name
+            ].meta_stats["Parity"]
+            data_meta_stats[read_session_name] = self.statistics[
+                read_session_name
+            ].meta_stats["Data"]
+
+        return MultiReadSessionMetaStatistic(
+            data_meta_stats, parity_meta_stats, self._read_session_names
         )
-    
-    def __radd__(self, other):
-        """
-        This needs to be defined in order to use sum() on a list of ReadSessionListStat objects
-        """
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
-@dataclass(init=False)
-class BramBlockStat(HDF5Convertible):
-    # TODO Test
-    name: str = field(init=False)
-    intradistance: dict[str, ReadSessionListStat]
-    entropy: dict[str, ReadSessionListStat]
-
-    def __init__(self, bram_block: BramBlock, read_session_names: list[str]) -> None:
-        self._read_session_names = read_session_names
-        self.list_stats = ["intradistance", "entropy"]
-        self.name = bram_block.name
-        self.intradistance = dict()
-        self.entropy = dict()
-        for read_session_name in read_session_names:
-            self.intradistance[read_session_name] = ReadSessionListStat(
-                f"intradistance_{read_session_name}",
-                intradistance_bootstrap,
-                bram_block.read_sessions[read_session_name]
+    @classmethod
+    def from_merge(
+        cls,
+        multi_rs_statistics: list[Self],
+        statistic_type: Type[Statistic],
+        read_session_names: list[str],
+    ) -> Self:
+        if not statistic_type.mergable:
+            raise Exception(f"Can't merge Statistic objects of type: {statistic_type}")
+        statistics = {
+            read_session_name: statistic_type.from_merge(
+                [
+                    multi_rs_statistic.statistics[read_session_name]
+                    for multi_rs_statistic in multi_rs_statistics
+                ]
             )
-            self.entropy[read_session_name] = ReadSessionListStat(
-                f"entropy_{read_session_name}",
-                entropy_list,
-                bram_block.read_sessions[read_session_name]
-            )
+            for read_session_name in read_session_names
+        }
+        return cls(statistics, statistic_type, read_session_names)
 
     def add_to_hdf5_group(self, parent: h5py.Group) -> None:
-        bram_block_group = parent.create_group(self.name)
+        multi_group = parent.create_group(self._hdf5_group_name)
+        for read_session_name in self._read_session_names:
+            read_session_group = multi_group.create_group(read_session_name)
+            self.statistics[read_session_name].add_to_hdf5_group(read_session_group)
+        self.meta_stats.add_to_hdf5_group(multi_group)
 
-        self.add_list_stats_to_hdf5_group(bram_block_group)
 
-@dataclass(init=False)
-class PblockStat(StatAggregator, HDF5Convertible):
-    # TODO Test
-    name: str = field(init=False)
-    bram_block_stats: list[BramBlockStat] = field(init=False)
-    intradistance: dict[str, ReadSessionListStat] = field(init=False)
-    entropy: dict[str, ReadSessionListStat] = field(init=False)
-    bram_interdistance: dict[str, ReadSessionListStat] = field(init=False)
+class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
+    # TODO minimal test
+    """
+    Class that manages reads of multiple read sessions
+    """
 
-    def __init__(self, pblock: PBlock, read_session_names: list[str], k: int) -> None:
-        self._read_session_names = read_session_names
-        self.aggregatable_stats = ["intradistance", "entropy"]
-        self.name = pblock.name
-        self.intradistance = dict()
-        self.entropy = dict()
-        self.bram_interdistance = dict()
-        self.bram_block_stats = [
-            BramBlockStat(bram_block, read_session_names, k)
-            for bram_block in pblock.bram_blocks.values()
-        ]
-        self.substats = self.bram_block_stats
-        self.list_stats = ["intradistance", "entropy", "bram_interdistance"]
-        self.aggregate_substats()
+    name: str
+    _read_session_names: list[str] = None
+    statistics: dict[Type[Statistic], MultiReadSessionStatistic]
+    types_of_statistics: list[
+        Type[Statistic]
+    ]  # Needs to be set by child class statically
 
-        #############################
-        # Create interdistance values
-        bram_combinations_idx = [
-            tuple(combination)
-            for combination in
-            combinations(range(len(self.bram_block_stats)), 2)
-        ]
-        bram_block_list = list(pblock.bram_blocks.values())
-        self.bram_interdistance = dict()
-        for read_session_name in self.read_session_names:
-            self.bram_interdistance[read_session_name] = [
-                ReadSessionListStat(
-                    "bram_interdistance",
-                    interdistance_bootstrap,
-                     data_read_stat=interdistance_bootstrap(
-                         bram_block_list[idx1].data_reads,
-                         bram_block_list[idx2].parity_reads,
-                         k
-                     ),
-                     parity_read_stat=interdistance_bootstrap(
-                         bram_block_list[idx1].data_reads,
-                         bram_block_list[idx2].parity_reads,
-                         k
-                     )
+    def __init__(self, experiment_container: ExperimentContainer) -> None:
+        self._read_session_names = experiment_container.read_session_names
+        self.name = experiment_container.name
+        self.statistics = dict()
+        self.compute_stats(experiment_container)
+
+    def compute_stats(self, experiment_container: ExperimentContainer) -> None:
+        for statistic_type in self.types_of_statistics:
+            if issubclass(statistic_type, SimpleStatistic):
+                statistics_per_read_session = dict()
+                for read_session_name in self._read_session_names:
+                    statistics_per_read_session[read_session_name] = statistic_type(
+                        experiment_container.read_sessions[read_session_name]
+                    )
+                self.statistics[statistic_type] = MultiReadSessionStatistic(
+                    statistics_per_read_session,
+                    statistic_type,
+                    self._read_session_names,
                 )
-                for idx1, idx2 in bram_combinations_idx
-            ]
-        # End of interdistance value creation
-        ####################################
 
-    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
-        pblock_group = parent.create_group(self.name)
+    @property
+    def read_session_names(self) -> list[str]:
+        """
+        All read_session owners need to know the names of their read sessions
+        These names are used as identifiers/dict keys
+        """
+        if self._read_session_names is None:
+            raise Exception("_read_session_names are not set.")
+        else:
+            return self._read_session_names
 
-        self.add_list_stats_to_hdf5_group(pblock_group)
+    def add_to_hdf5_group(self, parent: h5py.Group) -> h5py.Group:
+        multi_stat_group = parent.create_group(self.name)
 
-        # Create bram stats
-        multi_bram_block_group = pblock_group.create_group("bram_blocks")
-        for bram_block_stat in self.bram_block_stats:
-            bram_block_stat.add_to_hdf5_group(multi_bram_block_group)
+        for statistic_type in self.types_of_statistics:
+            if self.statistics[statistic_type]:
+                self.statistics[statistic_type].add_to_hdf5_group(multi_stat_group)
+            else:
+                continue
+
+        return multi_stat_group
 
 
-@dataclass(init=False)
-class BoardStat(StatAggregator, HDF5Convertible):
+class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     # TODO Test
-    board_name: str = field(init=False)
-    pblock_stats: list[PblockStat] = field(init=False)
-    intradistance: dict[str, ReadSessionListStat] = field(init=False)
-    entropy: dict[str, ReadSessionListStat] = field(init=False)
-    bram_interdistance: dict[str, ReadSessionListStat] = field(init=False)
+    """
+    Class that provides aggregation functions for substats
+    """
 
-    def __init__(self, board: Board, read_session_names: list[str], k: int) -> None:
-        self._read_session_names = read_session_names
-        self.aggregatable_stats = ["intradistance", "entropy", "bram_interdistance"]
-        self.board_name = board.board_name
-        self.intradistance = dict()
-        self.entropy = dict()
-        self.bram_interdistance = dict()
-        self.pblock_stats = [
-            PblockStat(pblock, read_session_names, k)
-            for pblock in board.pblocks.values()
+    subowners: list[MultiStatisticOwner] = None
+    subowner_type: Type[MultiStatisticOwner]
+    subowner_identifier: str  # Needs to be set by child class
+
+    def __init__(self, experiment_container: ExperimentContainer) -> None:
+        self._read_session_names = experiment_container.read_session_names
+        self.name = experiment_container.name
+        self.statistics = dict()
+        self.subowners = [
+            self.subowner_type(subcontainer)
+            for subcontainer in experiment_container.subcontainers.values()
         ]
-        self.substats = self.pblock_stats
-        self.list_stats = ["intradistance", "entropy", "bram_interdistance"]
+        self.merge_substats()
+        self.compare_substats(experiment_container)
 
-        self.aggregate_substats()
+    def merge_substats(self) -> None:
+        """
+        Class is expected to have a list of substat objects
+            e.g. PblockStat has list[BramStat]
+        This method merges these substats in order gain knowledge of the stat on a meta lvl
+            - e.g. we know the median entropy of each bram block,
+              -> now we want to know the median entropy of ALL bram blocks combined
+        """
+        if self.subowners is None or not self.subowners:
+            raise Exception(
+                "Cannot merge substats because 'subowners' is empty or None"
+            )
+        else:
+            for statistic_type in self.types_of_statistics:
+                subowner_sample = self.subowners[0]
 
-        # TODO debate whether or not interdistance between pblocks is useful knowledge
+                if (
+                    statistic_type.mergable
+                    and statistic_type in subowner_sample.statistics
+                ):
+                    self.statistics[statistic_type] = dict()
 
-    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
-        board_group = parent.create_group(self.board_name)
+                    substats = [
+                        subowner.statistics[statistic_type]
+                        for subowner in self.subowners
+                    ]
+                    self.statistics[statistic_type] = MultiReadSessionStatistic.from_merge(substats, statistic_type, self.read_session_names)
 
-        self.add_list_stats_to_hdf5_group(board_group)
+    def compare_substats(self, experiment_container: ExperimentContainer) -> None:
+        if self.subowners is None or not self.subowners:
+            raise Exception(
+                "Cannot compare substats because 'subowners' is empty or None"
+            )
+        else:
+            for statistic_type in self.types_of_statistics:
+                if issubclass(statistic_type, ComparisonStatistic):
+                    self.statistics[statistic_type] = dict()
+                    for read_session_name in self.read_session_names:
+                        # Gather read_sessions of same read_session_name for each container
+                        read_sessions_per_container = [
+                            subcontainer.read_sessions[read_session_name]
+                            for subcontainer in experiment_container.subcontainers.values()
+                        ]
+                        if len(read_sessions_per_container) == 1:
+                            print(
+                                f"Couldn't compare data of different instances of {statistic_type} because only one sample was present"
+                            )
+                        else:
+                            self.statistics[statistic_type][read_session_name] = (
+                                statistic_type(read_sessions_per_container)
+                            )
 
-        # Create bram stats
-        multi_pblock_group = board_group.create_group("pblocks")
-        for pblock_stat in self.pblock_stats:
-            pblock_stat.add_to_hdf5_group(multi_pblock_group)
+    def add_to_hdf5_group(self, parent: h5py.Group) -> h5py.Group:
+        multi_stat_group = super().add_to_hdf5_group(parent)
+        subowner_group = multi_stat_group.create_group(self.subowner_identifier)
+        for subowner in self.subowners:
+            subowner.add_to_hdf5_group(subowner_group)
 
 
-@dataclass(init=False)
-class ExperimentStat(StatAggregator, HDF5Convertible):
-    # TODO Test
-    board_stats: list[BoardStat] = field(init=False)
-    intradistance: dict[str, ReadSessionListStat] = field(init=False)
-    entropy: dict[str, ReadSessionListStat] = field(init=False)
-    bram_interdistance: dict[str, ReadSessionListStat] = field(init=False)
+class BramBlockStat(MultiStatisticOwner):
+    types_of_statistics = [IntradistanceStatistic, EntropyStatistic]
 
-    def __init__(self, experiment: Experiment, k: int) -> None:
-        read_session_names = experiment.read_session_names
-        self._read_session_names = read_session_names
-        self.intradistance = dict()
-        self.entropy = dict()
 
-        self.bram_interdistance = dict()
+class PBlockStat(StatAggregator):
+    types_of_statistics = [
+        IntradistanceStatistic,
+        EntropyStatistic,
+        InterdistanceStatistic,
+    ]
+    subowner_type = BramBlockStat
+    subowner_identifier = "BRAM Statistics"
 
-        self.board_stats = [
-            BoardStat(board, read_session_names, k)
-            for board in experiment.boards.values()
-        ]
-        self.substats = self.board_stats
-        self.list_stats = ["intradistance", "entropy", "bram_interdistance"]
 
-        self.aggregatable_stats = ["intradistance", "entropy", "bram_interdistance"]
-        self.aggregate_substats()
+class BoardStat(StatAggregator):
+    types_of_statistics = [
+        IntradistanceStatistic,
+        EntropyStatistic,
+        InterdistanceStatistic,
+    ]
+    subowner_type = PBlockStat
+    subowner_identifier = "PBlock Statistics"
 
-        # TODO debate whether or not interdistance between devices is useful knowledge
 
-    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
-
-        self.add_list_stats_to_hdf5_group(parent)
-
-        # Create bram stats
-        multi_board_group = parent.create_group("boards")
-        for board_stat in self.board_stats:
-            board_stat.add_to_hdf5_group(multi_board_group)
+class ExperimentStat(StatAggregator):
+    types_of_statistics = [
+        IntradistanceStatistic,
+        EntropyStatistic,
+        InterdistanceStatistic,
+    ]
+    subowner_type = BoardStat
+    subowner_identifier = "Board Statistics"

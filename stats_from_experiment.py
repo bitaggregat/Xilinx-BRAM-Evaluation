@@ -9,7 +9,7 @@ import numpy as np
 import h5py
 
 
-from hdf5_wrapper import Experiment, ReadSession, Read, ExperimentStat
+from hdf5_wrapper import Experiment, ExperimentStat
 
 
 def unpack_from_hdf5(path: Path) -> Experiment:
@@ -43,7 +43,7 @@ def main():
     experiment = unpack_from_hdf5(arg_dict["read_hdf5"])
     with h5py.File(arg_dict["out_hdf5"], "w") as hdf5_file:
         # TODO save read_session_names as attributes in experiment hdf5
-        experiment_stats = ExperimentStat(experiment, 1000)
+        experiment_stats = ExperimentStat(experiment)
         experiment_stats.add_to_hdf5_group(hdf5_file)
 
 if __name__ == "__main__":
