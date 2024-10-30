@@ -230,6 +230,7 @@ class IntradistanceStatistic(SimpleStatistic):
     _hdf5_group_name = "Intradistance"
     description="Intradistance of Bootstrap of set of SUV's via relative Hamming Distance"
     stat_func=staticmethod(intradistance_bootstrap)
+    stat_func_kwargs = {"k": 10000}
 
 class EntropyStatistic(SimpleStatistic):
     """
@@ -255,4 +256,5 @@ class InterdistanceStatistic(ComparisonStatistic):
     """
     _hdf5_group_name = "Interdistance"
     description="Interdistance values between Bootstrap of two sets of SUV's"
-    stat_func=staticmethod(intradistance_bootstrap)
+    stat_func=staticmethod(interdistance_bootstrap)
+    stat_func_kwargs = {"k": 100000}
