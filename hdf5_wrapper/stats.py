@@ -49,14 +49,31 @@ class MetaStatistic(HDF5Convertible):
 def entropy_list(reads: list[Read]) -> npt.NDArray[np.float64]:
     return np.fromiter((read.entropy for read in reads), np.float64)
 
-def intradistance_bootstrap(reads: list[Read], k:int = 0) -> npt.NDArray[np.float64]:
-    distance_values = list()
-    for _ in range(len(reads)):
-        idx1 = random.randrange(0, len(reads))
-        while (idx2 := random.randrange(0, len(reads))) == idx1:
-            idx2 = random.randrange(0, len(reads))
-        distance_values.append(hamming(reads[idx1].bits_flattened, reads[idx2].bits_flattened))
-    return np.array(distance_values)
+def intradistance_bootstrap(reads: list[Read], k: int = 10000) -> npt.NDArray[np.float64]:
+    k = int(min(k, (len(reads)**2 - len(reads)/2)))
+
+    return np.fromiter(
+        (
+            hamming(*[
+                read.bits_flattened 
+                for read in
+                tuple(random.choices(reads, k=2))
+            ])
+            for _ in range(k)
+        ),
+        np.float64
+    )
+
+def intradistance(reads: list[Read]) -> npt.NDArray[np.float64]:
+    reads_length = len(reads)
+    return np.fromiter(
+        (
+            hamming(reads[i].bits_flattened, reads[j].bits_flattened)
+            for i in range(len(reads_length))
+            for j in range(i, len(reads_length))
+        ),
+        np.float64
+    )
 
 def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int = 1000) -> npt.NDArray[np.float64]:
     self_choices = [
@@ -67,7 +84,20 @@ def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int =
         choice.bits_flattened for choice in
         random.choices(other_reads, k=k)
     ]
+    
     return np.fromiter(map(hamming, self_choices, other_choices))
+
+
+def interdistance(reads: list[Read], other_reads: list[Read]) -> npt.NDArray[np.float64]:
+
+    return np.fromiter(
+        (
+            hamming(read_x.bits_flattened, read_y.bits_flattened)
+            for read_x in reads
+            for read_y in other_reads
+        ),
+        np.float64
+    )
 
 class Statistic(HDF5Convertible, metaclass=ABCMeta):
     """
@@ -225,4 +255,4 @@ class InterdistanceStatistic(ComparisonStatistic):
     """
     _hdf5_group_name = "Interdistance"
     description="Interdistance values between Bootstrap of two sets of SUV's"
-    stat_func=staticmethod(interdistance_bootstrap)
+    stat_func=staticmethod(intradistance_bootstrap)
