@@ -2,7 +2,10 @@ import random
 import statistics
 from abc import ABCMeta
 from typing import Any, Callable, Self
-from h5py._hl.group import Group
+import h5py
+import numpy as np
+import numpy.typing as npt
+import scipy.stats
 from scipy.spatial.distance import hamming
 from .experiment_hdf5 import Read, ReadSession, ExperimentContainer
 from .hdf5_convertible import HDF5Convertible
@@ -15,23 +18,23 @@ class MetaStatistic(HDF5Convertible):
     """
     _hdf5_group_name = "Meta Statistic"
     statistic_methods = {
-        "Mean": statistics.mean,
-        "Median": statistics.median,
-        "Variance": statistics.variance,
-        "StdDeviation": statistics.stdev,
-        "Minimum": min,
-        "Maximum": max
+        "Mean": np.mean,
+        "Median": np.median,
+        "Variance": np.var,
+        "StdDeviation": np.std,
+        "Minimum": np.min,
+        "Maximum": np.max
     }
     statistic_method_names = sorted(list(statistic_methods.keys()))
     stats: dict[str, float] = None
 
-    def __init__(self, values: list[float]) -> None:
+    def __init__(self, values: npt.NDArray[np.float64]) -> None:
         self.stats = {
             stat_name: method(values)
             for stat_name, method in self.statistic_methods.items()
         }
 
-    def add_to_hdf5_group(self, parent: Group) -> None:
+    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
         meta_statistic_ds = parent.create_dataset(
             self._hdf5_group_name,
             (1, len(self.statistic_method_names)),
@@ -43,19 +46,19 @@ class MetaStatistic(HDF5Convertible):
         )
         meta_statistic_ds.attrs["Column Header"] = self.statistic_method_names
 
-def entropy_list(reads: list[Read]) -> list[float]:
-    return [read.entropy for read in reads]
+def entropy_list(reads: list[Read]) -> npt.NDArray[np.float64]:
+    return np.fromiter((read.entropy for read in reads), np.float64)
 
-def intradistance_bootstrap(reads: list[Read], k:int = 0) -> list[float]:
+def intradistance_bootstrap(reads: list[Read], k:int = 0) -> npt.NDArray[np.float64]:
     distance_values = list()
     for _ in range(len(reads)):
         idx1 = random.randrange(0, len(reads))
         while (idx2 := random.randrange(0, len(reads))) == idx1:
             idx2 = random.randrange(0, len(reads))
         distance_values.append(hamming(reads[idx1].bits_flatted, reads[idx2].bits_flatted))
-    return distance_values
+    return np.array(distance_values)
 
-def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int = 1000) -> list[float]:
+def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int = 1000) -> npt.NDArray[np.float64]:
     self_choices = [
         choice.bits_flatted for choice in
         random.choices(reads, k=k)
@@ -64,7 +67,7 @@ def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int =
         choice.bits_flatted for choice in
         random.choices(other_reads, k=k)
     ]
-    return map(hamming, self_choices, other_choices)
+    return np.fromiter(map(hamming, self_choices, other_choices))
 
 class Statistic(HDF5Convertible, metaclass=ABCMeta):
     """
@@ -72,10 +75,10 @@ class Statistic(HDF5Convertible, metaclass=ABCMeta):
     """
     # TODO Test
     description: str
-    stat_func: Callable[[list[Read]], list[float]]
+    stat_func: Callable[[list[Read]], npt.NDArray[np.float64]]
     stat_func_kwargs: dict    # args that are used by method additionally to Reads
-    data_read_stat: list[float]
-    parity_read_stat: list[float]
+    data_read_stat: npt.NDArray[np.float64]
+    parity_read_stat: npt.NDArray[np.float64]
     mergable = False
 
     @property
@@ -85,7 +88,7 @@ class Statistic(HDF5Convertible, metaclass=ABCMeta):
             "Parity": MetaStatistic(self.parity_read_stat)
         }
         
-    def add_to_hdf5_group(self, parent: Group) -> None:
+    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
         statistic_group = parent.create_group(self._hdf5_group_name)
 
         parity_group = statistic_group.create_group("Parity")
@@ -126,14 +129,14 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             merged_parity_read_stat = list()
 
             for statistic_container in stats:
-                merged_data_read_stat += statistic_container.data_read_stat
-                merged_parity_read_stat += statistic_container.parity_read_stat
+                merged_data_read_stat.append(statistic_container.data_read_stat)
+                merged_parity_read_stat.append(statistic_container.parity_read_stat)
 
             return cls(
                 # This assumes that all subclasses set their description from a default value (without any argument)
                 read_session=None,
-                data_read_stat=merged_data_read_stat,
-                parity_read_stat=merged_parity_read_stat,
+                data_read_stat=np.array(merged_data_read_stat).flatten(),
+                parity_read_stat=np.array(merged_parity_read_stat).flatten(),
                 **sample_instance.stat_func_kwargs
             )
 
@@ -142,7 +145,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     """
     Statistic that compares two ReadSessions
     """
-    stat_func: Callable[[list[Read], list[Read]], list[float]] = None
+    stat_func: Callable[[list[Read], list[Read]], npt.NDArray[np.float64]] = None
     mergable = False
 
     def __init__(self, read_sessions: list[ReadSession], stat_func_kwargs: dict[str, Any] = {}) -> None:
@@ -155,9 +158,9 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
         raise NotImplementedError
     
     def compare(self, read_sessions: list[ReadSession]) -> None:
-
-        data_compare_values = list()
-        parity_compare_values = list()
+        # TODO TEST!
+        data_compared_values = list()
+        parity_compared_values = list()
 
         # It may become to expensive to do this n*n, 
         # if so replace n*n with n bootstrap choices
@@ -167,19 +170,23 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
                     # Don't compare ReadSession with itself
                     continue
                 else:
-                    data_compare_values += self.stat_func(
+                    data_compared_values.append(self.stat_func(
                         read_sessions[idx_i].data_reads,
                         read_sessions[idx_j].data_reads,
                         **self.stat_func_kwargs
-                    )
-                    parity_compare_values += self.stat_func(
+                    ))
+                    parity_compared_values.append(self.stat_func(
                         read_sessions[idx_i].parity_reads,
                         read_sessions[idx_j].parity_reads,
                         **self.stat_func_kwargs
-                    )
+                    ))
         
-        self.data_read_stat = data_compare_values
-        self.parity_read_stat = parity_compare_values
+        # This combination of using lists of numpy arrays and then flatten them, is not the most efficient.
+        # It would be more efficient to allocate a numpy array with zeros and then fill it via slicing.
+        # But because of other priorities, such proper implementation is postponed for now
+        # TODO improve this implementation if theres spare time
+        self.data_read_stat = np.array(data_compared_values).flatten()
+        self.parity_read_stat = np.array(parity_compared_values).flatten()
 
 class IntradistanceStatistic(SimpleStatistic):
     """

@@ -3,6 +3,7 @@ Contains infrastructure (Boilerplate classes) that makes managing hdf5 experimen
 """
 
 import numpy as np
+import numpy.typing as npt
 import h5py
 from abc import ABC
 from dataclasses import dataclass, field
@@ -13,14 +14,14 @@ from functools import cached_property, reduce
 @dataclass(frozen=True)
 class Read:
     raw_read: bytes
-    bits: np.ndarray
+    bits: npt.NDArray
 
     @cached_property
-    def bits_flatted(self) -> np.ndarray:
+    def bits_flatted(self) -> npt.NDArray[np.float64]:
         return self.bits.flatten()
     
     @cached_property
-    def entropy(self) -> float:
+    def entropy(self) -> np.float64:
         value, counts = np.unique(self.bits_flatted, return_counts=True)
         return entropy(counts, base=2)
     
