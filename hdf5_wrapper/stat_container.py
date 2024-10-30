@@ -9,6 +9,7 @@ from .stats import (
     MetaStatistic,
     Statistic,
     SimpleStatistic,
+    BitAliasingStatistic,
     ComparisonStatistic,
     InterdistanceStatistic,
     IntradistanceStatistic,
@@ -289,13 +290,14 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
 
 class BramBlockStat(MultiStatisticOwner):
-    types_of_statistics = [IntradistanceStatistic, EntropyStatistic]
+    types_of_statistics = [IntradistanceStatistic, EntropyStatistic, BitAliasingStatistic]
 
 
 class PBlockStat(StatAggregator):
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
+        BitAliasingStatistic,
         InterdistanceStatistic,
     ]
     subowner_type = BramBlockStat
@@ -306,6 +308,7 @@ class BoardStat(StatAggregator):
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
+        BitAliasingStatistic,
         InterdistanceStatistic,
     ]
     subowner_type = PBlockStat
@@ -316,6 +319,7 @@ class ExperimentStat(StatAggregator):
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
+        BitAliasingStatistic,
         InterdistanceStatistic,
     ]
     subowner_type = BoardStat

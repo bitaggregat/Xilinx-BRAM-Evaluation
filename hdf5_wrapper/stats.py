@@ -4,6 +4,7 @@ from abc import ABCMeta
 from typing import Any, Callable, Self
 from h5py._hl.group import Group
 from scipy.spatial.distance import hamming
+import numpy as np
 from .experiment_hdf5 import Read, ReadSession, ExperimentContainer
 from .hdf5_convertible import HDF5Convertible
 
@@ -65,6 +66,15 @@ def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int =
         random.choices(other_reads, k=k)
     ]
     return map(hamming, self_choices, other_choices)
+
+def bit_aliasing(reads: list[Read]) -> list[float]:
+    reads_values = [read.bits_flatted for read in reads]
+    # TODO numpy only
+    reads_length = len(reads)
+    return [float(num/reads_length) for num in np.sum(reads_values, axis=0)]
+
+def stable_bit(reads: list[Read]) -> list[float]:
+    pass
 
 class Statistic(HDF5Convertible, metaclass=ABCMeta):
     """
@@ -136,6 +146,39 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 parity_read_stat=merged_parity_read_stat,
                 **sample_instance.stat_func_kwargs
             )
+
+class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
+    """
+    Statistic where a value is generated for each bit.
+    - e.g. probability that bit flips to 1
+
+    The attributes data_read_stat, parity_read_stat are seen as arrays of stats per bit in this case, 
+    where the idx is equal to the bit idx inside a BRAM
+    """
+    mergable = True
+
+    def __init__(self, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, stat_func_kwargs: dict[str, Any] = {}) -> None:
+        super().__init__(read_session, data_read_stat, parity_read_stat, stat_func_kwargs)
+        if len(self.data_read_stat) != 4096 * 8 or len(self.parity_read_stat) != 4096:
+            raise Exception("Unexpected length for data/parity_read_stat in BitwiseStatistic")
+        
+
+    @classmethod
+    def from_merge(cls, stats: list[Self]) -> Self:
+        """
+        Combines stats by adding each value in their lists (like adding two vectors)
+        """
+        data_read_stats_list = [bitwise_statistic.data_read_stat for bitwise_statistic in stats]
+        parity_read_stats_list = [bitwise_statistic.parity_read_stat for bitwise_statistic in stats]
+
+        data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
+
+        divide_function = lambda x: float(x/len(stats))
+        new_data_read_stats = list(map(divide_function, data_read_stats_sum))
+        parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
+        new_parity_read_stats = list(map(divide_function, parity_read_stats_sum))
+
+        return cls(None, new_data_read_stats, new_parity_read_stats)
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):
@@ -219,3 +262,8 @@ class InterdistanceStatistic(ComparisonStatistic):
     _hdf5_group_name = "Interdistance"
     description="Interdistance values between Bootstrap of two sets of SUV's"
     stat_func=staticmethod(interdistance_bootstrap)
+
+class BitAliasingStatistic(BitwiseStatistic):
+    _hdf5_group_name = "Bitaliasing"
+    description="TODO"
+    stat_func=staticmethod(bit_aliasing)
