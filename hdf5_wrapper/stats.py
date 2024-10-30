@@ -55,16 +55,16 @@ def intradistance_bootstrap(reads: list[Read], k:int = 0) -> npt.NDArray[np.floa
         idx1 = random.randrange(0, len(reads))
         while (idx2 := random.randrange(0, len(reads))) == idx1:
             idx2 = random.randrange(0, len(reads))
-        distance_values.append(hamming(reads[idx1].bits_flatted, reads[idx2].bits_flatted))
+        distance_values.append(hamming(reads[idx1].bits_flattened, reads[idx2].bits_flattened))
     return np.array(distance_values)
 
 def interdistance_bootstrap(reads: list[Read], other_reads: list[Read], k: int = 1000) -> npt.NDArray[np.float64]:
     self_choices = [
-        choice.bits_flatted for choice in
+        choice.bits_flattened for choice in
         random.choices(reads, k=k)
     ]
     other_choices =  [
-        choice.bits_flatted for choice in
+        choice.bits_flattened for choice in
         random.choices(other_reads, k=k)
     ]
     return np.fromiter(map(hamming, self_choices, other_choices))

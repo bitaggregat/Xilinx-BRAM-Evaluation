@@ -17,12 +17,12 @@ class Read:
     bits: npt.NDArray
 
     @cached_property
-    def bits_flatted(self) -> npt.NDArray[np.float64]:
+    def bits_flattened(self) -> npt.NDArray[np.float64]:
         return self.bits.flatten()
     
     @cached_property
     def entropy(self) -> np.float64:
-        value, counts = np.unique(self.bits_flatted, return_counts=True)
+        value, counts = np.unique(self.bits_flattened, return_counts=True)
         return entropy(counts, base=2)
     
     @classmethod
