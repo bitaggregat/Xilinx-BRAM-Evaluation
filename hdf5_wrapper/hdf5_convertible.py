@@ -9,6 +9,7 @@ class HDF5Convertible(ABC):
         in order to reduce code duplicates
     Note: This class may be replaceable by functions (TODO debate)
     """
+
     _hdf5_group_name: str = None
 
     @abstractmethod
@@ -17,6 +18,10 @@ class HDF5Convertible(ABC):
 
     @property
     def hdf5_group_name(self) -> str:
+        """
+        Getter for _hdf5_group_name
+        - checks whether or not attribute has been correctly checked by subclass
+        """
         if self._hdf5_group_name is None:
             raise Exception("Missing hdf5 group name")
         else:

@@ -1,9 +1,13 @@
-from abc import ABCMeta, abstractmethod
+"""
+Module contains Statistic container objects.
+These classes encapsulate iterations and handling of Statistic objects.
+"""
+
+from abc import ABCMeta
 from dataclasses import dataclass, field
-from itertools import combinations
-from typing import Any, Callable, Self, Type
+from typing import Self, Type
 import h5py
-from .experiment_hdf5 import Read, ReadSession, ExperimentContainer
+from .experiment_hdf5 import ExperimentContainer
 from .hdf5_convertible import HDF5Convertible
 from .stats import (
     MetaStatistic,
@@ -20,7 +24,7 @@ from .stats import (
 class MultiReadSessionMetaStatistic(HDF5Convertible):
     """
     Gathers MetaStatistic's of different ReadSessions
-    Main objectif:
+    Main objective:
     -> encapsulating the unification of MetaStatistic's and their handling in hdf5
     """
 
@@ -109,6 +113,9 @@ class MultiReadSessionStatistic(HDF5Convertible):
 
     @property
     def meta_stats(self) -> MultiReadSessionMetaStatistic:
+        """
+        Just in time processing of meta_stats
+        """
         parity_meta_stats = dict()
         data_meta_stats = dict()
 
@@ -131,6 +138,9 @@ class MultiReadSessionStatistic(HDF5Convertible):
         statistic_type: Type[Statistic],
         read_session_names: list[str],
     ) -> Self:
+        """
+        See SimpleStatistic.from_merge
+        """
         if not statistic_type.mergable:
             raise Exception(f"Can't merge Statistic objects of type: {statistic_type}")
         statistics = {
@@ -153,9 +163,10 @@ class MultiReadSessionStatistic(HDF5Convertible):
 
 
 class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
-    # TODO minimal test
     """
-    Class that manages reads of multiple read sessions
+    Class that manages MultReadSessionObjects of different Statistic types.
+    This is the Statistic container equivalent of a BramBlock object.
+    -> It manages Stats (but doesn't manage other Statistic container objects)
     """
 
     name: str
@@ -209,9 +220,12 @@ class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
 
 
 class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
-    # TODO Test
     """
-    Class that provides aggregation functions for substats
+    Class for objects that manage multiple MultiStatisticOwner's (called substats)
+    Provides aggregation functions for substats.
+
+    Is the Statistic equivalent of PBlock or Board objects of "experiment.hdf5.py".
+    The main objective of these classes is to reduce repetitive code duplicates
     """
 
     subowners: list[MultiStatisticOwner] = None
@@ -231,6 +245,8 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
     def merge_substats(self) -> None:
         """
+        Uses "from_merge" interface from substats (if "mergable")
+
         Class is expected to have a list of substat objects
             e.g. PblockStat has list[BramStat]
         This method merges these substats in order gain knowledge of the stat on a meta lvl
@@ -255,9 +271,16 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                         subowner.statistics[statistic_type]
                         for subowner in self.subowners
                     ]
-                    self.statistics[statistic_type] = MultiReadSessionStatistic.from_merge(substats, statistic_type, self.read_session_names)
+                    self.statistics[statistic_type] = (
+                        MultiReadSessionStatistic.from_merge(
+                            substats, statistic_type, self.read_session_names
+                        )
+                    )
 
     def compare_substats(self, experiment_container: ExperimentContainer) -> None:
+        """
+        Uses "compare" of substats (if available)
+        """
         if self.subowners is None or not self.subowners:
             raise Exception(
                 "Cannot compare substats because 'subowners' is empty or None"
