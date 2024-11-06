@@ -31,26 +31,41 @@ class TestExperiment(unittest.TestCase):
                 len(bram_block.read_sessions["previous_value_ff"].data_reads),
             )
             self.assertEqual(
-                len(bram_block.read_sessions["previous_value_00"].data_reads), 1000
+                len(bram_block.read_sessions["previous_value_00"].data_reads),
+                1000,
             )
             self.assertEqual(
-                len(bram_block.read_sessions["previous_value_00"].parity_reads),
-                len(bram_block.read_sessions["previous_value_ff"].parity_reads),
+                len(
+                    bram_block.read_sessions["previous_value_00"].parity_reads
+                ),
+                len(
+                    bram_block.read_sessions["previous_value_ff"].parity_reads
+                ),
             )
             self.assertEqual(
-                len(bram_block.read_sessions["previous_value_00"].parity_reads), 1000
+                len(
+                    bram_block.read_sessions["previous_value_00"].parity_reads
+                ),
+                1000,
             )
             self.assertEqual(
-                len(bram_block.read_sessions["previous_value_00"].temperatures), 1000
+                len(
+                    bram_block.read_sessions["previous_value_00"].temperatures
+                ),
+                1000,
             )
 
-            for read in bram_block.read_sessions["previous_value_00"].data_reads:
+            for read in bram_block.read_sessions[
+                "previous_value_00"
+            ].data_reads:
                 self.assertEqual(len(read.raw_read), 4096)
                 self.assertEqual(len(read.bits), 4096)
                 for byte in read.bits:
                     self.assertEqual(len(byte), 8)
 
-            for read in bram_block.read_sessions["previous_value_ff"].parity_reads:
+            for read in bram_block.read_sessions[
+                "previous_value_ff"
+            ].parity_reads:
                 self.assertEqual(len(read.raw_read), 512)
                 self.assertEqual(len(read.bits), 512)
                 for byte in read.bits:
@@ -62,8 +77,14 @@ class TestRead(unittest.TestCase):
         Read.from_raw(b"\x00\x00\x00"),
         Read.from_raw(b"\x00\x00\x00"),
     ]
-    reads_homogene_ff = [Read.from_raw(b"\xff\xff\xff"), Read.from_raw(b"\xff\xff\xff")]
-    reads_heterogene = [Read.from_raw(b"\xff\x00\xff"), Read.from_raw(b"\x00\xff\x00")]
+    reads_homogene_ff = [
+        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xff\xff\xff"),
+    ]
+    reads_heterogene = [
+        Read.from_raw(b"\xff\x00\xff"),
+        Read.from_raw(b"\x00\xff\x00"),
+    ]
     reads_heterogene_similar = [
         Read.from_raw(b"\xff\xff\xff"),
         Read.from_raw(b"\xf0\x0f\xf0"),
@@ -111,8 +132,12 @@ class TestRead(unittest.TestCase):
         )
 
     def test_entropy(self) -> None:
-        self.assertEqual([read.entropy for read in self.reads_homogene_00], [0, 0])
-        self.assertEqual([read.entropy for read in self.reads_homogene_ff], [0, 0])
+        self.assertEqual(
+            [read.entropy for read in self.reads_homogene_00], [0, 0]
+        )
+        self.assertEqual(
+            [read.entropy for read in self.reads_homogene_ff], [0, 0]
+        )
         self.assertEqual(
             [read.entropy for read in self.reads_heterogene_similar], [0, 1]
         )

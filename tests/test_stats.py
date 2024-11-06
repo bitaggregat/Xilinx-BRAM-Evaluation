@@ -8,16 +8,26 @@ class TestStats(unittest.TestCase):
         Read.from_raw(b"\x00\x00\x00"),
         Read.from_raw(b"\x00\x00\x00"),
     ]
-    reads_homogene_ff = [Read.from_raw(b"\xff\xff\xff"), Read.from_raw(b"\xff\xff\xff")]
-    reads_heterogene = [Read.from_raw(b"\xff\x00\xff"), Read.from_raw(b"\x00\xff\x00")]
+    reads_homogene_ff = [
+        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xff\xff\xff"),
+    ]
+    reads_heterogene = [
+        Read.from_raw(b"\xff\x00\xff"),
+        Read.from_raw(b"\x00\xff\x00"),
+    ]
     reads_heterogene_similar = [
         Read.from_raw(b"\xff\xff\xff"),
         Read.from_raw(b"\xf0\x0f\xf0"),
     ]
 
     def test_intradistance_bootstrap(self) -> None:
-        self.assertEqual(intradistance_bootstrap(self.reads_homogene_00), [0, 0])
-        self.assertEqual(intradistance_bootstrap(self.reads_heterogene), [1, 1])
+        self.assertEqual(
+            intradistance_bootstrap(self.reads_homogene_00), [0, 0]
+        )
+        self.assertEqual(
+            intradistance_bootstrap(self.reads_heterogene), [1, 1]
+        )
         self.assertEqual(
             intradistance_bootstrap(self.reads_heterogene_similar), [0.5, 0.5]
         )
