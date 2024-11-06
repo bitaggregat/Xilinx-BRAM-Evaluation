@@ -94,13 +94,13 @@ def add_bram_dataset_group(
     path: Path, parent: h5py.Group, group_name: str
 ) -> None:
     """
-    Adds multiple datasets based on content in "previous_value_00" 
+    Adds multiple datasets based on content in "previous_value_00"
     or "previous_value_ff" dir
 
     Parameters:
         path: Path to directory that contains dirs parity and data
         parent: Parent group of dataset
-        name: Name of the group 
+        name: Name of the group
               (should be either "previous_value_00" or "previous_value_ff")
     """
     bram_data_group = parent.create_group(group_name)
@@ -156,7 +156,7 @@ def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
 
 def add_bram_group(path: Path, parent: h5py.Group) -> None:
     """
-    Adds measurement Data from single BRAM experiment 
+    Adds measurement Data from single BRAM experiment
     as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
     - Also adds bitstreams if available

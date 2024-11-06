@@ -25,7 +25,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
     """
     Gathers MetaStatistic's of different ReadSessions
     Main objective:
-    -> encapsulating the unification of MetaStatistic's 
+    -> encapsulating the unification of MetaStatistic's
        and their handling in hdf5
     """
 
@@ -105,7 +105,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
 class MultiReadSessionStatistic(HDF5Convertible):
     """
     Gathers Statistics of different ReadSessions but same "Statistic"-type
-    - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00" 
+    - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00"
       and "previous_value_ff"
     """
 
@@ -245,11 +245,11 @@ class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
 
 class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     """
-    Class for objects that 
+    Class for objects that
     manage multiple MultiStatisticOwner's (called substats)
     Provides aggregation functions for substats.
 
-    Is the Statistic equivalent of PBlock or 
+    Is the Statistic equivalent of PBlock or
     Board objects of "experiment.hdf5.py".
     The main objective of these classes is to reduce repetitive code duplicates
     """
@@ -275,7 +275,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
         Class is expected to have a list of substat objects
             e.g. PblockStat has list[BramStat]
-        This method merges these substats in order gain knowledge 
+        This method merges these substats in order gain knowledge
         of the stat on a meta lvl
             - e.g. we know the median entropy of each bram block,
               -> we want to know the median entropy of ALL bram blocks combined

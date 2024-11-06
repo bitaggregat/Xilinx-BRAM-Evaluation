@@ -1,7 +1,7 @@
 """
-Contains infrastructure (Boilerplate classes) that 
+Contains infrastructure (Boilerplate classes) that
 makes managing hdf5 experiment files easier.
-Structures measurement data into objects that 
+Structures measurement data into objects that
 represent entities from the experiment.
 """
 
@@ -35,7 +35,7 @@ class Read:
     @cached_property
     def entropy(self) -> np.float64:
         """
-        Counts 1's and 0's in read value. 
+        Counts 1's and 0's in read value.
         Then computes entropy over those counts
         """
         value, counts = np.unique(self.bits_flattened, return_counts=True)
@@ -56,7 +56,7 @@ class ReadSession:
     - e.g.:
         - there can be a ReadSession for Temperature T:=ambient
         - and there can be a different ReadSession for T:=60°
-    - data and parity reads are related because 
+    - data and parity reads are related because
       they are measured at the same time
         - e.g. data_reads[0] was taken at the same time as parity_reads[0]
     """
@@ -72,7 +72,7 @@ class ReadSession:
     @classmethod
     def from_hdf5(cls, hdf5_group: h5py.Group) -> "ReadSession":
         """
-        Parses this object from a hdf5 subgroup, 
+        Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
         data_read_dataset = hdf5_group["data_reads"]
@@ -99,7 +99,7 @@ class ReadSession:
     @classmethod
     def merge_from_list(cls, read_sessions: list[Self]) -> Self:
         """
-        More efficient version of __add__ if multiple read sessions 
+        More efficient version of __add__ if multiple read sessions
         are added at once
         """
         merged_data_reads = list()
@@ -129,7 +129,7 @@ class BramBlock:
         cls, hdf5_group: h5py.Group, name: str, read_session_names: list[str]
     ) -> Self:
         """
-        Parses this object from a hdf5 subgroup, 
+        Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
         read_sessions = {
@@ -149,13 +149,13 @@ class BramBlock:
 @dataclass(frozen=True, kw_only=True)
 class ExperimentContainer(ABC):
     """
-    Generalization of containers that represent different layer entities 
+    Generalization of containers that represent different layer entities
     of an experiment.
     e.g.:
         - Container for all bram blocks in a pblock
         - or all pblocks on a device
     Reduces code duplicates
-    Note: BramBlock is not included because 
+    Note: BramBlock is not included because
           it does not own other "subcontainers"
     """
 
@@ -191,7 +191,7 @@ class PBlock(ExperimentContainer):
         cls, hdf5_group: h5py.Group, name: str, read_session_names: list[str]
     ) -> Self:
         """
-        Parses this object from a hdf5 subgroup, belonging 
+        Parses this object from a hdf5 subgroup, belonging
         to a experiment hdf5 file
         """
         bram_blocks = {
@@ -243,7 +243,7 @@ class Board(ExperimentContainer):
         cls, hdf5_group: h5py.Group, read_session_names: list[str]
     ) -> Self:
         """
-        Parses this object from a hdf5 subgroup, 
+        Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
 
@@ -259,7 +259,7 @@ class Board(ExperimentContainer):
             ]
         }
 
-        # This is a fix because attribute is named "board_name" instead of 
+        # This is a fix because attribute is named "board_name" instead of
         # name in experiment hdf5
         kwargs["name"] = kwargs["board_name"]
         kwargs.pop("board_name")
@@ -302,7 +302,7 @@ class Experiment(ExperimentContainer):
     @classmethod
     def from_hdf5(cls, hdf5_group: h5py.Group, commit: str) -> Self:
         """
-        Parses this object from a hdf5 subgroup, 
+        Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
         read_session_names = [

@@ -77,7 +77,7 @@ def intradistance_bootstrap(
     reads: list[Read], k: int = 10000
 ) -> npt.NDArray[np.float64]:
     """
-    Produces k intradistance values or the maximum, if the maximum of 
+    Produces k intradistance values or the maximum, if the maximum of
     possible values (without pair duplicates) is smaller than k
 
     Pairs of values are chosen pseudo randomly.
@@ -237,7 +237,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
     def from_merge(cls, stats: list[Self]) -> Self:
         """
         Combines stats by just adding their lists together.
-        This works because statistical values of this class 
+        This works because statistical values of this class
         are dependant on single Read values
         """
         sample_instance = stats[0]
@@ -269,9 +269,9 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     Statistic that compares two ReadSessions.
     e.g. interdistance
 
-    This type of Statistic is not mergable, 
+    This type of Statistic is not mergable,
     because their values depend on pairs of values.
-    These pairs would change drastically 
+    These pairs would change drastically
     when addtional values (merge) would be added
     """
 
