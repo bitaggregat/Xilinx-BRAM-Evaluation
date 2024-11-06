@@ -31,7 +31,9 @@ def add_meta_data_from_json(parent: h5py.Group, json_path: Path) -> None:
         add_meta_data(parent, json_dict)
 
 
-def add_temperature_dataset(temperature_file: Path, parent: h5py.Group) -> None:
+def add_temperature_dataset(
+    temperature_file: Path, parent: h5py.Group
+) -> None:
     """
     Adds temperature data set to <bram_name>/<0-to-f or f-to-0> group
 
@@ -44,13 +46,18 @@ def add_temperature_dataset(temperature_file: Path, parent: h5py.Group) -> None:
         # Zynq FPGAs will have two temperature sensors (PL and PS)
         # We assume the first output to be the temperature of PL
         values = [
-            float(measurement.split()[0].strip()) for measurement in f.readlines()
+            float(measurement.split()[0].strip())
+            for measurement in f.readlines()
         ]
 
-        parent.create_dataset("temperature", (len(values),), dtype="f", data=values)
+        parent.create_dataset(
+            "temperature", (len(values),), dtype="f", data=values
+        )
 
 
-def add_bram_dataset(path: Path, parent: h5py.Group, dataset_name: str) -> None:
+def add_bram_dataset(
+    path: Path, parent: h5py.Group, dataset_name: str
+) -> None:
     """
     Adds bram reads as a dataset to group
 
@@ -83,14 +90,18 @@ def add_bram_dataset(path: Path, parent: h5py.Group, dataset_name: str) -> None:
     )
 
 
-def add_bram_dataset_group(path: Path, parent: h5py.Group, group_name: str) -> None:
+def add_bram_dataset_group(
+    path: Path, parent: h5py.Group, group_name: str
+) -> None:
     """
-    Adds multiple datasets based on content in "previous_value_00" or "previous_value_ff" dir
+    Adds multiple datasets based on content in "previous_value_00" 
+    or "previous_value_ff" dir
 
     Parameters:
         path: Path to directory that contains dirs parity and data
         parent: Parent group of dataset
-        name: Name of the group (should be either "previous_value_00" or "previous_value_ff")
+        name: Name of the group 
+              (should be either "previous_value_00" or "previous_value_ff")
     """
     bram_data_group = parent.create_group(group_name)
 
@@ -111,7 +122,9 @@ def add_bram_dataset_group(path: Path, parent: h5py.Group, group_name: str) -> N
 
 
 def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
-    bs_files = [file_path for file_path in path.iterdir() if file_path.is_file()]
+    bs_files = [
+        file_path for file_path in path.iterdir() if file_path.is_file()
+    ]
 
     bitstream_group = parent.create_group("bitstreams", track_order=True)
 
@@ -120,10 +133,14 @@ def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
         match bs.stem.split("_"):
             case [*_, "partial", "bram", "bs"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["partial_bram_bs"] = np.void(f.read())
+                    bitstream_group.attrs["partial_bram_bs"] = np.void(
+                        f.read()
+                    )
             case [*_, "modified", "partial"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["modified_partial"] = np.void(f.read())
+                    bitstream_group.attrs["modified_partial"] = np.void(
+                        f.read()
+                    )
             case [*_, "ff"]:
                 with open(bs, mode="rb") as f:
                     bitstream_group.attrs["ff"] = np.void(f.read())
@@ -132,12 +149,15 @@ def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
                     bitstream_group.attrs["00"] = np.void(f.read())
             case [*_, "bramless", "partial"]:
                 with open(bs, mode="rb") as f:
-                    bitstream_group.attrs["bramless_partial"] = np.void(f.read())
+                    bitstream_group.attrs["bramless_partial"] = np.void(
+                        f.read()
+                    )
 
 
 def add_bram_group(path: Path, parent: h5py.Group) -> None:
     """
-    Adds measurement Data from single BRAM experiment as path to a given parent group
+    Adds measurement Data from single BRAM experiment 
+    as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
     - Also adds bitstreams if available
 
@@ -153,7 +173,9 @@ def add_bram_group(path: Path, parent: h5py.Group) -> None:
     sub_paths = [p for p in path.iterdir() if p.parts[-1] != "bs"]
     for expected_path in sub_paths:
         if expected_path.exists() and expected_path.is_dir():
-            add_bram_dataset_group(expected_path, bram_group, expected_path.parts[-1])
+            add_bram_dataset_group(
+                expected_path, bram_group, expected_path.parts[-1]
+            )
 
     bs_path = Path(path, "bs")
     if bs_path.exists() and bs_path.is_dir():
@@ -226,7 +248,9 @@ def derivate_read_session_names(hdf5_file: h5py.Group) -> None:
         if read_session != "bitstreams"
     ]
     hdf5_file.create_dataset(
-        "read_session_names", (len(read_session_names),), data=read_session_names
+        "read_session_names",
+        (len(read_session_names),),
+        data=read_session_names,
     )
 
 

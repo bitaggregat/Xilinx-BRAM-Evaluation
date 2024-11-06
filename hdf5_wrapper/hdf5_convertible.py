@@ -20,7 +20,8 @@ class HDF5Convertible(ABC):
     def hdf5_group_name(self) -> str:
         """
         Getter for _hdf5_group_name
-        - checks whether or not attribute has been correctly checked by subclass
+        - checks whether or not attribute has been
+          correctly checked by subclass
         """
         if self._hdf5_group_name is None:
             raise Exception("Missing hdf5 group name")

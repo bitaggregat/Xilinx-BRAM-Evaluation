@@ -22,11 +22,14 @@ def unpack_from_hdf5(path: Path) -> Experiment:
 
 
 parser = argparse.ArgumentParser(
-    "Script that takes BRAM experiment hdf5 file, unpacks the latter and computes various stats over the data\n"
+    "Script that takes BRAM experiment hdf5 file, unpacks the latter and "
+    "computes various stats over the data\n"
     "Generated stats are saved in another hdf5 file."
 )
 parser.add_argument(
-    "--read_hdf5", required=True, help="Path to hdf5 file containing bram reads"
+    "--read_hdf5",
+    required=True,
+    help="Path to hdf5 file containing bram reads",
 )
 parser.add_argument(
     "--out_hdf5", required=True, help="Path where result hdf5 shall be written"
@@ -34,19 +37,22 @@ parser.add_argument(
 parser.add_argument(
     "--interdistance_k",
     required=False,
-    help="Sets how many samples will be drawn for the bootstrapping for interdistances",
+    help="Sets how many samples will be drawn for the bootstrapping "
+    "for interdistances",
 )
 parser.add_argument(
     "--seed",
     required=False,
-    help="Seed that is used to initialize pythons random module (for reproducibility)",
+    help="Seed that is used to initialize pythons random module "
+    "(for reproducibility)",
     type=int,
     default=1337133713371337,
 )
 parser.add_argument(
     "--intradistance_k",
     required=False,
-    help="Sets how many samples will be drawn for the bootstrapping for intradistances",
+    help="Sets how many samples will be drawn for the bootstrapping "
+    "for intradistances",
 )
 
 
@@ -55,9 +61,13 @@ def main():
     arg_dict = vars(args)
 
     if arg_dict["interdistance_k"] is not None:
-        InterdistanceStatistic.stat_func_kwargs["k"] = arg_dict["interdistance_k"]
+        InterdistanceStatistic.stat_func_kwargs["k"] = arg_dict[
+            "interdistance_k"
+        ]
     if arg_dict["intradistance_k"] is not None:
-        IntradistanceStatistic.stat_func_kwargs["k"] = arg_dict["intradistance_k"]
+        IntradistanceStatistic.stat_func_kwargs["k"] = arg_dict[
+            "intradistance_k"
+        ]
 
     # Unpack from bram read hdf5
     experiment = unpack_from_hdf5(arg_dict["read_hdf5"])

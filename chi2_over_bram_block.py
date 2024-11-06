@@ -26,12 +26,16 @@ class ContingencyTable:
         for zero_count, one_count, variable in zip(
             self.zero_count_list, self.one_count_list, self.variables
         ):
-            variable_to_percentage_dict[variable] = one_count / (zero_count + one_count)
+            variable_to_percentage_dict[variable] = one_count / (
+                zero_count + one_count
+            )
         return variable_to_percentage_dict
 
     def contingency_odds(self) -> float:
         if len(self.variables) > 2:
-            raise Exception("Can't calculate contingency odds on more than 2 values")
+            raise Exception(
+                "Can't calculate contingency odds on more than 2 values"
+            )
         return odds_ratio(self.to_list()).statistic
 
 
@@ -74,7 +78,11 @@ def contingency_table_list(
 
     contingency_table_list = list()
     for byte_idx in range(
-        len(getattr(read_sessions[list(read_sessions.keys())[0]], bit_type)[0].bits)
+        len(
+            getattr(read_sessions[list(read_sessions.keys())[0]], bit_type)[
+                0
+            ].bits
+        )
     ):
         for bit_idx in range(8):
             variables = list()
@@ -119,16 +127,17 @@ def chi2_result_list(contingency_tables: List[ContingencyTable]) -> list:
 
 
 def chi2_pvalue_percentage_pass(alpha: float, chi2_results: list) -> float:
-    return len([data.pvalue for data in chi2_results if data.pvalue > alpha]) / len(
-        [data.pvalue for data in chi2_results]
-    )
+    return len(
+        [data.pvalue for data in chi2_results if data.pvalue > alpha]
+    ) / len([data.pvalue for data in chi2_results])
 
 
 def add_percentages_to_bit_group(
     parent: h5py.Group, contingency_tables: List[ContingencyTable]
 ) -> None:
     percentages_per_variable = {
-        variable_name: list() for variable_name in contingency_tables[0].variables
+        variable_name: list()
+        for variable_name in contingency_tables[0].variables
     }
 
     for contingency_table in contingency_tables:
@@ -145,17 +154,21 @@ def add_percentages_to_bit_group(
         )
 
         unstable_bits_flip_percent = [
-            percent for percent in percentage_list if percent != 1 and percent != 0
+            percent
+            for percent in percentage_list
+            if percent != 1 and percent != 0
         ]
         # Meta Data
         parent.attrs[f"Percentage of stable bits ({variable_name})"] = 1 - len(
             unstable_bits_flip_percent
         ) / len(percentage_list)
         parent.attrs[
-            f"Mean probability for unstable bits to flip to 1 ({variable_name})"
+            "Mean probability for unstable "
+            f"bits to flip to 1 ({variable_name})"
         ] = sum(unstable_bits_flip_percent) / len(unstable_bits_flip_percent)
         parent.attrs[
-            f"Variance of probability for unstable bits to flip to 1 ({variable_name})"
+            "Variance of probability for unstable "
+            f"bits to flip to 1 ({variable_name})"
         ] = np.var(unstable_bits_flip_percent)
 
 
@@ -188,18 +201,24 @@ def add_bit_type_group(
     )
 
 
-def chi2_result_to_hdf5(outpath: Path, read_sessions: Dict[str, ReadSession]) -> None:
+def chi2_result_to_hdf5(
+    outpath: Path, read_sessions: Dict[str, ReadSession]
+) -> None:
     with h5py.File(outpath, "w") as f:
         add_bit_type_group(f, read_sessions, "parity_reads")
         add_bit_type_group(f, read_sessions, "data_reads")
 
 
 parser = argparse.ArgumentParser(
-    "Script that takes BRAM experiment hdf5 file, unpacks the latter and does a chi squared test over the data\n"
-    "The goal is to prove that certain variables do not influence bitflips in the bram"
+    "Script that takes BRAM experiment hdf5 file, unpacks the latter "
+    "and does a chi squared test over the data\n"
+    "The goal is to prove that certain variables "
+    "do not influence bitflips in the bram"
 )
 parser.add_argument(
-    "--read_hdf5", required=True, help="Path to hdf5 file containing bram reads"
+    "--read_hdf5",
+    required=True,
+    help="Path to hdf5 file containing bram reads",
 )
 parser.add_argument(
     "--out_hdf5", required=True, help="Path where result hdf5 shall be written"
@@ -217,7 +236,8 @@ def main():
         ].bram_blocks.values()
     )[
         0
-    ]  # We just assume that the experiment was only performed on a single bram for this script
+    ]  # We just assume that the experiment was only performed 
+       # on a single bram for this script
     chi2_result_to_hdf5(arg_dict["out_hdf5"], bram_block.read_sessions)
 
 

@@ -43,7 +43,8 @@ class MetaStatistic(HDF5Convertible):
             (1, len(self.statistic_method_names)),
             dtype="f8",
             data=[
-                self.stats[method_name] for method_name in self.statistic_method_names
+                self.stats[method_name]
+                for method_name in self.statistic_method_names
             ],
         )
         meta_statistic_ds.attrs["Column Header"] = self.statistic_method_names
@@ -76,8 +77,8 @@ def intradistance_bootstrap(
     reads: list[Read], k: int = 10000
 ) -> npt.NDArray[np.float64]:
     """
-    Produces k intradistance values or the maximum,
-    if the maximum of possible values (without pair duplicates) is smaller than k
+    Produces k intradistance values or the maximum, if the maximum of 
+    possible values (without pair duplicates) is smaller than k
 
     Pairs of values are chosen pseudo randomly.
     Duplicates can occur
@@ -89,7 +90,10 @@ def intradistance_bootstrap(
     return np.fromiter(
         (
             hamming(
-                *[read.bits_flattened for read in tuple(random.choices(reads, k=2))]
+                *[
+                    read.bits_flattened
+                    for read in tuple(random.choices(reads, k=2))
+                ]
             )
             for _ in range(k)
         ),
@@ -125,7 +129,9 @@ def interdistance_bootstrap(
 
     Less computing tome expensive alternative to "interdistance"
     """
-    self_choices = [choice.bits_flattened for choice in random.choices(reads, k=k)]
+    self_choices = [
+        choice.bits_flattened for choice in random.choices(reads, k=k)
+    ]
     other_choices = [
         choice.bits_flattened for choice in random.choices(other_reads, k=k)
     ]
@@ -141,7 +147,9 @@ class Statistic(HDF5Convertible, metaclass=ABCMeta):
 
     description: str
     stat_func: Callable[[list[Read]], npt.NDArray[np.float64]]
-    stat_func_kwargs: dict  # Args that are used by method additionally to Reads
+    stat_func_kwargs: (
+        dict  # Args that are used by method additionally to Reads
+    )
 
     # This class and objects that handle ReadSession data in general
     # Differentiate between two types of Reads (see ReadSession)
@@ -218,7 +226,8 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             )
         elif data_stats is None or parity_stats is None:
             raise Exception(
-                "Either read_session or data_stats and parity_stats have to be not None"
+                "Either read_session or data_stats and "
+                "parity_stats have to be not None"
             )
         else:
             self.data_stats = data_stats
@@ -228,12 +237,14 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
     def from_merge(cls, stats: list[Self]) -> Self:
         """
         Combines stats by just adding their lists together.
-        This works because statistical values of this class are dependant on single Read values
+        This works because statistical values of this class 
+        are dependant on single Read values
         """
         sample_instance = stats[0]
         if any([not isinstance(obj, cls) for obj in stats]):
             raise Exception(
-                "Can't combine non StatisticContatiner types. 'stat' list has to be homogene."
+                "Can't combine non StatisticContatiner types. 'stat' list"
+                " has to be homogeneous."
             )
         else:
             merged_data_stats = list()
@@ -244,7 +255,8 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 merged_parity_stats.append(statistic_container.parity_stats)
 
             return cls(
-                # This assumes that all subclasses set their description from a default value (without any argument)
+                # This assumes that all subclasses set their description 
+                # from a default value (without any argument)
                 read_session=None,
                 data_stats=np.array(merged_data_stats).flatten(),
                 parity_stats=np.array(merged_parity_stats).flatten(),
@@ -257,15 +269,21 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     Statistic that compares two ReadSessions.
     e.g. interdistance
 
-    This type of Statistic is not mergable, because their values depend on pairs of values.
-    These pairs would change drastically when addtional values (merge) would be added
+    This type of Statistic is not mergable, 
+    because their values depend on pairs of values.
+    These pairs would change drastically 
+    when addtional values (merge) would be added
     """
 
-    stat_func: Callable[[list[Read], list[Read]], npt.NDArray[np.float64]] = None
+    stat_func: Callable[[list[Read], list[Read]], npt.NDArray[np.float64]] = (
+        None
+    )
     mergable = False
 
     def __init__(
-        self, read_sessions: list[ReadSession], stat_func_kwargs: dict[str, Any] = {}
+        self,
+        read_sessions: list[ReadSession],
+        stat_func_kwargs: dict[str, Any] = {},
     ) -> None:
         self.stat_func_kwargs = stat_func_kwargs
 
@@ -302,9 +320,12 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
                         )
                     )
 
-        # This combination of using lists of numpy arrays and then flatten them, is not the most efficient.
-        # It would be more efficient to allocate a numpy array with zeros and then fill it via slicing.
-        # But because of other priorities, such proper implementation is postponed for now
+        # This combination of using lists of numpy arrays and then flattening 
+        # them, is not the most efficient.
+        # It would be more efficient to allocate a numpy array with zeros 
+        # and then fill it via slicing.
+        # But because of other priorities, 
+        # such proper implementation is postponed for now
         # TODO improve this implementation if theres spare time
         self.data_stats = np.array(data_compared_values).flatten()
         self.parity_stats = np.array(parity_compared_values).flatten()
@@ -312,9 +333,8 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
 
 class IntradistanceStatistic(SimpleStatistic):
     _hdf5_group_name = "Intradistance"
-    description = (
-        "Intradistance of Bootstrap of set of SUV's via relative Hamming Distance"
-    )
+    description = "Intradistance of Bootstrap of set of SUV's"
+    "via relative Hamming Distance"
     stat_func = staticmethod(intradistance_bootstrap)
     stat_func_kwargs = {"k": 10000}
 
