@@ -2,6 +2,14 @@
 
 # Function definitions:
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+
+function ctrl_c() {
+  echo "run_pblock_analysis was interrupted"
+  tmux kill-session -t "${vivado_session}"
+  echo "tried to kill vivado tmux session"
+}
 
 #######################################
 # Constantly checks output of parallel tmux terminal
@@ -212,6 +220,6 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     done
 done
 
-echo $(tmux capture-pane -pt vivado)
+echo $(tmux capture-pane -pt "${vivado_session}")
 tmux send-keys "source tcl/clean_up_vivado.tcl" C-m
-tmux kill-session -t vivado
+tmux kill-session -t "${vivado_session}"
