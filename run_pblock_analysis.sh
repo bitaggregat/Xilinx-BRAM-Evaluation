@@ -17,7 +17,7 @@ function wait_for_tmux_vivado(){
     while [ "${vivado_output}" != "Vivado%" ]; do
         sleep 0.01s
         # Get last line of capture
-        vivado_output=$(tmux capture-pane -p -t vivado |sed '/^$/d' |tail -1);
+        vivado_output=$(tmux capture-pane -p -t "${vivado_session}" |sed '/^$/d' |tail -1);
     done
 } 
 
@@ -30,11 +30,11 @@ function wait_for_tmux_vivado(){
 #   temperature file: path to file where new temperature measurement is appended 
 #######################################
 function measure_temperature(){
-    tmux send-keys -t vivado "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
+    tmux send-keys -t "${vivado_session}" "puts [get_property TEMPERATURE [get_hw_sysmons]]" C-m;
     # Catch penultimate line of output (contains temperature values)
     temperature_str="Vivado%"
     while [[ "${temperature_str}" == *"Vivado%"* ]] || [[ ${#temperature_str} -gt 9 ]]; do
-        temperature_str=$(tmux capture-pane -p -t vivado |sed '/^$/d'| tail -n 2|head -1);
+        temperature_str=$(tmux capture-pane -p -t "${vivado_session}" |sed '/^$/d'| tail -n 2|head -1);
     done
     echo "${temperature_str}" >> "${1}";
 }
@@ -67,8 +67,6 @@ function flash_bitstreams(){
 #######################################
 #######################################
 
-# Kill previous vivado session if necessary
-tmux kill-session -t vivado
 
 # Help output:
 read -r -d '' help <<EOM
@@ -120,20 +118,28 @@ from_root="$(pwd)"
 # - flashing bs
 # - measuring temperature
 # without open/close hw manager overhead
+vivado_session="vivado_${uart_sn}_${pblock}"
+
+# Kill previous vivado session if necessary
+tmux kill-session -t vivado
+
 tmux new-session -d -s vivado
 # Open vivado interactive terminal in tmux
-tmux send-keys -t vivado "${vivado_path} -mode tcl" C-m
+tmux send-keys -t "${vivado_session}" "${vivado_path} -mode tcl" C-m
 # TODO describe bram measurement
-tmux send-keys -t vivado "open_hw_manager" C-m
-tmux send-keys -t vivado "connect_hw_server" C-m
-tmux send-keys -t vivado "current_hw_target \"localhost:3121/xilinx_tcf/${programming_interface}\"" C-m
-tmux send-keys -t vivado "open_hw_target" C-m
-# Wait for preparation script to finish
-wait_for_tmux_vivado
+if  [ "$reads" -gt 0 ]; then
+  tmux send-keys -t "${vivado_session}" "open_hw_manager" C-m
+  tmux send-keys -t "${vivado_session}" "connect_hw_server" C-m
+  tmux send-keys -t "${vivado_session}" "current_hw_target \"localhost:3121/xilinx_tcf/${programming_interface}\"" C-m
+  tmux send-keys -t "${vivado_session}" "open_hw_target" C-m
+  # Wait for preparation script to finish
+  wait_for_tmux_vivado
+fi
 
 # Iterate over all BRAM Blocks between bram36_min and max_y (inclusive)
 for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_position"); do
     ram_block="RAMB36_X${bram_row_x_position}Y${current_bram_y_position}"
+    echo "${ram_block}"
 
     # Create directory where measurements are saved
     if [ ! -d "${output_path}/${pblock}/${ram_block}" ]; then
@@ -150,7 +156,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position"
 
         # create modified bs:
-        python initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
+        python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
 
         cp "$full_bs_with_initial_value_00" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
         cp "$full_bs_with_initial_value_ff" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
