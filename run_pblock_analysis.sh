@@ -129,9 +129,9 @@ from_root="$(pwd)"
 vivado_session="vivado_${uart_sn}_${pblock}"
 
 # Kill previous vivado session if necessary
-tmux kill-session -t vivado
+tmux kill-session -t "${vivado_session}"
 
-tmux new-session -d -s vivado
+tmux new-session -d -s "${vivado_session}"
 # Open vivado interactive terminal in tmux
 tmux send-keys -t "${vivado_session}" "${vivado_path} -mode tcl" C-m
 # TODO describe bram measurement
