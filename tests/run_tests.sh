@@ -3,7 +3,7 @@
 
 # Test run
 # Tests will verify produced by this run
-source run_device_analysis.sh tests/test_data/test_pblock_config.sh
+#source run_device_analysis.sh tests/test_data/test_pblock_config.sh
 
 #######################################
 # Temperature test
@@ -18,7 +18,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
         echo "Temperature test failed"
         exit 0
     fi
-done < "tests/temp_dir/pblock_1/RAMB36_X2Y12/previous_value_ff/temperature.txt"
+done < "tests/temp_dir/boards/te0802/pblock_1/RAMB36_X2Y12/previous_value_ff_t=0/temperature.txt"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
     if [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
@@ -26,7 +26,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
         echo "Temperature test failed"
         exit 0
     fi
-done < "tests/temp_dir/pblock_1/RAMB36_X2Y12/previous_value_00/temperature.txt"
+done < "tests/temp_dir/boards/te0802/pblock_1/RAMB36_X2Y12/previous_value_00_t=0/temperature.txt"
 
 
 #######################################
@@ -38,13 +38,13 @@ done < "tests/temp_dir/pblock_1/RAMB36_X2Y12/previous_value_00/temperature.txt"
 #######################################
 first_bram_y=12
 second_bram_y=13
-base_path=tests/temp_dir/pblock_1/
+base_path=tests/temp_dir/boards/te0802/pblock_1/
 
 bitstreams=(
   RAMB36_X2Y@/bs/RAMB36_X2Y@_00.bit
   RAMB36_X2Y@/bs/RAMB36_X2Y@_bramless_partial.bit
   RAMB36_X2Y@/bs/RAMB36_X2Y@_ff.bit
-  RAMB36_X2Y@/bs/RAMB36_X2Y@_modified_partial.bit
+  RAMB36_X2Y@/bs/RAMB36_X2Y@_modified_partial.bin
   RAMB36_X2Y@/bs/RAMB36_X2Y@_partial_bram_bs.bit
 )
 

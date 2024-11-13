@@ -175,11 +175,11 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         rm "${modified_bs}";
     fi
     # Set bitstream paths to experiment directory ones
-    full_bs_with_initial_value_00="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
-    full_bs_with_initial_value_ff="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
-    bramless_partial_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
-    partial_bram_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
-    modified_bs="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
+    full_bs_with_initial_value_00_local="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
+    full_bs_with_initial_value_ff_local="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
+    bramless_partial_bs_local="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
+    partial_bram_bs_local="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
+    modified_bs_local="${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
 
 
     # Create temperature file for "previous_value_00"
@@ -201,7 +201,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     for read in $(seq 1 "$reads"); do
         # With previous value 00:
         # BRAM init
-        flash_bitstreams "${full_bs_with_initial_value_00}" "${bramless_partial_bs}" "${modified_bs}" "${wait_time}";
+        flash_bitstreams "${full_bs_with_initial_value_00_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
         # Readout process
         python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "00" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}";
         
@@ -210,7 +210,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         if [ -n "${use_previous_value_ff}" ]; then
             # With previous value ff:
             # BRAM init 
-            flash_bitstreams "${full_bs_with_initial_value_ff}" "${bramless_partial_bs}" "${modified_bs}" "${wait_time}";
+            flash_bitstreams "${full_bs_with_initial_value_ff_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
             # Readout process
             python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -v "ff" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}";
                 
