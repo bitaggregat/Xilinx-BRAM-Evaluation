@@ -2,8 +2,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy.typing as npt
 import numpy as np
-from hdf5_wrapper.experiment_hdf5 import Read
-from hdf5_wrapper.stats_base import MetaStatistic
+from .experiment_hdf5 import Read
+from .stats_base import MetaStatistic
 
 
 def stable_bit_per_read_step_plot(

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 import h5py
-
+from .utility import PlotSettings
 
 class HDF5Convertible(ABC):
     """
@@ -38,16 +38,15 @@ class Plottable(ABC):
     - e.g. a MetaStats obj should create a latex table in their plot method
     """
 
-    _plot_path: str
-    _plot_active: bool
+    plot_settings: PlotSettings
 
     def plot(self) -> None:
         """
         This method is not supposed to be overwritten
         Only _plot shall be overwritten by inherited classes
         """
-        if self._plot_active:
-            if isinstance(self._plot_path, Path):
+        if self.plot_settings.active:
+            if isinstance(self.plot_settings.path, Path):
                 self._plot()
             else:
                 raise Exception("No viable plot was given.\n"

@@ -11,7 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
-
+from .utility import PlotSettings
 
 class MetaStatistic(HDF5Convertible, Plottable):
     """
@@ -28,15 +28,14 @@ class MetaStatistic(HDF5Convertible, Plottable):
         "Maximum": np.max,
     }
     statistic_method_names = sorted(list(statistic_methods.keys()))
-    stats: dict[str, float] = None
+    stats: dict[str, np.float64] = None
 
     def __init__(
         self,
         values: npt.NDArray[np.float64],
-        plot_path: Path,
-        plot_active: bool,
+        plot_settings: PlotSettings
     ) -> None:
-        super().__init__(plot_path, plot_active)
+        super().__init__(plot_settings)
         self.stats = {
             stat_name: method(values)
             for stat_name, method in self.statistic_methods.items()
@@ -64,11 +63,11 @@ class MetaStatistic(HDF5Convertible, Plottable):
         table_format = "|".join(["c"] * len(self.statistic_method_names))
         row = " & ".join(
             [
-                self.stats[stat_name]
+                str(self.stats[stat_name])
                 for stat_name in self.statistic_method_names
             ]
         )
-        with open(path.with_suffix("tex"), mode="w") as f:
+        with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
                 [
                     "\\begin{tabular}{" + table_format + "}",
@@ -80,7 +79,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
             )
 
     def _plot(self) -> None:
-        self.meta_stat_latex_table(Path(self._plot_path, "metas_stats"))
+        self.meta_stat_latex_table(Path(self.plot_settings.path, "metas_stats"))
 
 
 class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
@@ -108,13 +107,11 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         return {
             "Data": MetaStatistic(
                 self.data_stats,
-                Path(self._plot_path, "data_meta_stats"),
-                self._plot_active,
+                self.plot_settings.with_expanded_path("data_meta_stats")
             ),
             "Parity": MetaStatistic(
                 self.parity_stats,
-                Path(self._plot_path, "parity_meta_stats"),
-                self._plot_active,
+                self.plot_settings.with_expanded_path("parity_meta_stats")
             ),
         }
 
@@ -144,7 +141,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_merge(cls, stats: list[Self]) -> Self:
+    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
         raise NotImplementedError
 
     def _plot(self) -> None:
@@ -163,7 +160,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
 
     def __init__(
         self,
-        plot_path: Path,
+        plot_settings: PlotSettings,
         read_session: ReadSession = None,
         data_stats: Any = None,
         parity_stats: Any = None,
@@ -174,6 +171,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         - ReadSession
         - already precalculated data and parity stats
         """
+        self.plot_settings = plot_settings
         self.stat_func_kwargs = stat_func_kwargs
         if read_session is not None:
             self.data_stats = self.stat_func(
@@ -192,7 +190,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             self.parity_stats = parity_stats
 
     @classmethod
-    def from_merge(cls, stats: list[Self]) -> Self:
+    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
         """
         Combines stats by just adding their lists together.
         This works because statistical values of this class
@@ -218,6 +216,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 read_session=None,
                 data_stats=np.array(merged_data_stats).flatten(),
                 parity_stats=np.array(merged_parity_stats).flatten(),
+                plot_settings=plot_settings,
                 **sample_instance.stat_func_kwargs,
             )
 
@@ -241,8 +240,10 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     def __init__(
         self,
         read_sessions: list[ReadSession],
-        stat_func_kwargs: dict[str, Any] = {},
+        plot_settings: PlotSettings,
+        stat_func_kwargs: dict[str, Any] = {}
     ) -> None:
+        self.plot_settings = plot_settings
         self.stat_func_kwargs = stat_func_kwargs
 
         self.compare(read_sessions, **stat_func_kwargs)
@@ -287,3 +288,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
         # TODO improve this implementation if theres spare time
         self.data_stats = np.array(data_compared_values).flatten()
         self.parity_stats = np.array(parity_compared_values).flatten()
+
+    @classmethod
+    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+        return super().from_merge(stats, plot_settings)

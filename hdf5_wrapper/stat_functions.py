@@ -91,7 +91,9 @@ def interdistance_bootstrap(
         choice.bits_flattened for choice in random.choices(other_reads, k=k)
     ]
 
-    return np.fromiter(map(hamming, self_choices, other_choices))
+    return np.fromiter(
+        map(hamming, self_choices, other_choices), dtype=np.float64
+    )
 
 
 def bit_stabilization_count_over_time(
@@ -123,8 +125,7 @@ def bit_stabilization_count_over_time(
 
     stable_bits_per_time_step = np.zeros(reads_count)
     bit_indices, counts = np.unique(
-        did_not_change_since_read, 
-        return_counts=True
+        did_not_change_since_read, return_counts=True
     )
 
     last_relevant_idx = reads_count - stable_after_n_reads
