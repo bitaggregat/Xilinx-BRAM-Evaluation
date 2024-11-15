@@ -36,7 +36,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
 
     def __post_init__(self) -> None:
         # Simple check to help securing the produced datas correctness
-        # This may cost some extra time, 
+        # This may cost some extra time,
         # but it is worth it because correctness is our highest priority
         if (
             any(
@@ -319,11 +319,11 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                 if issubclass(statistic_type, ComparisonStatistic):
                     self.statistics[statistic_type] = dict()
                     for read_session_name in self.read_session_names:
-                        # Gather read_sessions of same read_session_name 
+                        # Gather read_sessions of same read_session_name
                         # for each container
                         read_sessions_per_container = [
                             subcontainer.read_sessions[read_session_name]
-                            for subcontainer in 
+                            for subcontainer in
                             experiment_container.subcontainers.values()
                         ]
                         if len(read_sessions_per_container) == 1:

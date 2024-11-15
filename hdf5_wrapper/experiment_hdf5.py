@@ -24,7 +24,7 @@ class Read:
 
     raw_read: bytes
     # Has shape (x, 8)
-    # Not noted in type hint because numpy type hinting best practice 
+    # Not noted in type hint because numpy type hinting best practice
     # is currently going through changes
     bits: npt.NDArray
 

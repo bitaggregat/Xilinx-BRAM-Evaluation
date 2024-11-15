@@ -255,7 +255,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 merged_parity_stats.append(statistic_container.parity_stats)
 
             return cls(
-                # This assumes that all subclasses set their description 
+                # This assumes that all subclasses set their description
                 # from a default value (without any argument)
                 read_session=None,
                 data_stats=np.array(merged_data_stats).flatten(),
@@ -320,11 +320,11 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
                         )
                     )
 
-        # This combination of using lists of numpy arrays and then flattening 
+        # This combination of using lists of numpy arrays and then flattening
         # them, is not the most efficient.
-        # It would be more efficient to allocate a numpy array with zeros 
+        # It would be more efficient to allocate a numpy array with zeros
         # and then fill it via slicing.
-        # But because of other priorities, 
+        # But because of other priorities,
         # such proper implementation is postponed for now
         # TODO improve this implementation if theres spare time
         self.data_stats = np.array(data_compared_values).flatten()
