@@ -43,6 +43,11 @@ class Read:
 
     @classmethod
     def from_raw(cls, raw_read: bytes) -> Self:
+        """
+        Creates Read object from raw read.
+        Args:
+            raw_read (bytes): Single read of bram startup value 
+        """
         uint8_read = np.frombuffer(raw_read, dtype=np.uint8)
         bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
         return cls(raw_read, bits)
@@ -59,6 +64,12 @@ class ReadSession:
     - data and parity reads are related because
       they are measured at the same time
         - e.g. data_reads[0] was taken at the same time as parity_reads[0]
+
+    Attributes:
+        data_reads: Read's made from brams "regular" bits' startup values
+        parity_reads: Read's made from brams parity bits' startup values
+        temperatures: Temperature values after each readout procedure
+                      (Index parallel to data_ and parity_reads)
     """
 
     # ReadSession's (and many other objects)
@@ -101,6 +112,9 @@ class ReadSession:
         """
         More efficient version of __add__ if multiple read sessions
         are added at once
+
+        Args:
+            read_sessions: List of ReadSession's objects that shall be merged  
         """
         merged_data_reads = list()
         merged_parity_reads = list()
@@ -118,6 +132,8 @@ class ReadSession:
 class BramBlock:
     """
     Container that gathers all ReadSession's of the same bram block
+
+    Attributes:
     """
 
     name: str  # name of bram block: e.g. RAMB36_X2Y12
@@ -210,6 +226,9 @@ class PBlock(ExperimentContainer):
     def flatten(self) -> Dict[str, ReadSession]:
         """
         Merges read sessions of all brams for each keyword
+
+        Returns:
+            Adds up flatten
         """
         return {
             read_session_key: reduce(
