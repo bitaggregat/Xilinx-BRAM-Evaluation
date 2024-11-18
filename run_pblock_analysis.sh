@@ -187,6 +187,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/temperature.txt";
     if [ ! -f "${temperature_file_path_00}" ]; then
         touch "${temperature_file_path_00}";
+        echo "# Temperature in Celsius" >> "${temperature_file_path_00}";
     fi
     # Create temperature file for "previous_value_ff"
     if [ -n "${use_previous_value_ff}" ]; then
@@ -194,6 +195,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/temperature.txt";
         if [ ! -f "${temperature_file_path_ff}" ]; then
             touch "${temperature_file_path_ff}";
+            echo "# Temperature in Celsius" >> "${temperature_file_path_ff}";
         fi
     fi
 
