@@ -23,7 +23,7 @@ function ctrl_c() {
 function wait_for_tmux_vivado(){
     vivado_output=''
     while [ "${vivado_output}" != "Vivado%" ]; do
-        sleep 0.01s
+        sleep 0.25s
         # Get last line of capture
         vivado_output=$(tmux capture-pane -p -t "${vivado_session}" |sed '/^$/d' |tail -1);
     done
