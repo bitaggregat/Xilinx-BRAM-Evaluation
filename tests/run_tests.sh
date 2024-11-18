@@ -2,8 +2,8 @@
 
 
 # Test run
-# Tests will verify produced by this run
-#source run_device_analysis.sh tests/test_data/test_pblock_config.sh
+# Tests will verify content produced by this run:
+source run_device_analysis.sh tests/test_data/test_pblock_config.sh
 
 #######################################
 # Temperature test
