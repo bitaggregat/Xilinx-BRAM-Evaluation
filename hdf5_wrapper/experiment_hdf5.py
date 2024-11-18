@@ -20,12 +20,14 @@ class Read:
     """
     Wrapper around a single read value of the BRAM
     - also sometimes called SUV (start up value)
+
+    Attributes:
+        raw_read: SUV as bytes object
+        bits: SUV as numpy array. Has shape (x, 8)
     """
 
     raw_read: bytes
-    # Has shape (x, 8)
     # Not noted in type hint because numpy type hinting best practice
-    # is currently going through changes
     bits: npt.NDArray
 
     @cached_property
@@ -134,9 +136,12 @@ class BramBlock:
     Container that gathers all ReadSession's of the same bram block
 
     Attributes:
+        name: Name of bram block: e.g. RAMB36_X2Y12
+        read_sessions: ReadSession objects mapped by their name
+        read_session_names: Names of all existings ReadSession's
     """
 
-    name: str  # name of bram block: e.g. RAMB36_X2Y12
+    name: str 
     read_sessions: Dict[str, ReadSession]
     read_session_names: list[str]
 
@@ -173,6 +178,13 @@ class ExperimentContainer(ABC):
     Reduces code duplicates
     Note: BramBlock is not included because
           it does not own other "subcontainers"
+
+    Attributes:
+        name: Name of experiment container (e.g. pblock_x or "device_y")
+        subcontainers: Subordinated containers (e.g. a device has multiple 
+                        pblocks and a pblock has multiple bram blocks)
+        read_sessions: ReadSession objects mapped by their name
+        read_session_names: Names of all existings ReadSession's
     """
 
     name: str
@@ -249,6 +261,14 @@ class PBlock(ExperimentContainer):
 class Board(ExperimentContainer):
     """
     See ExperimentContainer
+
+    Attributes:
+        fpga: Name of fpga. Not to be confused with device name (e.g.
+                device:=te0802 but fpga:=zu1eg
+        uart_sn: Serial number of UART device used for measurements
+        programming_interface: Serial number of jtag programming interface
+        data: Date of measurement of board
+        subcontainers: See ExperimentContainer  
     """
 
     fpga: str
@@ -313,6 +333,10 @@ class Experiment(ExperimentContainer):
     """
     See ExperimentContainer
     - Highest layer of ExperimentContainers
+
+    Attributes;
+        subcontainer: See ExperimentContainer
+        commit: Hash value of git commit used during experiment
     """
 
     subcontainers: Dict[str, Board]

@@ -17,6 +17,13 @@ from .hdf5_convertible import HDF5Convertible
 class MetaStatistic(HDF5Convertible):
     """
     Stores stats about stats
+
+    Attributes:
+        _hdf5_group_name: See HDF5Convertible
+        statistic_methods: Statistic functions mapped by a sttring that shall
+                            represent them
+        statistic_method_names: Sorted list of keys of "statistic_methods"
+        stats: Results of statistic functions mapped by their functions name
     """
 
     _hdf5_group_name = "Meta Statistic"
@@ -143,6 +150,15 @@ class Statistic(HDF5Convertible, metaclass=ABCMeta):
     """
     Statistic over ReadSession.
     Abstract class
+
+    Attributes:
+        description: String that helps identifying the statistic used
+        stat_func: Function used to create statistic
+        stat_func_kwargs: Kwargs of additinal parameters for "stat_func"
+        data_stats: Stats of data bits, gained through "stat_func"
+        parity_stats: Stats of parity bits, gained through "stat_func"
+        mergable: Indicates if "from_merge" method can be used on multiple
+                    instances of this "Statistic" class
     """
 
     description: str
@@ -200,6 +216,9 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
     """
     Statistic over function such that there is one value for each Read.
     e.g. intradistance
+
+    Attributes:
+        mergable: See Statistic. Instances of this class are mergable.
     """
 
     mergable = True
@@ -273,6 +292,11 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     because their values depend on pairs of values.
     These pairs would change drastically
     when addtional values (merge) would be added
+
+    Attributes:
+        stat_func: See Statistic. Method signature differs slightly from 
+                    parent class
+        mergable: See Statistic. Instances of this class are not mergable
     """
 
     stat_func: Callable[[list[Read], list[Read]], npt.NDArray[np.float64]] = (
@@ -332,6 +356,10 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
 
 
 class IntradistanceStatistic(SimpleStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Intradistance"
     description = "Intradistance of Bootstrap of set of SUV's"
     "via relative Hamming Distance"
@@ -340,12 +368,20 @@ class IntradistanceStatistic(SimpleStatistic):
 
 
 class EntropyStatistic(SimpleStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Entropy"
     description = "Entropy on single reads via counts of 1's and 0's in SUV"
     stat_func = staticmethod(entropy_list)
 
 
 class InterdistanceStatistic(ComparisonStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Interdistance"
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)
