@@ -21,7 +21,7 @@
 
 
 module new_uart_tx(
-    input       CLK_50M         ,
+    input       CLK_in         ,
     input       rst_n           ,
     input [2:0] bps_sel         ,
     input       check_sel       ,
@@ -52,7 +52,7 @@ module new_uart_tx(
     assign      busy = n_cnt_flag;
 
     //输入数据寄存
-    always@(posedge CLK_50M)	
+    always@(posedge CLK_in)	
     if(req)
         din_reg <= din;
     else if(~n_cnt_flag)
@@ -68,7 +68,7 @@ module new_uart_tx(
     end  
 
     //波特率计数器
-    always@(posedge CLK_50M or posedge rst_n)
+    always@(posedge CLK_in or posedge rst_n)
     if(rst_n)
         bps_cnt <= 'd0;
     else if(bps_cnt == bps_mode-1) 
@@ -77,7 +77,7 @@ module new_uart_tx(
         bps_cnt <= bps_cnt + 1'b1;
 
     //线性序列机
-    always@(posedge CLK_50M or posedge rst_n)
+    always@(posedge CLK_in or posedge rst_n)
     if(rst_n)
         n_cnt_flag <= 1'b0;
     else if(n_cnt == 'd10 && bps_cnt == bps_mode-1)
@@ -85,7 +85,7 @@ module new_uart_tx(
     else if(req)
         n_cnt_flag <= 1'b1;
 
-    always@(posedge CLK_50M or posedge rst_n)	
+    always@(posedge CLK_in or posedge rst_n)	
     if(rst_n)
         n_cnt <= 'd0;
     else if(n_cnt_flag) begin

@@ -45,7 +45,7 @@ module read_bram(
 
     /*****************************Wire************************************/
     wire        w_clk           ;
-    wire        w_resetn        ;
+    wire        w_reset        ;
     wire        w_uart_busy     ;
     wire [35:0] w_bram_dout     ;
     wire [7:0]  w_uart_txdata   ;
@@ -53,14 +53,14 @@ module read_bram(
     wire        send_enable     ;
 
     /*************************Combinational Logic************************/
-    assign w_resetn         =   rst                    ;
+    assign w_reset         =   rst                    ;
     assign w_uart_txdata    =   r_bram_dout             ;
     assign led              =   r_led                   ;
     assign send_enable      =   1'b1                    ;
 
     /****************************Processing*****************************/
     always @(posedge w_clk) begin
-        if(w_resetn || rx_received) begin
+        if(w_reset || rx_received) begin
             r_exec_state <= IDLE;
         end else begin
             r_exec_state <= r_next_state;
@@ -164,7 +164,7 @@ module read_bram(
         
     new_uart_tx new_uart(
         .CLK_50M(w_clk),  
-        .rst_n(w_resetn),   
+        .rst_n(w_reset),   
         .bps_sel(3'd1),     // 9600, DONT CHANGE
         .check_sel(1'b0),   // Even
         .din(w_uart_txdata),      
