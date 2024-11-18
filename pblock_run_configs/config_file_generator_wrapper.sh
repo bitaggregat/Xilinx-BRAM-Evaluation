@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+echo "Note: This script is supposed to be run from */pblock_run_configs"
+
+# Adapt this according to your target runs
 python3 config_files_generator.py \
---vivado_project /home/wschulz/Documents/xilinx-bram-evaluation/vivado_project/zcu102_eva_kit/read_bram_zcu102 \
+--vivado_project "$(dirname "${PWD}")/vivado_project/zcu102_eva_kit/read_bram_zcu102" \
 --vivado_path /opt/Xilinx/Vivado/2024.1/bin/vivado \
---experiment_output_path /home/wschulz/Documents/xilinx-bram-evaluation/measurements/automatic/full_scan_zcu102 \
+--experiment_output_path "$(dirname "${PWD}")/measurements/automatic/full_scan_zcu102" \
 --reads 0 \
 --output_path zcu102_part2 \
 --uart_sn A503VYYY \
