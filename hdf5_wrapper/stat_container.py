@@ -110,7 +110,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
     ) -> None:
         header = " & " + " & ".join(
             [
-                "\\textbf{" + stat_name + "}"
+                "\\textbf{" + stat_name.replace("_", "\_") + "}"
                 for stat_name in MetaStatistic.statistic_method_names
             ]
         )
@@ -120,24 +120,24 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
 
         rows = [
             " & ".join(
-                [read_session_name]
+                [read_session_name.replace("_", "\_")]
                 + [
-                    meta_stat.stats[stat_name]
+                    str(meta_stat.stats[stat_name])
                     for stat_name in MetaStatistic.statistic_method_names
                 ]
             )
-            + "\\\\"
+            + "\\\\\n"
             for read_session_name, meta_stat in meta_stats_per_read_session.items()
         ]
-        with open(path.with_suffix("tex"), mode="w") as f:
+        with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
                 [
-                    "\\begin{tabular}{" + table_format + "}",
-                    header + "\\\\",
-                    "\\hline",
+                    "\\begin{tabular}{" + table_format + "}\n",
+                    header + "\\\\\n",
+                    "\\hline\n",
                 ]
                 + rows
-                + ["\\end{tabular}"]
+                + ["\\end{tabular}\n"]
             )
 
     def _plot(self) -> None:
@@ -192,7 +192,7 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
             ].meta_stats["Data"]
 
         return MultiReadSessionMetaStatistic(
-            self.plot_settings.with_expanded_path("meta_stats"),
+            self.plot_settings.with_expanded_path("all_meta_stats"),
             data_meta_stats,
             parity_meta_stats,
             self._read_session_names,
@@ -219,9 +219,7 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
                     multi_rs_statistic.statistics[read_session_name]
                     for multi_rs_statistic in multi_rs_statistics
                 ],
-                plot_settings.with_expanded_path(
-                    statistic_type._hdf5_group_name
-                ),
+                plot_settings.with_expanded_path(read_session_name),
             )
             for read_session_name in read_session_names
         }
@@ -239,6 +237,7 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
         self.meta_stats.add_to_hdf5_group(multi_group)
 
     def _plot(self) -> None:
+        self.meta_stats.plot()
         for statistic in self.statistics.values():
             statistic.plot()
 
@@ -277,7 +276,7 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
                         statistic_type(
                             self.plot_settings.with_expanded_path(
                                 statistic_type._hdf5_group_name
-                            ),
+                            ).with_expanded_path(read_session_name),
                             experiment_container.read_sessions[
                                 read_session_name
                             ],
@@ -353,7 +352,9 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
         self.statistics = dict()
         self.subowners = [
             self.subowner_type(
-                plot_settings=self.plot_settings.with_expanded_path(self.name),
+                plot_settings=self.plot_settings.with_expanded_path(
+                    subcontainer.name
+                ),
                 experiment_container=subcontainer,
             )
             for subcontainer in experiment_container.subcontainers.values()
@@ -441,16 +442,14 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                                 read_session_lists[read_session_name],
                                 self.plot_settings.with_expanded_path(
                                     statistic_type._hdf5_group_name
-                                ),
+                                ).with_expanded_path(read_session_name),
                             )
                             for read_session_name in self._read_session_names
                         }
 
                         self.statistics[statistic_type] = (
                             MultiReadSessionStatistic(
-                                plot_settings=self.plot_settings.with_expanded_path(
-                                    statistic_type._hdf5_group_name
-                                ),
+                                plot_settings=self.plot_settings.with_expanded_path(statistic_type._hdf5_group_name),
                                 statistics=statistics,
                                 statistic_type=statistic_type,
                                 _read_session_names=self._read_session_names,
@@ -468,6 +467,8 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     def _plot(self) -> None:
         for statistic in self.statistics.values():
             statistic.plot()
+        for subowner in self.subowners:
+            subowner.plot()
 
 
 class BramBlockStat(MultiStatisticOwner):

@@ -97,7 +97,7 @@ def interdistance_bootstrap(
 
 
 def bit_stabilization_count_over_time(
-    reads: list[Read], stable_after_n_reads: int = 100
+    reads: list[Read], stable_after_n_reads: int = 1000
 ) -> npt.NDArray[np.float64]:
     """
     Goes backwards through Read's.

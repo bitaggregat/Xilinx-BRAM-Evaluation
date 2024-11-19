@@ -29,17 +29,20 @@ class MetaStatistic(HDF5Convertible, Plottable):
     }
     statistic_method_names = sorted(list(statistic_methods.keys()))
     stats: dict[str, np.float64] = None
+    bit_type: str
 
     def __init__(
         self,
         values: npt.NDArray[np.float64],
-        plot_settings: PlotSettings
+        plot_settings: PlotSettings,
+        bit_type: str
     ) -> None:
         super().__init__(plot_settings)
         self.stats = {
             stat_name: method(values)
             for stat_name, method in self.statistic_methods.items()
         }
+        self.bit_type = bit_type
 
     def add_to_hdf5_group(self, parent: h5py.Group) -> None:
         meta_statistic_ds = parent.create_dataset(
@@ -56,7 +59,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
     def meta_stat_latex_table(self, path: Path) -> None:
         header = " & ".join(
             [
-                "\\textbf{" + stat_name + "}"
+                "\\textbf{" + stat_name.replace("_", "\_") + "}"
                 for stat_name in self.statistic_method_names
             ]
         )
@@ -70,16 +73,16 @@ class MetaStatistic(HDF5Convertible, Plottable):
         with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
                 [
-                    "\\begin{tabular}{" + table_format + "}",
-                    header + "\\\\",
-                    "\\hline",
-                    row + "\\\\",
-                    "\\end{tabular}",
+                    "\\begin{tabular}{" + table_format + "}\n",
+                    header + "\\\\\n",
+                    "\\hline\n",
+                    row + "\\\\\n",
+                    "\\end{tabular}\n",
                 ]
             )
 
     def _plot(self) -> None:
-        self.meta_stat_latex_table(Path(self.plot_settings.path, "metas_stats"))
+        self.meta_stat_latex_table(Path(self.plot_settings.path, f"{self.bit_type}_meta_stats"))
 
 
 class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
@@ -90,9 +93,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
 
     description: str
     stat_func: Callable[[list[Read]], npt.NDArray[np.float64]]
-    stat_func_kwargs: (
-        dict  # Args that are used by method additionally to Reads
-    )
+    stat_func_kwargs: dict = dict()  # Args that are used by method additionally to Reads
 
     # This class and objects that handle ReadSession data in general
     # Differentiate between two types of Reads (see ReadSession)
@@ -107,11 +108,13 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         return {
             "Data": MetaStatistic(
                 self.data_stats,
-                self.plot_settings.with_expanded_path("data_meta_stats")
+                self.plot_settings.with_expanded_path(""),
+                bit_type="data"
             ),
             "Parity": MetaStatistic(
                 self.parity_stats,
-                self.plot_settings.with_expanded_path("parity_meta_stats")
+                self.plot_settings.with_expanded_path(""),
+                bit_type="parity"
             ),
         }
 
@@ -163,8 +166,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         plot_settings: PlotSettings,
         read_session: ReadSession = None,
         data_stats: Any = None,
-        parity_stats: Any = None,
-        stat_func_kwargs: dict[str, Any] = {},
+        parity_stats: Any = None
     ) -> None:
         """
         Class can be created from either:
@@ -172,13 +174,12 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         - already precalculated data and parity stats
         """
         self.plot_settings = plot_settings
-        self.stat_func_kwargs = stat_func_kwargs
         if read_session is not None:
             self.data_stats = self.stat_func(
-                read_session.data_reads, **stat_func_kwargs
+                read_session.data_reads, **self.stat_func_kwargs
             )
             self.parity_stats = self.stat_func(
-                read_session.parity_reads, **stat_func_kwargs
+                read_session.parity_reads, **self.stat_func_kwargs
             )
         elif data_stats is None or parity_stats is None:
             raise Exception(
@@ -196,7 +197,6 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         This works because statistical values of this class
         are dependant on single Read values
         """
-        sample_instance = stats[0]
         if any([not isinstance(obj, cls) for obj in stats]):
             raise Exception(
                 "Can't combine non StatisticContatiner types. 'stat' list"
@@ -216,8 +216,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 read_session=None,
                 data_stats=np.array(merged_data_stats).flatten(),
                 parity_stats=np.array(merged_parity_stats).flatten(),
-                plot_settings=plot_settings,
-                **sample_instance.stat_func_kwargs,
+                plot_settings=plot_settings
             )
 
 
@@ -240,13 +239,11 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     def __init__(
         self,
         read_sessions: list[ReadSession],
-        plot_settings: PlotSettings,
-        stat_func_kwargs: dict[str, Any] = {}
+        plot_settings: PlotSettings
     ) -> None:
         self.plot_settings = plot_settings
-        self.stat_func_kwargs = stat_func_kwargs
 
-        self.compare(read_sessions, **stat_func_kwargs)
+        self.compare(read_sessions)
 
     def compare(self, read_sessions: list[ReadSession]) -> None:
         """

@@ -1,9 +1,6 @@
 from pathlib import Path
 from .plotting import stable_bit_per_read_step_plot
-from .stats_base import (
-    SimpleStatistic,
-    ComparisonStatistic
-)
+from .stats_base import SimpleStatistic, ComparisonStatistic
 from .stat_functions import (
     interdistance,
     intradistance,
@@ -32,15 +29,27 @@ class InterdistanceStatistic(ComparisonStatistic):
     _hdf5_group_name = "Interdistance"
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)
-    stat_func_kwargs = {"k": 100000}
+    stat_func_kwargs = {"k": 100}
 
 
 class BitStabilizationStatistic(SimpleStatistic):
     _hdf5_group_name = "Bit Stabilization"
     description = "TODO"
     stat_func = staticmethod(bit_stabilization_count_over_time)
-    stat_func_kwargs = {}
+    stat_func_kwargs = {"stable_after_n_reads": 5}
 
     def _plot(self) -> None:
-        pass
-        
+        super()._plot()
+
+        stable_bit_per_read_step_plot(
+            self.data_stats,
+            "data",
+            self.plot_settings.path,
+            **self.stat_func_kwargs,
+        )
+        stable_bit_per_read_step_plot(
+            self.parity_stats,
+            "parity",
+            self.plot_settings.path,
+            **self.stat_func_kwargs,
+        )

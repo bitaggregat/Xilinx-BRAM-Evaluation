@@ -7,7 +7,7 @@ from .stats_base import MetaStatistic
 
 
 def stable_bit_per_read_step_plot(
-    bit_stats: npt.NDArray[np.float64], bit_type: str, path: Path
+    bit_stats: npt.NDArray[np.float64], bit_type: str, path: Path, stable_after_n_reads: int = 1000
 ) -> None:
     """
     Creates a step plot of stable bits over time/reads
@@ -18,11 +18,11 @@ def stable_bit_per_read_step_plot(
     bits_over_time = np.cumsum(bit_stats)
 
     fig, ax = plt.subplots()
-    x = np.arange(1, len(bit_stats) + 1)
-    y = bits_over_time
+    x = np.arange(1, len(bit_stats) + 1 - stable_after_n_reads)
+    y = bits_over_time[:-stable_after_n_reads]
 
     ax.step(x, y, where="post", label="post")
-    ax.plot(x, y, "o--", color="grey", alpha=0.3)
+    #ax.plot(x, y, "o--", color="grey", alpha=0.3)
     ax.set(
         xlabel="Bram readout procedure",
         ylabel="# of stable bits",

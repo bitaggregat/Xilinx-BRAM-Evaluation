@@ -100,7 +100,7 @@ def main(arg_dict: dict[str, Any]):
         hdf5_file.attrs["rng seed"] = arg_dict["seed"]
         random.seed(arg_dict["seed"])
 
-        experiment_stats = ExperimentStat(experiment, plot_settings)
+        experiment_stats = ExperimentStat(experiment, plot_settings.with_expanded_path("Experiment"))
         # Start computing stats
         experiment_stats.add_to_hdf5_group(hdf5_file)
         experiment_stats.plot()
