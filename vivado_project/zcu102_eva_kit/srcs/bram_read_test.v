@@ -11,6 +11,8 @@ module bram_read_test(
     
     assign douta = {parity, data};
     
+// Documentation of the RAMB36E2 primitive and its ports is in
+// https://docs.amd.com/r/en-US/ug974-vivado-ultrascale-libraries/RAMB36E2
 RAMB36E2 #(
 // CASCADE_ORDER_A, CASCADE_ORDER_B: "FIRST", "MIDDLE", "LAST", "NONE"
 .CASCADE_ORDER_A("NONE"),
