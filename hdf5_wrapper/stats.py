@@ -12,6 +12,10 @@ from .stat_functions import (
 
 
 class IntradistanceStatistic(SimpleStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Intradistance"
     description = "Intradistance of Bootstrap of set of SUV's"
     "via relative Hamming Distance"
@@ -20,12 +24,20 @@ class IntradistanceStatistic(SimpleStatistic):
 
 
 class EntropyStatistic(SimpleStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Entropy"
     description = "Entropy on single reads via counts of 1's and 0's in SUV"
     stat_func = staticmethod(entropy_list)
 
 
 class InterdistanceStatistic(ComparisonStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Interdistance"
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)

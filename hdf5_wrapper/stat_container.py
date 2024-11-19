@@ -32,6 +32,14 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
     Main objective:
     -> encapsulating the unification of MetaStatistic's
        and their handling in hdf5
+
+    Attributes:
+        data_meta_statistics: MetaStatistic objects of data bits, mapped by
+                                read sesssion name
+        parity_meta_statistics: Metastatistic objects of parity bits, mapped
+                                byt read session name
+        _read_session_names: List of existing read session names/keys
+        _hdf5_group_name: See HDF5Convertible
     """
 
     data_meta_statistics: dict[str, MetaStatistic]
@@ -157,6 +165,11 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
     Gathers Statistics of different ReadSessions but same "Statistic"-type
     - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00"
       and "previous_value_ff"
+
+    Attributes:
+        statistics: Statistic objects mapped by read session name
+        statisitic_type: Statistic type used by this class
+        _read_session_names: Names/Keys of existing read sessions
     """
 
     statistics: dict[str, Statistic]
@@ -247,6 +260,12 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
     Class that manages MultReadSessionObjects of different Statistic types.
     This is the Statistic container equivalent of a BramBlock object.
     -> It manages Stats (but doesn't manage other Statistic container objects)
+
+    Attributes:
+        name: Name of ExperimentContainer that was used for this object/class
+        _read_session_names: List of existing read session names/keys
+        types_of_statistics: List of Statistic types used 
+                                by this MultiStatisticOwner 
     """
 
     name: str
@@ -332,11 +351,18 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     Is the Statistic equivalent of PBlock or
     Board objects of "experiment.hdf5.py".
     The main objective of these classes is to reduce repetitive code duplicates
+
+    Attributes:
+        subowners: List of subordinated MultiStatisticOwner's
+        subowner_type: Type of "subowners"
+        subowner_identifier: String used for path in hdf5 path of subowner
+                                Will be extracted from subcontainer
+
     """
 
     subowners: list[MultiStatisticOwner] = None
     subowner_type: Type[MultiStatisticOwner]
-    subowner_identifier: str  # Needs to be set by child class
+    subowner_identifier: str
 
     def __init__(
         self,
@@ -472,14 +498,21 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
 
 class BramBlockStat(MultiStatisticOwner):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitStabilizationStatistic,
     ]
 
-
 class PBlockStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -490,6 +523,10 @@ class PBlockStat(StatAggregator):
 
 
 class BoardStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -500,6 +537,10 @@ class BoardStat(StatAggregator):
 
 
 class ExperimentStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
