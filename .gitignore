@@ -113,9 +113,10 @@ build/*
 !*.fasm
 !*.png
 !*.md
-!*.bit
+*.bit
 !copenFPGALoader/build/copenFPGALoader.so
 !reading/switches_and_leds.jpg
+temperature.txt
 #########
-!*.hdf5
+*.hdf5
 #########
