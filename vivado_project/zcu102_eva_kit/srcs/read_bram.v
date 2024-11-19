@@ -163,8 +163,8 @@ module read_bram(
     );
         
     new_uart_tx new_uart(
-        .CLK_50M(w_clk),  
-        .rst_n(w_reset),   
+        .CLK_in(w_clk),
+        .rst(w_reset),
         .bps_sel(3'd1),     // 9600, DONT CHANGE
         .check_sel(1'b0),   // Even
         .din(w_uart_txdata),      
