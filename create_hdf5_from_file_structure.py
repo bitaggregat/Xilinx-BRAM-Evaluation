@@ -43,6 +43,7 @@ def add_temperature_dataset(temperature_file: Path, parent: h5py._hl.group.Group
         values = [
             float(measurement.split()[0].strip()) 
             for measurement in f.readlines()
+            if measurement.strip()[0] != "#"  # Ignore Comments
         ]
 
         parent.create_dataset("temperature" , (len(values),), dtype="f", data=values)
@@ -135,7 +136,7 @@ def add_bitstream_group(path: Path, parent: h5py._hl.group.Group) -> None:
                     bitstream_group.attrs["bramless_partial"] = np.void(f.read())
     
 
-def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_bram_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
     '''
     Adds measurement Data from single BRAM experiment as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
@@ -160,10 +161,10 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group) -> None:
             add_bram_dataset_group(expected_path, bram_group, expected_path.parts[-1])
     
     bs_path = Path(path, "bs")
-    if bs_path.exists() and bs_path.is_dir():
+    if include_bs and bs_path.exists() and bs_path.is_dir():
         add_bitstream_group(bs_path, bram_group)
 
-def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_pblock_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
     '''
     Adds all bram data directories from a given pblock directory
     '''
@@ -177,9 +178,9 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group) -> None:
     ]
 
     for bram_dir in bram_dirs:
-        add_bram_group(bram_dir, pblock_group)
+        add_bram_group(bram_dir, pblock_group, include_bs)
 
-def add_single_board_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_single_board_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
     '''
     Adds content of a board directory
     '''
@@ -197,9 +198,9 @@ def add_single_board_group(path: Path, parent: h5py._hl.group.Group) -> None:
     ]
 
     for pblock_dir in pblock_dirs:
-        add_pblock_group(pblock_dir, board_group)
+        add_pblock_group(pblock_dir, board_group, include_bs)
 
-def add_boards_group(path: Path, parent: h5py._hl.group.Group) -> None:
+def add_boards_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
     '''
     Adds all board directories from a given boards directory
     '''
@@ -211,13 +212,21 @@ def add_boards_group(path: Path, parent: h5py._hl.group.Group) -> None:
     ]
 
     for board_dir in board_dirs:
-        add_single_board_group(board_dir, boards_group)
+        add_single_board_group(board_dir, boards_group, include_bs)
 
 parser = argparse.ArgumentParser("Script converts read bram data structured in directories, to hdf5")
 parser.add_argument(
     "-r", "--root_dir",
     help="Base directory of read data",
     required=True
+)
+parser.add_argument(
+    "-ib",
+    "--ignore_bitstreams",
+    help="Pass this argument if you don't want to include the bitstreams in "
+    "the produced hdf5 file",
+    required=False,
+    action="store_true"
 )
 
 if __name__ == "__main__":
@@ -230,5 +239,5 @@ if __name__ == "__main__":
         root_group = f
 
         add_meta_data_from_json(root_group, Path(root_path, "meta_data.json"))
-        add_boards_group(Path(root_path, "boards"), root_group)
+        add_boards_group(Path(root_path, "boards"), root_group, not args["ignore_bitstreams"])
 
