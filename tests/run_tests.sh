@@ -16,7 +16,10 @@ fi
 
 # Verify content of temperature files
 while IFS= read -r line || [[ -n "$line" ]]; do
-    if [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
+    # Ignore comments
+    if [[ "${line}" == "#"* ]]; then
+        continue
+    elif [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
         echo $line
         echo "Temperature test failed"
         exit 0
@@ -24,7 +27,10 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 done < "tests/temp_dir/pblock_1/RAMB36_X2Y12/previous_value_ff/temperature.txt"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
-    if [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
+    # Ignore comments
+    if [[ "${line}" == "#"* ]]; then
+        continue
+    elif [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
         echo $line
         echo "Temperature test failed"
         exit 0
