@@ -1,9 +1,13 @@
-from abc import ABCMeta, abstractmethod
+"""
+Module contains Statistic container objects.
+These classes encapsulate iterations and handling of Statistic objects.
+"""
+
+from abc import ABCMeta
 from dataclasses import dataclass, field
-from itertools import combinations
-from typing import Any, Callable, Self, Type
+from typing import Self, Type
 import h5py
-from .experiment_hdf5 import Read, ReadSession, ExperimentContainer
+from .experiment_hdf5 import ExperimentContainer
 from .hdf5_convertible import HDF5Convertible
 from .stats import (
     MetaStatistic,
@@ -21,8 +25,17 @@ from .stats import (
 class MultiReadSessionMetaStatistic(HDF5Convertible):
     """
     Gathers MetaStatistic's of different ReadSessions
-    Main objectif:
-    -> encapsulating the unification of MetaStatistic's and their handling in hdf5
+    Main objective:
+    -> encapsulating the unification of MetaStatistic's
+       and their handling in hdf5
+
+    Attributes:
+        data_meta_statistics: MetaStatistic objects of data bits, mapped by
+                                read sesssion name
+        parity_meta_statistics: Metastatistic objects of parity bits, mapped
+                                byt read session name
+        _read_session_names: List of existing read session names/keys
+        _hdf5_group_name: See HDF5Convertible
     """
 
     data_meta_statistics: dict[str, MetaStatistic]
@@ -32,7 +45,8 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
 
     def __post_init__(self) -> None:
         # Simple check to help securing the produced datas correctness
-        # This may cost some extra time, but it is worth it because correctness is our highest priority
+        # This may cost some extra time,
+        # but it is worth it because correctness is our highest priority
         if (
             any(
                 [
@@ -46,7 +60,8 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
                     for read_session_name in self._read_session_names
                 ]
             )
-            or len(self.parity_meta_statistics) != len(self._read_session_names)
+            or len(self.parity_meta_statistics)
+            != len(self._read_session_names)
         ):
             raise Exception(
                 "Unequal Read Session Names found please inspect via debugger"
@@ -59,11 +74,15 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
         for read_session_name in self._read_session_names:
             # Add meta_stats to list for overview dataset in super group
             parity_meta_stat_rows += [
-                self.parity_meta_statistics[read_session_name].stats[statistic_method]
+                self.parity_meta_statistics[read_session_name].stats[
+                    statistic_method
+                ]
                 for statistic_method in MetaStatistic.statistic_method_names
             ]
             data_meta_stat_rows += [
-                self.data_meta_statistics[read_session_name].stats[statistic_method]
+                self.data_meta_statistics[read_session_name].stats[
+                    statistic_method
+                ]
                 for statistic_method in MetaStatistic.statistic_method_names
             ]
             row_header.append(read_session_name)
@@ -74,7 +93,9 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
             dtype="f8",
             data=parity_meta_stat_rows,
         )
-        parity_meta_ds.attrs["Column Header"] = MetaStatistic.statistic_method_names
+        parity_meta_ds.attrs["Column Header"] = (
+            MetaStatistic.statistic_method_names
+        )
         parity_meta_ds.attrs["Row Header"] = row_header
 
         data_meta_ds = parent.create_dataset(
@@ -83,7 +104,9 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
             dtype="f8",
             data=data_meta_stat_rows,
         )
-        data_meta_ds.attrs["Column Header"] = MetaStatistic.statistic_method_names
+        data_meta_ds.attrs["Column Header"] = (
+            MetaStatistic.statistic_method_names
+        )
         data_meta_ds.attrs["Row Header"] = row_header
 
 
@@ -91,7 +114,13 @@ class MultiReadSessionMetaStatistic(HDF5Convertible):
 class MultiReadSessionStatistic(HDF5Convertible):
     """
     Gathers Statistics of different ReadSessions but same "Statistic"-type
-    - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00" and "previous_value_ff"
+    - e.g. "IntraDistance"-objects of ReadSessions "previous_value_00"
+      and "previous_value_ff"
+
+    Attributes:
+        statistics: Statistic objects mapped by read session name
+        statisitic_type: Statistic type used by this class
+        _read_session_names: Names/Keys of existing read sessions
     """
 
     statistics: dict[str, Statistic]
@@ -105,11 +134,16 @@ class MultiReadSessionStatistic(HDF5Convertible):
                 for statistic in self.statistics.values()
             ]
         ):
-            raise Exception(f"Statistic's are not all of type: {self.statistic_type}")
+            raise Exception(
+                f"Statistic's are not all of type: {self.statistic_type}"
+            )
         self._hdf5_group_name = self.statistic_type._hdf5_group_name
 
     @property
     def meta_stats(self) -> MultiReadSessionMetaStatistic:
+        """
+        Just in time processing of meta_stats
+        """
         parity_meta_stats = dict()
         data_meta_stats = dict()
 
@@ -132,8 +166,13 @@ class MultiReadSessionStatistic(HDF5Convertible):
         statistic_type: Type[Statistic],
         read_session_names: list[str],
     ) -> Self:
+        """
+        See SimpleStatistic.from_merge
+        """
         if not statistic_type.mergable:
-            raise Exception(f"Can't merge Statistic objects of type: {statistic_type}")
+            raise Exception(
+                f"Can't merge Statistic objects of type: {statistic_type}"
+            )
         statistics = {
             read_session_name: statistic_type.from_merge(
                 [
@@ -149,14 +188,23 @@ class MultiReadSessionStatistic(HDF5Convertible):
         multi_group = parent.create_group(self._hdf5_group_name)
         for read_session_name in self._read_session_names:
             read_session_group = multi_group.create_group(read_session_name)
-            self.statistics[read_session_name].add_to_hdf5_group(read_session_group)
+            self.statistics[read_session_name].add_to_hdf5_group(
+                read_session_group
+            )
         self.meta_stats.add_to_hdf5_group(multi_group)
 
 
 class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
-    # TODO minimal test
     """
-    Class that manages reads of multiple read sessions
+    Class that manages MultReadSessionObjects of different Statistic types.
+    This is the Statistic container equivalent of a BramBlock object.
+    -> It manages Stats (but doesn't manage other Statistic container objects)
+
+    Attributes:
+        name: Name of ExperimentContainer that was used for this object/class
+        _read_session_names: List of existing read session names/keys
+        types_of_statistics: List of Statistic types used 
+                                by this MultiStatisticOwner 
     """
 
     name: str
@@ -177,8 +225,12 @@ class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
             if issubclass(statistic_type, SimpleStatistic):
                 statistics_per_read_session = dict()
                 for read_session_name in self._read_session_names:
-                    statistics_per_read_session[read_session_name] = statistic_type(
-                        experiment_container.read_sessions[read_session_name]
+                    statistics_per_read_session[read_session_name] = (
+                        statistic_type(
+                            experiment_container.read_sessions[
+                                read_session_name
+                            ]
+                        )
                     )
                 self.statistics[statistic_type] = MultiReadSessionStatistic(
                     statistics_per_read_session,
@@ -202,7 +254,9 @@ class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
 
         for statistic_type in self.types_of_statistics:
             if self.statistics[statistic_type]:
-                self.statistics[statistic_type].add_to_hdf5_group(multi_stat_group)
+                self.statistics[statistic_type].add_to_hdf5_group(
+                    multi_stat_group
+                )
             else:
                 continue
 
@@ -210,14 +264,26 @@ class MultiStatisticOwner(HDF5Convertible, metaclass=ABCMeta):
 
 
 class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
-    # TODO Test
     """
-    Class that provides aggregation functions for substats
+    Class for objects that
+    manage multiple MultiStatisticOwner's (called substats)
+    Provides aggregation functions for substats.
+
+    Is the Statistic equivalent of PBlock or
+    Board objects of "experiment.hdf5.py".
+    The main objective of these classes is to reduce repetitive code duplicates
+
+    Attributes:
+        subowners: List of subordinated MultiStatisticOwner's
+        subowner_type: Type of "subowners"
+        subowner_identifier: String used for path in hdf5 path of subowner
+                                Will be extracted from subcontainer
+
     """
 
     subowners: list[MultiStatisticOwner] = None
     subowner_type: Type[MultiStatisticOwner]
-    subowner_identifier: str  # Needs to be set by child class
+    subowner_identifier: str
 
     def __init__(self, experiment_container: ExperimentContainer) -> None:
         self._read_session_names = experiment_container.read_session_names
@@ -232,11 +298,14 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
     def merge_substats(self) -> None:
         """
+        Uses "from_merge" interface from substats (if "mergable")
+
         Class is expected to have a list of substat objects
             e.g. PblockStat has list[BramStat]
-        This method merges these substats in order gain knowledge of the stat on a meta lvl
+        This method merges these substats in order gain knowledge
+        of the stat on a meta lvl
             - e.g. we know the median entropy of each bram block,
-              -> now we want to know the median entropy of ALL bram blocks combined
+              -> we want to know the median entropy of ALL bram blocks combined
         """
         if self.subowners is None or not self.subowners:
             raise Exception(
@@ -256,9 +325,18 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                         subowner.statistics[statistic_type]
                         for subowner in self.subowners
                     ]
-                    self.statistics[statistic_type] = MultiReadSessionStatistic.from_merge(substats, statistic_type, self.read_session_names)
+                    self.statistics[statistic_type] = (
+                        MultiReadSessionStatistic.from_merge(
+                            substats, statistic_type, self.read_session_names
+                        )
+                    )
 
-    def compare_substats(self, experiment_container: ExperimentContainer) -> None:
+    def compare_substats(
+        self, experiment_container: ExperimentContainer
+    ) -> None:
+        """
+        Uses "compare" of substats (if available)
+        """
         if self.subowners is None or not self.subowners:
             raise Exception(
                 "Cannot compare substats because 'subowners' is empty or None"
@@ -268,32 +346,46 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                 if issubclass(statistic_type, ComparisonStatistic):
                     self.statistics[statistic_type] = dict()
                     for read_session_name in self.read_session_names:
-                        # Gather read_sessions of same read_session_name for each container
+                        # Gather read_sessions of same read_session_name
+                        # for each container
                         read_sessions_per_container = [
                             subcontainer.read_sessions[read_session_name]
-                            for subcontainer in experiment_container.subcontainers.values()
+                            for subcontainer in
+                            experiment_container.subcontainers.values()
                         ]
                         if len(read_sessions_per_container) == 1:
                             print(
-                                f"Couldn't compare data of different instances of {statistic_type} because only one sample was present"
+                                "Couldn't compare data of different instances"
+                                f" of {statistic_type} because only one "
+                                "sample was present"
                             )
                         else:
-                            self.statistics[statistic_type][read_session_name] = (
-                                statistic_type(read_sessions_per_container)
-                            )
+                            self.statistics[statistic_type][
+                                read_session_name
+                            ] = statistic_type(read_sessions_per_container)
 
     def add_to_hdf5_group(self, parent: h5py.Group) -> h5py.Group:
         multi_stat_group = super().add_to_hdf5_group(parent)
-        subowner_group = multi_stat_group.create_group(self.subowner_identifier)
+        subowner_group = multi_stat_group.create_group(
+            self.subowner_identifier
+        )
         for subowner in self.subowners:
             subowner.add_to_hdf5_group(subowner_group)
 
 
 class BramBlockStat(MultiStatisticOwner):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [IntradistanceStatistic, EntropyStatistic, BitAliasingStatistic]
 
 
 class PBlockStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -305,6 +397,10 @@ class PBlockStat(StatAggregator):
 
 
 class BoardStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -316,6 +412,10 @@ class BoardStat(StatAggregator):
 
 
 class ExperimentStat(StatAggregator):
+    """
+    Attributes:
+        See parent classes
+    """
     types_of_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
