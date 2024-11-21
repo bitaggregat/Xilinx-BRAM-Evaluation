@@ -135,3 +135,12 @@ def bit_stabilization_count_over_time(
         stable_bits_per_time_step[bit_idx] = count
 
     return stable_bits_per_time_step
+
+def bit_aliasing(reads: list[Read]) -> list[float]:
+    reads_values = [read.bits_flatted for read in reads]
+    # TODO numpy only
+    reads_length = len(reads)
+    return [float(num/reads_length) for num in np.sum(reads_values, axis=0)]
+
+def stable_bit(reads: list[Read]) -> list[float]:
+    pass

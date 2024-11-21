@@ -237,6 +237,41 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 parity_stats=np.array(merged_parity_stats).flatten(),
                 plot_settings=plot_settings
             )
+        
+
+class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
+    """
+    Statistic where a value is generated for each bit.
+    - e.g. probability that bit flips to 1
+
+    The attributes data_read_stat, parity_read_stat are seen as arrays of stats per bit in this case, 
+    where the idx is equal to the bit idx inside a BRAM
+    """
+    mergable = True
+
+    def __init__(self, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, stat_func_kwargs: dict[str, Any] = {}) -> None:
+        super().__init__(read_session, data_read_stat, parity_read_stat, stat_func_kwargs)
+        if len(self.data_read_stat) != 4096 * 8 or len(self.parity_read_stat) != 4096:
+            raise Exception("Unexpected length for data/parity_read_stat in BitwiseStatistic")
+        
+
+    @classmethod
+    def from_merge(cls, stats: list[Self]) -> Self:
+        """
+        Combines stats by adding each value in their lists (like adding two vectors)
+        """
+        data_read_stats_list = [bitwise_statistic.data_read_stat for bitwise_statistic in stats]
+        parity_read_stats_list = [bitwise_statistic.parity_read_stat for bitwise_statistic in stats]
+
+        data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
+
+        divide_function = lambda x: float(x/len(stats))
+        new_data_read_stats = list(map(divide_function, data_read_stats_sum))
+        parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
+        new_parity_read_stats = list(map(divide_function, parity_read_stats_sum))
+
+        return cls(None, new_data_read_stats, new_parity_read_stats)
+
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):
