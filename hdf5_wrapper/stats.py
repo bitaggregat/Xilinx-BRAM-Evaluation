@@ -427,7 +427,7 @@ class InterdistanceStatistic(ComparisonStatistic):
     _hdf5_group_name = "Interdistance"
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)
-    stat_func_kwargs = {"k": 100000})
+    stat_func_kwargs = {"k": 100000}
 
 class BitAliasingStatistic(BitwiseStatistic):
     _hdf5_group_name = "Bitaliasing"
