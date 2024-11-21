@@ -166,11 +166,11 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         # create modified bs:
         python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
 
-        cp "$full_bs_with_initial_value_00" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
-        cp "$full_bs_with_initial_value_ff" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
-        cp "$bramless_partial_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
-        cp "$partial_bram_bs"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
-        cp "$modified_bs" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
+        cp "${full_bs_with_initial_value_00}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
+        cp "${full_bs_with_initial_value_ff}}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
+        cp "${bramless_partial_bs}"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit"
+        cp "${partial_bram_bs}"  "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit"
+        cp "${modified_bs}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin"
         # Remove temporary bitstream
         rm "${modified_bs}";
     fi
@@ -221,5 +221,5 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 done
 
 echo $(tmux capture-pane -pt "${vivado_session}")
-tmux send-keys "source tcl_scripts/clean_up_vivado.tcl" C-m
+tmux send-keys -t "${vivado_session}" "source tcl_scripts/clean_up_vivado.tcl" C-m
 tmux kill-session -t "${vivado_session}"
