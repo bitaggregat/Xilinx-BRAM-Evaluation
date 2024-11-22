@@ -11,6 +11,8 @@ from hdf5_wrapper import (
     add_commit_to_hdf5_group,
 )
 from hdf5_wrapper.utility import PlotSettings
+from hdf5_wrapper.stats import StatisticTypes
+from hdf5_wrapper.stat_container import StatContainers
 
 
 def unpack_from_hdf5(path: Path) -> Experiment:
@@ -23,12 +25,11 @@ def unpack_from_hdf5(path: Path) -> Experiment:
     return experiment
 
 
-
 def create_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-    "Script that takes BRAM experiment hdf5 file, unpacks the latter and "
-    "computes various stats over the data\n"
-    "Generated stats are saved in another hdf5 file."
+        "Script that takes BRAM experiment hdf5 file, unpacks the latter and "
+        "computes various stats over the data\n"
+        "Generated stats are saved in another hdf5 file."
     )
     parser.add_argument(
         "--read_hdf5",
@@ -36,7 +37,9 @@ def create_arg_parser() -> argparse.ArgumentParser:
         help="Path to hdf5 file containing bram reads",
     )
     parser.add_argument(
-        "--out_hdf5", required=True, help="Path where result hdf5 shall be written"
+        "--out_hdf5",
+        required=True,
+        help="Path where result hdf5 shall be written",
     )
     parser.add_argument(
         "--interdistance_k",
@@ -64,24 +67,63 @@ def create_arg_parser() -> argparse.ArgumentParser:
         help="Sets path where plot images will be saved. "
         "Plots will NOT be generated if no path is given.",
         default=None,
-        type=Path
+        type=Path,
     )
+    parser.add_argument(
+        "--select_stats",
+        required=False,
+        help="Types of statistics that shall be calculated.\n"
+        f"Possible stats are: {[t.name for t in StatisticTypes]}",
+        nargs="*",
+    )
+    return parser
+
 
 def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
     if arg_dict["plot_path"] is None:
-        return PlotSettings(
-            None,
-            False
-        )
+        return PlotSettings(None, False)
     else:
-        return PlotSettings(
-            arg_dict["plot_path"],
-            True
-        )
+        return PlotSettings(arg_dict["plot_path"], True)
 
 
-def main(arg_dict: dict[str, Any]):
+def select_stats(arg_dict: dict[str, Any]) -> None:
+    """
+    Function takes argument dictionary from argparser and activates
+    statistics that were selected by user through args.
 
+    Each Class in "StatContainers" has a list of allowed Statistics and a list
+    of used Statistics.
+    Statistics types selected by user will be statically added to the
+    list of "used_statistics" of a Container class if they are allowed
+    for said Containers
+
+    Arguments:
+        arg_dict: Dictionary created by argparser
+    """
+
+    for stat_container in StatContainers:
+        stat_container.value.used_statistics = list()
+        for stat_type in arg_dict["select_stats"]:
+            if stat_type in [st.name for st in StatisticTypes]:
+
+                if (
+                    StatisticTypes[stat_type].value
+                    in stat_container.value.allowed_statistics
+                ):
+                    stat_container.value.used_statistics.append(
+                        StatisticTypes[stat_type].value
+                    )
+                else:
+                    continue
+            else:
+                raise Exception(
+                    f"Stat type {stat_type} is not available.\n"
+                    f"Available types are: {[t.name for t in StatisticTypes]}"
+                )
+            
+    # The block below isn't really best practice and should instead be handled
+    # by some kind of subparser group
+    # Future TODO
     if arg_dict["interdistance_k"] is not None:
         InterdistanceStatistic.stat_func_kwargs["k"] = arg_dict[
             "interdistance_k"
@@ -91,7 +133,12 @@ def main(arg_dict: dict[str, Any]):
             "intradistance_k"
         ]
 
+
+def main(arg_dict: dict[str, Any]):
+    
+
     plot_settings = generate_plot_settings(arg_dict)
+    select_stats(arg_dict)
     # Unpack from bram read hdf5
     experiment = unpack_from_hdf5(arg_dict["read_hdf5"])
 
@@ -100,7 +147,9 @@ def main(arg_dict: dict[str, Any]):
         hdf5_file.attrs["rng seed"] = arg_dict["seed"]
         random.seed(arg_dict["seed"])
 
-        experiment_stats = ExperimentStat(experiment, plot_settings.with_expanded_path("Experiment"))
+        experiment_stats = ExperimentStat(
+            experiment, plot_settings.with_expanded_path("Experiment")
+        )
         # Start computing stats
         experiment_stats.add_to_hdf5_group(hdf5_file)
         experiment_stats.plot()

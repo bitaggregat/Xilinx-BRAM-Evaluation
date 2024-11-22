@@ -5,6 +5,7 @@ These classes encapsulate iterations and handling of Statistic objects.
 
 from abc import ABCMeta
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Self, Type
 import h5py
@@ -22,6 +23,7 @@ from .stats import (
     EntropyStatistic,
     BitStabilizationStatistic,
     BitAliasingStatistic,
+    BitFlipChanceStatistic
 )
 from .utility import PlotSettings
 
@@ -265,16 +267,19 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
     Attributes:
         name: Name of ExperimentContainer that was used for this object/class
         _read_session_names: List of existing read session names/keys
-        types_of_statistics: List of Statistic types used 
-                                by this MultiStatisticOwner 
+        used_statistics: List of Statistic types that will be calculated and
+                            potentially plotted by this MultiStatisticOwner 
+        allowed_statistics: List of Statistic types that may be added to 
+                            "used_statistics" by user
     """
 
     name: str
     _read_session_names: list[str] = None
     statistics: dict[Type[Statistic], MultiReadSessionStatistic]
-    types_of_statistics: list[
+    used_statistics: list[
         Type[Statistic]
     ]  # Needs to be set by child class statically
+    allowed_statistics: list = None
 
     def __init__(
         self,
@@ -288,7 +293,8 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
         self.compute_stats(experiment_container)
 
     def compute_stats(self, experiment_container: ExperimentContainer) -> None:
-        for statistic_type in self.types_of_statistics:
+        for statistic_type in self.used_statistics:
+            print(statistic_type)
             if issubclass(statistic_type, SimpleStatistic):
                 statistics_per_read_session = dict()
                 for read_session_name in self._read_session_names:
@@ -325,7 +331,7 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
     def add_to_hdf5_group(self, parent: h5py.Group) -> h5py.Group:
         multi_stat_group = parent.create_group(self.name)
 
-        for statistic_type in self.types_of_statistics:
+        for statistic_type in self.used_statistics:
             if (
                 statistic_type in self.statistics
                 and self.statistics[statistic_type]
@@ -405,7 +411,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                 "Cannot merge substats because 'subowners' is empty or None"
             )
         else:
-            for statistic_type in self.types_of_statistics:
+            for statistic_type in self.used_statistics:
                 subowner_sample = self.subowners[0]
 
                 if (
@@ -462,7 +468,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
                 )
                 return
             else:
-                for statistic_type in self.types_of_statistics:
+                for statistic_type in self.used_statistics:
                     if issubclass(statistic_type, ComparisonStatistic):
                         statistics = {
                             read_session_name: statistic_type(
@@ -498,17 +504,20 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             subowner.plot()
 
 
+
+
 class BramBlockStat(MultiStatisticOwner):
     """
     Attributes:
         See parent classes
     """
 
-    types_of_statistics = [
+    allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitStabilizationStatistic,
-        BitAliasingStatistic
+        BitAliasingStatistic,
+        BitFlipChanceStatistic
     ]
 
 class PBlockStat(StatAggregator):
@@ -516,7 +525,7 @@ class PBlockStat(StatAggregator):
     Attributes:
         See parent classes
     """
-    types_of_statistics = [
+    allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitAliasingStatistic,
@@ -531,7 +540,7 @@ class BoardStat(StatAggregator):
     Attributes:
         See parent classes
     """
-    types_of_statistics = [
+    allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitAliasingStatistic,
@@ -546,7 +555,7 @@ class ExperimentStat(StatAggregator):
     Attributes:
         See parent classes
     """
-    types_of_statistics = [
+    allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitAliasingStatistic,
@@ -554,3 +563,9 @@ class ExperimentStat(StatAggregator):
     ]
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
+
+class StatContainers(Enum):
+    BramBlockStat = BramBlockStat
+    PBlockStat = PBlockStat
+    BoardStat = BoardStat 
+    ExperimentStat = ExperimentStat

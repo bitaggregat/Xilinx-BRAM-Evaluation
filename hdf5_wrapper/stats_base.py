@@ -251,7 +251,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
     def __init__(self, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, stat_func_kwargs: dict[str, Any] = {}) -> None:
         super().__init__(read_session, data_read_stat, parity_read_stat, stat_func_kwargs)
-        if len(self.data_read_stat) != 4096 * 8 or len(self.parity_read_stat) != 4096:
+        if len(self.data_stats) != 4096 * 8 or len(self.parity_stats) != 4096:
             raise Exception("Unexpected length for data/parity_read_stat in BitwiseStatistic")
         
 

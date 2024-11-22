@@ -1,4 +1,4 @@
-from .hdf5_wrapper.main import main, create_arg_parser
+from hdf5_wrapper.main import main, create_arg_parser
 
 
 if __name__ == "__main__":
