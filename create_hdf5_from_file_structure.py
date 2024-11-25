@@ -234,7 +234,7 @@ def add_boards_group(path: Path, parent: h5py.Group) -> None:
         add_single_board_group(board_dir, boards_group)
 
 
-def derivate_read_session_names(hdf5_file: h5py.Group) -> None:
+def derive_read_session_names(hdf5_file: h5py.Group) -> None:
     """
     Parameters:
         hdf5_file: File AFTER experiment data has been written to it
