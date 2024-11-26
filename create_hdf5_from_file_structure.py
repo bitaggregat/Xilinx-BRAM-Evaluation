@@ -154,7 +154,7 @@ def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
                         f.read()
                     )
 
-def add_bram_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
+def add_bram_group(path: Path, parent: h5py.Group, include_bs: bool) -> None:
     '''
     Adds measurement Data from single BRAM experiment as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
@@ -163,7 +163,7 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -
     Parameters:
         path: Path to BRAM measurements in (Linux)filesystem
         parent: Parent group of new group
-    """
+    '''
 
     bram_name = path.parts[-1]
 
@@ -180,10 +180,10 @@ def add_bram_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -
     if include_bs and bs_path.exists() and bs_path.is_dir():
         add_bitstream_group(bs_path, bram_group)
 
-def add_pblock_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
+def add_pblock_group(path: Path, parent: h5py.Group, include_bs: bool) -> None:
     '''
     Adds all bram data directories from a given pblock directory
-    """
+    '''
 
     pblock_name = path.parts[-1]
     pblock_group = parent.create_group(pblock_name)
@@ -197,10 +197,10 @@ def add_pblock_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool)
     for bram_dir in bram_dirs:
         add_bram_group(bram_dir, pblock_group, include_bs)
 
-def add_single_board_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
+def add_single_board_group(path: Path, parent: h5py.Group, include_bs: bool) -> None:
     '''
     Adds content of a board directory
-    """
+    '''
     board_group = parent.create_group(path.parts[-1])
 
     # Add meta data from expected json file
@@ -218,10 +218,10 @@ def add_single_board_group(path: Path, parent: h5py._hl.group.Group, include_bs:
     for pblock_dir in pblock_dirs:
         add_pblock_group(pblock_dir, board_group, include_bs)
 
-def add_boards_group(path: Path, parent: h5py._hl.group.Group, include_bs: bool) -> None:
+def add_boards_group(path: Path, parent: h5py.Group, include_bs: bool) -> None:
     '''
     Adds all board directories from a given boards directory
-    """
+    '''
     boards_group = parent.create_group("boards")
 
     board_dirs = [sub_path for sub_path in path.iterdir() if sub_path.is_dir()]
