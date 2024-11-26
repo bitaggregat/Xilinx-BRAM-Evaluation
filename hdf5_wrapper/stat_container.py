@@ -133,8 +133,8 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
                 for stat_name in MetaStatistic.statistic_method_names
             ]
         )
-        table_format = "|c||" + "|".join(
-            ["c"] * len(MetaStatistic.statistic_method_names)
+        table_format = "c||" + "".join(
+            ["cl"] * len(MetaStatistic.statistic_method_names)
         )
 
         rows = [
@@ -151,7 +151,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
         with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
                 [
-                    "\\begin{tabular}{" + table_format + "}\n",
+                    "\\begin{tabular}{|" + table_format + "|}\n",
                     header + "\\\\\n",
                     "\\hline\n",
                 ]
