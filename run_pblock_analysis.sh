@@ -59,13 +59,13 @@ function measure_temperature(){
 #   wait_time: Time that will be waited (in s) before reactivating the bram
 #######################################
 function flash_bitstreams(){
-    tmux send-keys "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
-    tmux send-keys "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
     echo "waiting for ${4:-0}s"
     sleep "${4:-0}"s
-    tmux send-keys "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
 }
 
@@ -223,5 +223,5 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 done
 
 echo $(tmux capture-pane -pt "${vivado_session}")
-tmux send-keys "source tcl_scripts/clean_up_vivado.tcl" C-m
+tmux send-keys -t "${vivado_session}" source tcl_scripts/clean_up_vivado.tcl" C-m
 tmux kill-session -t "${vivado_session}"
