@@ -23,6 +23,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
                             represent them
         statistic_method_names: Sorted list of keys of "statistic_methods"
         stats: Results of statistic functions mapped by their functions name
+        bit_type: Either "Parity" or "Data", will be inserted into diagrams
     """
 
     _hdf5_group_name = "Meta Statistic"
@@ -64,6 +65,12 @@ class MetaStatistic(HDF5Convertible, Plottable):
         meta_statistic_ds.attrs["Column Header"] = self.statistic_method_names
 
     def meta_stat_latex_table(self, path: Path) -> None:
+        """
+        Creates a latex table of meta stats of this object
+
+        Arguments:
+            path: Path where diagram will be saved
+        """
         header = " & ".join(
             [
                 "\\textbf{" + stat_name.replace("_", "\_") + "}"
