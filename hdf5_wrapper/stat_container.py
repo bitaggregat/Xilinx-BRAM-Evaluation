@@ -40,7 +40,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
         data_meta_statistics: MetaStatistic objects of data bits, mapped by
                                 read sesssion name
         parity_meta_statistics: Metastatistic objects of parity bits, mapped
-                                byt read session name
+                                by read session name
         _read_session_names: List of existing read session names/keys
         _hdf5_group_name: See HDF5Convertible
     """
@@ -119,6 +119,14 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
     def multi_meta_stat_latex_table(
         self, meta_stats_per_read_session: dict[str, MetaStatistic], path: Path
     ) -> None:
+        """
+        Creates latex table gives overview of meta stats created by this class
+
+        Arguments:
+            meta_stats_per_read_session: MetaStatistic objects ordered by there
+                                            read session names.
+            path: Path where diagram will be saved (file ext not included)
+        """
         header = " & " + " & ".join(
             [
                 "\\textbf{" + stat_name.replace("_", "\_") + "}"
@@ -565,6 +573,10 @@ class ExperimentStat(StatAggregator):
     subowner_identifier = "Board Statistics"
 
 class StatContainers(Enum):
+    """
+    Attributes:
+        See parent classes
+    """
     BramBlockStat = BramBlockStat
     PBlockStat = PBlockStat
     BoardStat = BoardStat 
