@@ -80,6 +80,12 @@ def create_arg_parser() -> argparse.ArgumentParser:
 
 
 def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
+    """
+    Generates PlotSettings object from arg_dict
+
+    Arguments:
+        arg_dict: Argument dict gained from argparser
+    """
     if arg_dict["plot_path"] is None:
         return PlotSettings(None, False)
     else:
@@ -136,7 +142,6 @@ def select_stats(arg_dict: dict[str, Any]) -> None:
 
 def main(arg_dict: dict[str, Any]):
     
-
     plot_settings = generate_plot_settings(arg_dict)
     select_stats(arg_dict)
     # Unpack from bram read hdf5
