@@ -272,4 +272,4 @@ if __name__ == "__main__":
 
         add_meta_data_from_json(root_group, Path(root_path, "meta_data.json"))
         add_boards_group(Path(root_path, "boards"), root_group)
-        derivate_read_session_names(f)
+        derive_read_session_names(f)
