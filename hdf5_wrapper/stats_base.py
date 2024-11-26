@@ -13,6 +13,7 @@ from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
 from .utility import PlotSettings
 
+
 class MetaStatistic(HDF5Convertible, Plottable):
     """
     Stores stats about stats
@@ -43,7 +44,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
         self,
         values: npt.NDArray[np.float64],
         plot_settings: PlotSettings,
-        bit_type: str
+        bit_type: str,
     ) -> None:
         super().__init__(plot_settings)
         self.stats = {
@@ -96,7 +97,9 @@ class MetaStatistic(HDF5Convertible, Plottable):
             )
 
     def _plot(self) -> None:
-        self.meta_stat_latex_table(Path(self.plot_settings.path, f"{self.bit_type}_meta_stats"))
+        self.meta_stat_latex_table(
+            Path(self.plot_settings.path, f"{self.bit_type}_meta_stats")
+        )
 
 
 class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
@@ -116,7 +119,9 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
 
     description: str
     stat_func: Callable[[list[Read]], npt.NDArray[np.float64]]
-    stat_func_kwargs: dict = dict()  # Args that are used by method additionally to Reads
+    stat_func_kwargs: dict = (
+        dict()
+    )  # Args that are used by method additionally to Reads
 
     # This class and objects that handle ReadSession data in general
     # Differentiate between two types of Reads (see ReadSession)
@@ -132,12 +137,12 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
             "Data": MetaStatistic(
                 self.data_stats,
                 self.plot_settings.with_expanded_path(""),
-                bit_type="data"
+                bit_type="data",
             ),
             "Parity": MetaStatistic(
                 self.parity_stats,
                 self.plot_settings.with_expanded_path(""),
-                bit_type="parity"
+                bit_type="parity",
             ),
         }
 
@@ -167,7 +172,9 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         raise NotImplementedError
 
     def _plot(self) -> None:
@@ -192,7 +199,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         plot_settings: PlotSettings,
         read_session: ReadSession = None,
         data_stats: Any = None,
-        parity_stats: Any = None
+        parity_stats: Any = None,
     ) -> None:
         """
         Class can be created from either:
@@ -217,7 +224,9 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             self.parity_stats = parity_stats
 
     @classmethod
-    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         """
         Combines stats by just adding their lists together.
         This works because statistical values of this class
@@ -242,43 +251,62 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
                 read_session=None,
                 data_stats=np.array(merged_data_stats).flatten(),
                 parity_stats=np.array(merged_parity_stats).flatten(),
-                plot_settings=plot_settings
+                plot_settings=plot_settings,
             )
-        
+
 
 class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
     """
     Statistic where a value is generated for each bit.
     - e.g. probability that bit flips to 1
 
-    The attributes data_read_stat, parity_read_stat are seen as arrays of stats per bit in this case, 
-    where the idx is equal to the bit idx inside a BRAM
+    The attributes data_read_stat, parity_read_stat are seen as arrays of stats
+    per bit in this case,where the idx is equal to the bit idx inside a BRAM
+
+    
     """
+
     mergable = True
 
-    def __init__(self, read_session: ReadSession = None, data_read_stat: Any = None, parity_read_stat: Any = None, stat_func_kwargs: dict[str, Any] = {}) -> None:
-        super().__init__(read_session, data_read_stat, parity_read_stat, stat_func_kwargs)
+    def __init__(
+        self,
+        read_session: ReadSession = None,
+        data_read_stat: Any = None,
+        parity_read_stat: Any = None,
+        stat_func_kwargs: dict[str, Any] = {},
+    ) -> None:
+        super().__init__(
+            read_session, data_read_stat, parity_read_stat, stat_func_kwargs
+        )
         if len(self.data_stats) != 4096 * 8 or len(self.parity_stats) != 4096:
-            raise Exception("Unexpected length for data/parity_read_stat in BitwiseStatistic")
-        
+            raise Exception(
+                "Unexpected length for data/parity_read_stat in "
+                "BitwiseStatistic"
+            )
 
     @classmethod
     def from_merge(cls, stats: list[Self]) -> Self:
         """
-        Combines stats by adding each value in their lists (like adding two vectors)
+        Combines stats by adding each value in their lists 
+        (like adding two vectors)
         """
-        data_read_stats_list = [bitwise_statistic.data_read_stat for bitwise_statistic in stats]
-        parity_read_stats_list = [bitwise_statistic.parity_read_stat for bitwise_statistic in stats]
+        data_read_stats_list = [
+            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+        ]
+        parity_read_stats_list = [
+            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+        ]
 
         data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
 
-        divide_function = lambda x: float(x/len(stats))
+        divide_function = lambda x: float(x / len(stats))
         new_data_read_stats = list(map(divide_function, data_read_stats_sum))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
-        new_parity_read_stats = list(map(divide_function, parity_read_stats_sum))
+        new_parity_read_stats = list(
+            map(divide_function, parity_read_stats_sum)
+        )
 
         return cls(None, new_data_read_stats, new_parity_read_stats)
-
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):
@@ -292,7 +320,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     when addtional values (merge) would be added
 
     Attributes:
-        stat_func: See Statistic. Method signature differs slightly from 
+        stat_func: See Statistic. Method signature differs slightly from
                     parent class
         mergable: See Statistic. Instances of this class are not mergable
     """
@@ -303,9 +331,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     mergable = False
 
     def __init__(
-        self,
-        read_sessions: list[ReadSession],
-        plot_settings: PlotSettings
+        self, read_sessions: list[ReadSession], plot_settings: PlotSettings
     ) -> None:
         self.plot_settings = plot_settings
 
@@ -353,5 +379,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
         self.parity_stats = np.array(parity_compared_values).flatten()
 
     @classmethod
-    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         return super().from_merge(stats, plot_settings)

@@ -1,3 +1,8 @@
+"""
+Contains classes that inherit from SimpleStatisitc, ComparisionStatistic or
+BitwiseStatistic.
+These are specialized Statistics for specific use cases
+"""
 from pathlib import Path
 from enum import Enum
 import functools
@@ -59,6 +64,11 @@ class InterdistanceStatistic(ComparisonStatistic):
 
 
 class BitAliasingStatistic(BitwiseStatistic):
+    """
+    WIP: scheduled for next merge
+    Attributes:
+        See parent classes
+    """
     _hdf5_group_name = "Bitaliasing"
     description = "TODO"
     stat_func = staticmethod(bit_aliasing)
@@ -67,9 +77,9 @@ class BitAliasingStatistic(BitwiseStatistic):
 
 class BitStabilizationStatistic(SimpleStatistic):
     _hdf5_group_name = "Bit Stabilization"
-    description = "TODO"
+    description = "Evolution of number of Stable Bits over time in Reads"
     stat_func = staticmethod(bit_stabilization_count_over_time)
-    stat_func_kwargs = {"stable_after_n_reads": 5}
+    stat_func_kwargs = {"stable_after_n_reads": 1000}
 
     def _plot(self) -> None:
         super()._plot()
@@ -89,11 +99,15 @@ class BitStabilizationStatistic(SimpleStatistic):
 
 
 class BitFlipChanceStatistic(BitwiseStatistic):
-    _hdf5_group_name = "Relative Bitflip Frequency"
-    description = "TODO"
+    _hdf5_group_name = "Bitflip Percentage"
+    description = "Percentage of times that SUV 1 occured per bit index. Also "
+    "describes the number of Stable bits."
     stat_func = staticmethod(bit_flip_chance)
     stat_func_kwargs = {}
 
+
+    # Alot of these count values will be used multiple times
+    # Which is why we cache each of them as a class attribute
     @functools.cached_property
     def data_percentage_count_dict(self) -> dict:
         unique, counts = np.unique(self.data_stats, return_counts=True)
@@ -133,7 +147,7 @@ class BitFlipChanceStatistic(BitwiseStatistic):
 
     def create_flip_latex_table(self) -> None:
         """
-        Gathers the number of stable bits (for 0 and 1) in a latex table
+        Gathers the number of stable bits (for 0 and 1) in a latex table.
         """
         header = [
             "Bit Type",
@@ -191,8 +205,8 @@ class BitFlipChanceStatistic(BitwiseStatistic):
         self, bit_stats: npt.NDArray[np.float64], bit_type: str
     ) -> None:
         """
-        Wrapper around per_bit_idx_hist where part of the description attributes
-        is already set.
+        Wrapper around per_bit_idx_histogram where part of the description 
+        attributes is already set.
 
         Arguments:
             bits_stats: Numpy array of relative frequency of bitflip to 1 per bit
