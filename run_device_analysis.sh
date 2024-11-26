@@ -72,11 +72,23 @@ The config file should be a bash script that defines variables in the following 
     board_name="te0802"
 
 NOTE: Do not ever pass randomly scripts as arguments to this script. (arbitrary code exec)
+
+Call with -c or --clean to remove directories for a given pblock
 EOM
 
 # "Parse" arguments
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo "$help"
+    exit 0
+elif [ "$1" == "-c" ] || [ "$1" == "--clean" ]; then
+    # Remove directories for a given pblock configuration
+    shift
+    for config_file in "$@"
+    do
+        echo "${config_file}"
+        source "${config_file}"
+        rm -r "${output_path}/boards/${board_name}/${pblock}"
+    done
     exit 0
 fi
 
