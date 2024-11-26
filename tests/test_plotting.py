@@ -131,6 +131,7 @@ class TestPlotting(unittest.TestCase):
             "interdistance_k": None,
             "intradistance_k": None,
             "seed": 1337133713371337,
+            "select_stats": ["BitStabilizationStatistic", "IntradistanceStatistic", "EntropyStatistic"]
         }
 
         main(arg_dict)
