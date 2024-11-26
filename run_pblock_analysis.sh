@@ -61,11 +61,11 @@ function measure_temperature(){
 function flash_bitstreams(){
     tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
-    tmux send-keys -t "${vivado_session}" set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
     echo "waiting for ${4:-0}s"
     sleep "${4:-0}"s
-    tmux send-keys -t "${vivado_session}" set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
 }
 
