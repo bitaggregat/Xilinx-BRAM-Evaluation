@@ -17,7 +17,9 @@ from typing import Tuple, List
 parser = argparse.ArgumentParser(
     description="Script that reads bram data via UART and does some evalutation on it."
 )
-parser.add_argument("-d", "--device", help="Serial number of device.", default="210183A89AC3")
+parser.add_argument(
+    "-d", "--device", help="Serial number of device.", default="210183A89AC3"
+)
 parser.add_argument(
     "-s",
     "--show_device",
@@ -29,12 +31,10 @@ parser.add_argument(
     "-v",
     "--previous_value",
     help="Value that was previously written to the BRAM (before it was depowered). Either ff or 00",
-    default="00"
+    default="00",
 )
 parser.add_argument(
-    "-o",
-    "--output_path",
-    help="Path where read output files shall be saved"
+    "-o", "--output_path", help="Path where read output files shall be saved"
 )
 # Start byte/ byte swap?
 #
@@ -64,8 +64,7 @@ def evaluate_readout(data: str, previous_value: str) -> List[Tuple[str, int]]:
 
 
 def find_transmission_start(port) -> Tuple[bytes, bytes]:
-
-    # Write anything to reset device state 
+    # Write anything to reset device state
     # -> Necessary because the received data is sometimes bugged after partial reconfig
     port.write(b"\x00")
 
@@ -90,6 +89,7 @@ def read_batch(port) -> Tuple[bytes, bytes, bytes]:
     parity = port.read(1)
     return data, parity, header
 
+
 def prepare_paths(input_path: str) -> Tuple[Path, Path]:
     """
     Expects path of form: .../1
@@ -97,10 +97,7 @@ def prepare_paths(input_path: str) -> Tuple[Path, Path]:
     """
     given_path = Path(input_path)
     base_path = Path(*given_path.parts[:-1])
-    new_paths = (
-        Path(base_path, "data_reads"),
-        Path(base_path, "parity_reads")
-    )
+    new_paths = (Path(base_path, "data_reads"), Path(base_path, "parity_reads"))
 
     file_name = given_path.parts[-1]
     for path in new_paths:
@@ -108,11 +105,9 @@ def prepare_paths(input_path: str) -> Tuple[Path, Path]:
             continue
         else:
             path.mkdir(parents=True)
-    
-    return (
-        Path(path, file_name)
-        for path in new_paths
-    )
+
+    return (Path(path, file_name) for path in new_paths)
+
 
 if __name__ == "__main__":
     args = vars(parser.parse_args())
@@ -125,8 +120,6 @@ if __name__ == "__main__":
         exit(0)
 
     if args["device"] is not None:
-        
-
         # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
         if args["device"] == "A503VSXV":
             # This specific UART Adapter uses a different ftdi chip and port than dev boards
@@ -143,22 +136,19 @@ if __name__ == "__main__":
                 parity=serial.PARITY_NONE,
             )
 
-
         data, temp_parity = find_transmission_start(port)
         parity = temp_parity.hex()[1]
         header = None
         while True:
             temp_data, temp_parity, header = read_batch(port)
 
-            if header != b"\x00\x00;":# and b";" in header:
+            if header != b"\x00\x00;":  # and b";" in header:
                 data += temp_data
                 parity += temp_parity.hex()[1]
             else:
                 break
 
-        #print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
-        
 
         if args["output_path"] is not None:
             data_path, parity_path = prepare_paths(args["output_path"])
@@ -167,13 +157,7 @@ if __name__ == "__main__":
                 f.write(data)
             with open(parity_path, mode="wb") as f:
                 f.write(bytes.fromhex(parity))
-                
-        print(f"Length of data {len(data)}")
-        print("Data bytes evaluation:\n")
-        print(evaluate_readout(data.hex(), args["previous_value"]))
-        print(f"{len(evaluate_readout(data.hex(), args['previous_value']))} bytes have flips")
-        print("Parity bytes evaluation:\n")
-        print(evaluate_readout(parity, args["previous_value"]))
+
     else:
         print(
             "No Serial Number specified. Call with '-s' to see possible serial numbers."
