@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     if args["device"] is not None:
         # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
-        if args["device"] == "A503VSXV":
+        if args["device"] == "A503VSXV" or args["device"] == "A503VYYY":
             # This specific UART Adapter uses a different ftdi chip and port than dev boards
             # Making this more 'generic' could be a future TODO
             port = pyftdi.serialext.serial_for_url(
