@@ -59,13 +59,13 @@ function measure_temperature(){
 #   wait_time: Time that will be waited (in s) before reactivating the bram
 #######################################
 function flash_bitstreams(){
-    tmux send-keys "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
-    tmux send-keys "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${2} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
     echo "waiting for ${4:-0}s"
     sleep "${4:-0}"s
-    tmux send-keys "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
+    tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${3} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     wait_for_tmux_vivado
 }
 
@@ -117,8 +117,8 @@ project_xpr="${vivado_project_path}/$(ls "$vivado_project_path" | grep .xpr)"
 run_dir=$(ls "${vivado_project_path}" | grep .runs)
 full_bs_with_initial_value_00="${vivado_project_path}/${run_dir}/child_0_impl_1/read_bram.bit"
 full_bs_with_initial_value_ff="${vivado_project_path}/${run_dir}/child_1_impl_1/read_bram.bit"
-bramless_partial_bs="${vivado_project_path}/${run_dir}/child_2_impl_1/bram_wrap_return_0_partial.bit"
-partial_bram_bs="${vivado_project_path}/${run_dir}/child_1_impl_1/bram_wrap_bram_wrap_ff_partial.bit"
+bramless_partial_bs="${vivado_project_path}/${run_dir}/child_2_impl_1/bram_wrap_return_0_${pblock}_partial.bit"
+partial_bram_bs="${vivado_project_path}/${run_dir}/child_1_impl_1/bram_wrap_bram_wrap_ff_${pblock}_partial.bit"
 modified_bs="temp_bs.bin"
 from_root="$(pwd)"
 
@@ -187,6 +187,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/temperature.txt";
     if [ ! -f "${temperature_file_path_00}" ]; then
         touch "${temperature_file_path_00}";
+        echo "# Temperature in Celsius" >> "${temperature_file_path_00}";
     fi
     # Create temperature file for "previous_value_ff"
     if [ -n "${use_previous_value_ff}" ]; then
@@ -194,6 +195,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/temperature.txt";
         if [ ! -f "${temperature_file_path_ff}" ]; then
             touch "${temperature_file_path_ff}";
+            echo "# Temperature in Celsius" >> "${temperature_file_path_ff}";
         fi
     fi
 
@@ -221,5 +223,5 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 done
 
 echo $(tmux capture-pane -pt "${vivado_session}")
-tmux send-keys "source tcl_scripts/clean_up_vivado.tcl" C-m
+tmux send-keys -t "${vivado_session}" source tcl_scripts/clean_up_vivado.tcl" C-m
 tmux kill-session -t "${vivado_session}"
