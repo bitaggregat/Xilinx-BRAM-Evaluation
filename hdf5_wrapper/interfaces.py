@@ -4,13 +4,14 @@ from pathlib import Path
 import h5py
 from .utility import PlotSettings
 
+
 class HDF5Convertible(ABC):
     """
     Alot of the HDF5 conversion/write code is repetitive
     This class provides functions for typical cases of conversion to hdf5,
         in order to reduce code duplicates
     Note: This class may be replaceable by functions (TODO debate)
-    
+
     Attributes:
         _hdf5_group_name: Name that shall be used for hdf5 subpath
     """
@@ -33,6 +34,7 @@ class HDF5Convertible(ABC):
         else:
             return self._hdf5_group_name
 
+
 @dataclass
 class Plottable(ABC):
     """
@@ -52,12 +54,12 @@ class Plottable(ABC):
             if isinstance(self.plot_settings.path, Path):
                 self._plot()
             else:
-                raise Exception("No viable plot was given.\n"
-                                "Make sure to pass a path as argument if "
-                                " plots are activated."
-                                )
+                raise Exception(
+                    "No viable plot was given.\n"
+                    "Make sure to pass a path as argument if "
+                    " plots are activated."
+                )
 
     @abstractmethod
     def _plot(self) -> None:
         raise NotImplementedError
-

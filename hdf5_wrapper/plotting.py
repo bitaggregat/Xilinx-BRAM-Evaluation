@@ -2,12 +2,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy.typing as npt
 import numpy as np
-from .experiment_hdf5 import Read
-from .stats_base import MetaStatistic
 
 
 def stable_bit_per_read_step_plot(
-    bit_stats: npt.NDArray[np.float64], bit_type: str, path: Path, stable_after_n_reads: int = 1000
+    bit_stats: npt.NDArray[np.float64],
+    bit_type: str,
+    path: Path,
+    stable_after_n_reads: int = 1000,
 ) -> None:
     """
     Creates a step plot of stable bits over time/reads
@@ -22,7 +23,7 @@ def stable_bit_per_read_step_plot(
     y = bits_over_time[:-stable_after_n_reads]
 
     ax.step(x, y, where="post", label="post")
-    #ax.plot(x, y, "o--", color="grey", alpha=0.3)
+    # ax.plot(x, y, "o--", color="grey", alpha=0.3)
     ax.set(
         xlabel="Bram readout procedure",
         ylabel="# of stable bits",
@@ -89,4 +90,3 @@ def distribution_histogram(
     ax.hist(bit_stats, bins="sturges", edgecolor="black", linewidth=1.2)
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
     fig.savefig(Path(path, f"{title}.svg"), format="svg")
-

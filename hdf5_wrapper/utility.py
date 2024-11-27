@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
 
+
 def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
     """
     Gets hash of latest commit of repository.
@@ -16,11 +17,11 @@ def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
     commit_hash = subprocess.check_output(["git", "rev-parse", "HEAD"])
     parent.attrs["git commit hash"] = commit_hash
 
+
 @dataclass(frozen=True)
 class PlotSettings:
     path: Path
     active: bool
-
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         new_path = Path(self.path, path_expansion)

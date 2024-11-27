@@ -23,12 +23,11 @@ def unpack_from_hdf5(path: Path) -> Experiment:
     return experiment
 
 
-
 def create_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-    "Script that takes BRAM experiment hdf5 file, unpacks the latter and "
-    "computes various stats over the data\n"
-    "Generated stats are saved in another hdf5 file."
+        "Script that takes BRAM experiment hdf5 file, unpacks the latter and "
+        "computes various stats over the data\n"
+        "Generated stats are saved in another hdf5 file."
     )
     parser.add_argument(
         "--read_hdf5",
@@ -36,7 +35,9 @@ def create_arg_parser() -> argparse.ArgumentParser:
         help="Path to hdf5 file containing bram reads",
     )
     parser.add_argument(
-        "--out_hdf5", required=True, help="Path where result hdf5 shall be written"
+        "--out_hdf5",
+        required=True,
+        help="Path where result hdf5 shall be written",
     )
     parser.add_argument(
         "--interdistance_k",
@@ -64,24 +65,18 @@ def create_arg_parser() -> argparse.ArgumentParser:
         help="Sets path where plot images will be saved. "
         "Plots will NOT be generated if no path is given.",
         default=None,
-        type=Path
+        type=Path,
     )
+
 
 def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
     if arg_dict["plot_path"] is None:
-        return PlotSettings(
-            None,
-            False
-        )
+        return PlotSettings(None, False)
     else:
-        return PlotSettings(
-            arg_dict["plot_path"],
-            True
-        )
+        return PlotSettings(arg_dict["plot_path"], True)
 
 
 def main(arg_dict: dict[str, Any]):
-
     if arg_dict["interdistance_k"] is not None:
         InterdistanceStatistic.stat_func_kwargs["k"] = arg_dict[
             "interdistance_k"
@@ -100,7 +95,9 @@ def main(arg_dict: dict[str, Any]):
         hdf5_file.attrs["rng seed"] = arg_dict["seed"]
         random.seed(arg_dict["seed"])
 
-        experiment_stats = ExperimentStat(experiment, plot_settings.with_expanded_path("Experiment"))
+        experiment_stats = ExperimentStat(
+            experiment, plot_settings.with_expanded_path("Experiment")
+        )
         # Start computing stats
         experiment_stats.add_to_hdf5_group(hdf5_file)
         experiment_stats.plot()
