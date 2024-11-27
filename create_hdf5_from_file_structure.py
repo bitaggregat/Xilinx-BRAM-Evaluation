@@ -156,7 +156,8 @@ def add_bitstream_group(path: Path, parent: h5py.Group) -> None:
 
 def add_bram_group(path: Path, parent: h5py.Group, include_bs: bool) -> None:
     '''
-    Adds measurement Data from single BRAM experiment as path to a given parent group
+    Adds measurement Data from single BRAM experiment
+    as path to a given parent group
     - Adds measurements with previous value ff and 00 if available)
     - Also adds bitstreams if available
 

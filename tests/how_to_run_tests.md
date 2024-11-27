@@ -14,7 +14,7 @@ Set your path variables in test_config.sh.
 ### Bash tests
 
 ```bash
-tests/run_tests.sh tests/test_config.sh
+tests/run_tests.sh tests/test_pblock_config.sh
 ```
 
 ### Python tests
