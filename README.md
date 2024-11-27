@@ -1,103 +1,66 @@
-# Documentation on XC7 FPGA SRAM PUFs
+# Documentation on FPGA BRAMs for PUFs
+
+[[_TOC_]]
 
 ## General
 
-SRAMs can have an initial value different from 0 when being switched on.  
-These initial values can potentially used to implement a PUF.  
-This Readme sums up what has been done/found out/tested about possible SRAM PUFs on XC7 FPGAs.  
-The procedure used for our tests includes manipulation of bitstreams (bs) and is documented here aswell.
+- BRAMs can have an initial value different from 0 after being switched on.  
+- Initial values can potentially used to implement a PUF, a BRAM PUF.  
+- This Readme sums up what has been done/found out/tested about possible BRAM PUFs on Xilinx FPGAs.
+- The procedure used for tests includes manipulation of bs and is documented here aswell.
+- The procedure + measurements will often be referred as "BRAM experiment" in this document
+- Instructions came originally from [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf)
 
-## Current Status
+## BRAM
 
-Following the instructions of the [Paper by Wild & Güneysu 2014](https://gitlab.bitaggregat.de/hwt/hardware-security-module/hsm.pages.bitaggregat.de/uploads/d757e7e215824307a9c7764a4860b0d7/wild2014.pdf) led to some flipped bits in the SRAM (BRAM Blocks). The results are documented below.
+### XC7 FPGAs
 
-## Measured Stats
+- 36K BRAM Blocks
+- 32K Data Bits and 4K Parity Bits
+- Parity Bits can be used as extra Data Bits
+- 2 x 18K Slices in BRAM Block
+- BRAM Blocks in same column can be cascaded
+- 10 BRAM Blocks in one column
+- Multiple primitives
+- Prioritize 36K primitive
 
-### Basys3 (xc7a35tcpg236-1)
+### XCUS+ (Zynq) FPGAs
 
-These measurements were done on our local basys3 board. (sticker on the downside of the board: **DA89AC3**).  
-Measurements were done on:
+- Same size as XC7
+- More extra features and primitives
+- Sleep feature that allows to save BRAM content while "sleeping"
 
-- 3 x 36K BRAM Blocks
-- All 3 BRAM Blocks were within the same row of the FPGA
-- Parity and Data bits were used
-- Each BRAM Block was measured 4 times (named Read 1, Read 2 ...)
-- "-" stands for "no bitlfip"
-- Indexes of data in bram are measured in **bytes**
+## Bitstream
 
-|Tile and Slice|BRAM value before power outage|% of flipped bits in data|% of flipped bits in parity|other|
-|--------------|------------------------------|---------------------------|---------------------------|-----|
-|BRAM_X30Y35_RAMB_X1Y6|ff|0|0|-|
-|BRAM_X30Y35_RAMB_X1Y6|00|0.00024606299212598425|0|-|
-|BRAM_X30Y35_RAMB_X1Y7|ff|0|0|-|
-|BRAM_X30Y35_RAMB_X1Y7|00|0.0002768208661417323|0|-|
-|BRAM_X30Y35_RAMB_X1Y8|ff|0|0|-|
-|BRAM_X30Y35_RAMB_X1Y8|00|0.00024606299212598425|0|-|
-|BRAM_X30Y35_RAMB_X1Y6|00|~0.005580357142857143|0|initializing BRAM without values 100 times consecutively|
+### Why is Bitstream Manipulation needed?
 
-#### BRAM_X30Y35_RAMB_X1Y6 (previous value 00)
+- Getting the BRAM experiment involves bs manipulation
+- Explaining in detail what the bitstream is composed of, goes beyond the scope of this document
+- In nutshell:
+  - Bitstream is composed of "Configuration Packages"
+  - Configuration Package := Write/Read + Target Register + Payload
+- There exists a specific set of Configuration Packages that write values to the BRAM, which overwrites the initial that are needed for a PUF
+- Removing/dropping these packages from the bs is essential
+- Partial Bitstreams are needed
+  - The device writes 0 as a default value to the BRAM on startup
+    - Using the process described above with full bitstreams would therefore not work
+    - This was verified once in this project ([click for further information](/initialize_bram/full_bitstream_initialization/full_bitsream_initialization.md))
+  - Partial bitstreams can be loaded without fully restarting the device
 
-|Byte Position|Read 1|Read 2|Read 3|Read 4|
-|-|-|-|-|-|
-|3607|c0|c0|c0|c0|
-|3615|-|-|-|40|
-|3647|40|40|40|40|
-|3671|-|-|-|80|
-|3690|80|80|80|80|
-|3691|80|-|80|80|
-|4055|80|80|80|80|
-|4063|-|-|-|80|
-|4095|c0|c0|c0|c0|
+### Bitstream Handler
 
-#### BRAM_X30Y35_RAMB_X1Y7 (previous value 00)
+- ```initialize_bram/bitstream_handling``` contains codebase that allows to unpack and handle Configuration Packages
+- This codebase can be used like a python library
+- It is currently used by scripts in ```initiliaze_bram/```
+- Only a fraction of this python library is currently used
+- Unused but available features are:
+  - bs handling on configuration bits level
+  - bs handling on [FASMs](https://github.com/chipsalliance/fasm) level
+- More information about this library [here](/initialize_bram/bitstream_handling/README.md)
 
-|Byte Position|Read 1 |All other Reads|
-|-|-|-|
-|131|40|40|
-|419|c0|c0|
-|1523|40|40|
-|3007|80|80|
-|3438|**82**|80|
-|4095|c0|c0|
-
-#### BRAM_X30Y35_RAMB_X1Y8 (previous value 00)
-
-|Byte Position|Read 1|Read 2|Read 3|Read 4|
-|-|-|-|-|-|
-|1370|02|02|02|02|
-|1371|**82**|**80**|**02**|**82**|
-|1635|40|40|40|40|
-|1891|c0|c0|c0|c0|
-|1899|-|40|-|-|
-|1911|80|80|80|80|
-|3959|-|80|-|-|
-|4075|40|40|40|40|
-|4091|-|40|-|-|
-
-### Problem
-
-- The amount of flipped bits is low on the basys3. This is in accordance with newer generation zed boards mentioned in the paper.
-- Flashing the partial bitstream that reactivates the bram (without initializing it's values) increases the amount of flipped bits by a great amount
-- Flashing the partial bitstream multiples times was not mentioned in the paper and could be a new insight.
-- Flipped bits seem very volatile (this became very clear during ticket review)
-
-#### <a name="link1"></a> Initializing BRAM without values multiple times
-
-- The amount of flipped bits increased alot by doing this
-- We looked at the flipped bits from a **byte level** perspective
-- But the flipped **bytes** were predictable
-- e.g. flashing 100 times led to many ```c0```, ```80``` and ```40```'s
-- flasing 1000 times led to more variety in flipped bytes (e.g ```01```, ```41```, ```82```)
-- There seems to be a correlation between amount of times the bram was activated and randomness of the bram content
-- Tests using a heat gun showed that this phenomenon is **NOT** temperature related
-
-## Notes on Process
+## Approach
 
 ### XC7 BRAMs
-
-- One BRAM Tile can store 36608 bits (4096 Data Bytes + 480 Parity Bytes)
-- Parity Bytes can also be used as additional data bytes
-- Helper Scripts exist:
 
 |Name|Use case|
 |-|-|
@@ -110,34 +73,97 @@ Measurements were done on:
 - using the custom editor with a python debugger is ideal for inspecting details about the bitstream
 - TODO helper script ```analyze_bitstream.py``` to automatize use cases of the editor code base
 
-### How To
+### Terms
 
-#### General Approach
+|Term|Definition|
+|-|-|
+|**Target partial region**| A statically defined partial region used for designs.|
+|**"Read BRAM" full Design**| A Hardware design that contains a UART and a BRAM Block that is readout. Fills the BRAM with either 0 or f. The BRAM Block is routed in the target partial region.|
+|**BRAMless partial Design**| A partial design that returns either 0 or f via LUTs. It is located in the target partial region and can replace the BRAM Block.|
+|**"Read BRAM" partial Design**| Partial version of "Read BRAM" full design. Contains only the BRAM part, not the UART.|
+|**"Read BRAM" full bitstream**| Bistream of "Read BRAM" full Design|
+|**BRAMless partial bitstream**| Bitstream of BRAMless partial Design|
+|**"Read BRAM" partial bitstream**| Bitstream of "Read BRAM" partial Design|
+|**Manipulated bitstream**| A modified version of "Read BRAM" partial bitstream. Removes Configuration Packages that write values to the BRAM, leaving the BRAM with its initial "random" values.|
+
+### General Approach
 
 ![Visualization of Readout Design](bram_partial.drawio.png)
 
-1. Create a partial design in Vivado (fill BRAM with either 0 or f)
-2. Flash "Read BRAM Design" config as full bitstream
-3. Flash "Non BRAM Design" config as partial bitstream (this will disconnect BRAM from power)
-4. Modify "Read BRAM Design" partial bitstream such that BRAM will be initiated but without values
-5. Flash modified partial bitstream
-6. Readout BRAM via UART
+1. Create "Read BRAM" full Design, BRAMless partial Design and "Read BRAM" partial Design in a Vivado project and synthethize bitstreams
+2. Flash "Read BRAM" full bitstream
+3. Flash BRAMless partial bitstream (this will disconnect BRAM from the power grid)
+4. Optional: Wait for specific amount of time or/and expose FPGA to high temperatures
+5. Modify "Read BRAM" partial bitstream in order to create a manipulated bitstream
+6. Flash manipulated bitstream
+7. Readout BRAM via UART
 
-#### Practical Approach
+### Practical Approach
+
+Scripts have been written in order to ease and partially automatize the steps mentioned in [General Approach](###General Approach).  
+Sadly tools do not always support all FPGA devices, which is why the instructions and tools may differ depending on the used device.  
+
+#### Basys3 (xc7a35tcpg236-1)
 
 - Step 1 is contained in [a vivado project](/vivado_project/README.md) of this repository
-- Step 2 - 5 can be done by calling ```initialize_bram.py```
-- Step 6 can be done via ```read_bram_ftdi.py```
+- Step 2 - 5 can be done by calling [```initialize_bram.py```](initialize_bram/initialize_bram.md)
+- Step 6 can be done via [```read_bram_ftdi.py```](reading/README.md)
 
 Note: All these scripts named above can be called with ```-h``` for usage information.
 
-#### Additions
+#### te0802
 
-- A wait time can be inserted between Step 3 and 5
-- Repeating Step 5 multiple times yields interesting results [see previous section](#link1)
+WIP
 
-### Possible Future TODOs
+## Measurements
 
-- automatize reset/enable switch
-- generate stats with 1000 samples
-- find out how volatile flipped bits are under condition that bram is reactivated multiple times before redout
+See [README in Subdirectory](measurements/measurements_and_observations.md)
+
+## Observations
+
+See [README in Subdirectory](measurements/measurements_and_observations.md)
+
+## Conclusion
+
+- Using XC7 FPGA BRAMs for PUF is either hardly possible or will atleast require alot of extra work
+- Neither temperature change nor increased wait time had an influence on the amount of flipped bits in XC7 FPGAs
+
+## Future Work / TODOs
+
+This section contains TODOs that have currently been deemed not irrelevant, but might become relevant again in the future:
+
+### XC7 BRAM bitflips and multiple flashing procedures
+
+- XC7 BRAMs on basys3 had very few bitflips
+- More bits flip under the condition that the manipulated bitstream is flashed multiple times to the FPGA
+- May be usable if a sufficient number of flashing procedures is done
+- Extensive statistic would be needed in order to verify the following questions:
+  - How unique are flipped bits obtained through this procedure?
+  - How reliable is this procedure?
+  - How many flashing procedures (and time) are needed in order to make it reliable?
+  - Why does this work?
+  - Can these multiple flashing procedures be replaced by one single flashing procedure (e.g. one bitstream that sends the same instruction 100x)
+
+### Measuring how Aging influences the BRAM
+
+- BRAM flips may behave differently after being in use for a long time
+- BRAM flips may behave differently after being written to many times
+- Setup automatic process where BRAM is measured regulary over a year (e.g. once every day for a year)
+- This setup could be done over a CI/CD Pipeline or directly on the PS of a Zynq device
+
+## Glossary
+
+|Term/Macro|Definition|
+|-|-|
+|**XC7**| Xilinx 7-Series|
+|**XCUS**| Xilinx UltraScale|
+|**XCUS+**| Xilinx UltraScale+|
+|**bs/BS**| Bitstream|
+|**Target partial region**| A statically defined partial region used for designs.|
+|**"Read BRAM" full Design**| A Hardware design that contains a UART and a BRAM Block that is readout. Fills the BRAM with either 0 or f. The BRAM Block is routed in the target partial region.|
+|**BRAMless partial Design**| A partial design that returns either 0 or f via LUTs. It is located in the target partial region and can replace the BRAM Block.|
+|**"Read BRAM" partial Design**| Partial version of "Read BRAM" full design. Contains only the BRAM part, not the UART.|
+|**"Read BRAM" full bitstream**| Bistream of "Read BRAM" full Design|
+|**BRAMless partial bitstream**| Bitstream of BRAMless partial Design|
+|**"Read BRAM" partial bitstream**| Bitstream of "Read BRAM" partial Design|
+|**Manipulated bitstream**| A modified version of "Read BRAM" partial bitstream. Removes Configuration Packages that write values to the BRAM, leaving the BRAM with its initial "random" values.|

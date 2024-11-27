@@ -1,8 +1,8 @@
-# 7-Series vs UltraScale Bitstream differences
+# 7-Series vs UltraScale(+) Bitstream differences
 
-7-Series and UltraScale FPGAs are two product lines/architectures of Xilinx FPGAs.  
+7-Series and UltraScale(+) FPGAs are two product lines/architectures of Xilinx FPGAs.  
 This document describes how much their bitstream format differs.  
-- [XCUS Configuration Doc](https://gitlab.bitaggregat.de/hwt/wissensspeicher/-/blob/main/Manuals/Xilinx/UltraScale/ug570-ultrascale-configuration.pdf?ref_type=heads)
+- [XCUS Configuration Doc](https://gitlab.bitaggregat.de/hwt/wissensspeicher/-/blob/main/Manuals/Xilinx/UltraScale/ug570-ultrascale-configuration.pdf?ref_type=heads)(Which includes UltraScale+)
 - [XC7 Configuration Doc](https://gitlab.bitaggregat.de/hwt/wissensspeicher/-/blob/main/Manuals/Xilinx/7-Series/ug470_7Series_Config.pdf?ref_type=heads)
 
 ## Configuration Packets
