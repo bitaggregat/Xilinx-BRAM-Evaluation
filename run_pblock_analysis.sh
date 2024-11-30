@@ -223,5 +223,5 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 done
 
 echo $(tmux capture-pane -pt "${vivado_session}")
-tmux send-keys -t "${vivado_session}" source tcl_scripts/clean_up_vivado.tcl" C-m
+tmux send-keys -t "${vivado_session}" "source tcl_scripts/clean_up_vivado.tcl" C-m
 tmux kill-session -t "${vivado_session}"
