@@ -256,6 +256,42 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             )
 
 
+class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
+    """
+    Statistics whose result is a single value.
+        - e.g. a single float f: 0 <= f <= 1.0, for reliability.
+    We treat this case as a special case because they should be handled
+    differently:
+        - no metastatistics for a single value
+        - handled differently when being added to hdf5
+    """
+
+    mergable = True
+    data_stats: float = None
+    parity_stats: float = None
+
+    @property
+    def meta_stats(self) -> dict[str, MetaStatistic]:
+        raise NotImplementedError
+
+    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
+        statistic_group = parent.create_group(self._hdf5_group_name)
+        statistic_group.attrs["parity_stats"] = self.parity_stats
+        statistic_group.attrs["data_stats"] = self.data_stats
+
+    @classmethod
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
+        data_values = [stat.data_stats for stat in stats]
+        parity_values = [stats.parity_stats for stat in stats]
+        return cls(
+            plot_settings=plot_settings,
+            data_stats=sum(data_values) / len(data_values),
+            parity_stats=sum(parity_values) / len(parity_values),
+        )
+
+
 class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
     """
     Statistic where a value is generated for each bit.
