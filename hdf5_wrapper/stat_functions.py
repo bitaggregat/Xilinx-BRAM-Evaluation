@@ -161,3 +161,27 @@ def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
         flip_total_vector = np.add(flip_total_vector, read.bits_flattened)
 
     return flip_total_vector / len(reads)
+
+def reliability(reads: list[Read]) -> np.float64:
+    """
+    Calculates reliability according to:
+        "A Systematic Method to Evaluate and Compare
+         the Performance of Physical Unclonable Functions"
+
+    Where r_i/r_i,k,l will be compared to all other read samples.
+    We choose reads[0] as r_i, because we assume the first read to be the 
+    "least influenced by aging"
+
+    Arguments:
+        reads: list of Read samples from a BRAM block
+
+    Returns: Reliability score v: 0 <= v <= 1.0, with 1.0 being the best 
+                possible reliability
+    """
+    r_i = reads[0].bits_flattened
+    intradistance_sum = sum(
+        [hamming(r_i, other_read.bits_flattened) for other_read in reads[1:]]
+    )
+    normalized_avg_intradistance = intradistance_sum/(len(reads) - 1)
+    return 1 - normalized_avg_intradistance
+    
