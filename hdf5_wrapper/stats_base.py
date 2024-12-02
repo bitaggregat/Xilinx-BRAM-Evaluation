@@ -71,7 +71,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
                 for stat_name in self.statistic_method_names
             ]
         )
-        table_format = "|".join(["c"] * len(self.statistic_method_names))
+        table_format = "".join(["c"] * len(self.statistic_method_names))
         row = " & ".join(
             [
                 str(self.stats[stat_name])
@@ -82,9 +82,11 @@ class MetaStatistic(HDF5Convertible, Plottable):
             f.writelines(
                 [
                     "\\begin{tabular}{" + table_format + "}\n",
+                    "\\toprule\n",
                     header + "\\\\\n",
                     "\\hline\n",
                     row + "\\\\\n",
+                    "\\bottomrule\n"
                     "\\end{tabular}\n",
                 ]
             )
