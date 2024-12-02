@@ -93,8 +93,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
                     header + "\\\\\n",
                     "\\hline\n",
                     row + "\\\\\n",
-                    "\\bottomrule\n"
-                    "\\end{tabular}\n",
+                    "\\bottomrule\n" "\\end{tabular}\n",
                 ]
             )
 
@@ -265,7 +264,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
     The attributes data_read_stat, parity_read_stat are seen as arrays of stats
     per bit in this case,where the idx is equal to the bit idx inside a BRAM
 
-    
+
     """
 
     mergable = True
@@ -289,7 +288,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
     @classmethod
     def from_merge(cls, stats: list[Self]) -> Self:
         """
-        Combines stats by adding each value in their lists 
+        Combines stats by adding each value in their lists
         (like adding two vectors)
         """
         data_read_stats_list = [
@@ -301,7 +300,9 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
         data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
 
-        divide_function = lambda x: float(x / len(stats))
+        def div_and_float_cast(x: float) -> float:
+            return float(x / len(stats))
+        divide_function = div_and_float_cast
         new_data_read_stats = list(map(divide_function, data_read_stats_sum))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
         new_parity_read_stats = list(

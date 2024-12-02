@@ -79,7 +79,6 @@ def create_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-
 def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
     """
     Generates PlotSettings object from arg_dict
@@ -112,7 +111,6 @@ def select_stats(arg_dict: dict[str, Any]) -> None:
         stat_container.value.used_statistics = list()
         for stat_type in arg_dict["select_stats"]:
             if stat_type in [st.name for st in StatisticTypes]:
-
                 if (
                     StatisticTypes[stat_type].value
                     in stat_container.value.allowed_statistics
@@ -127,7 +125,7 @@ def select_stats(arg_dict: dict[str, Any]) -> None:
                     f"Stat type {stat_type} is not available.\n"
                     f"Available types are: {[t.name for t in StatisticTypes]}"
                 )
-            
+
     # The block below isn't really best practice and should instead be handled
     # by some kind of subparser group
     # Future TODO
@@ -142,7 +140,6 @@ def select_stats(arg_dict: dict[str, Any]) -> None:
 
 
 def main(arg_dict: dict[str, Any]):
-    
     plot_settings = generate_plot_settings(arg_dict)
     select_stats(arg_dict)
     # Unpack from bram read hdf5

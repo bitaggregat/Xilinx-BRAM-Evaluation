@@ -23,7 +23,7 @@ from .stats import (
     EntropyStatistic,
     BitStabilizationStatistic,
     BitAliasingStatistic,
-    BitFlipChanceStatistic
+    BitFlipChanceStatistic,
 )
 from .utility import PlotSettings
 
@@ -157,10 +157,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
                     "\\toprule\n",
                 ]
                 + rows
-                + [
-                    "\\bottomrule\n",
-                    "\\end{tabular}\n"
-                ]
+                + ["\\bottomrule\n", "\\end{tabular}\n"]
             )
 
     def _plot(self) -> None:
@@ -280,8 +277,8 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
         name: Name of ExperimentContainer that was used for this object/class
         _read_session_names: List of existing read session names/keys
         used_statistics: List of Statistic types that will be calculated and
-                            potentially plotted by this MultiStatisticOwner 
-        allowed_statistics: List of Statistic types that may be added to 
+                            potentially plotted by this MultiStatisticOwner
+        allowed_statistics: List of Statistic types that may be added to
                             "used_statistics" by user
     """
 
@@ -521,8 +518,6 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             subowner.plot()
 
 
-
-
 class BramBlockStat(MultiStatisticOwner):
     """
     Attributes:
@@ -534,7 +529,7 @@ class BramBlockStat(MultiStatisticOwner):
         EntropyStatistic,
         BitStabilizationStatistic,
         BitAliasingStatistic,
-        BitFlipChanceStatistic
+        BitFlipChanceStatistic,
     ]
 
 
@@ -543,6 +538,7 @@ class PBlockStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -558,6 +554,7 @@ class BoardStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -573,6 +570,7 @@ class ExperimentStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -582,12 +580,14 @@ class ExperimentStat(StatAggregator):
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
 
+
 class StatContainers(Enum):
     """
     Attributes:
         See parent classes
     """
+
     BramBlockStat = BramBlockStat
     PBlockStat = PBlockStat
-    BoardStat = BoardStat 
+    BoardStat = BoardStat
     ExperimentStat = ExperimentStat

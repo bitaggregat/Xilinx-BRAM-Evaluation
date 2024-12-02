@@ -21,22 +21,23 @@ def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
 @dataclass(frozen=True)
 class PlotSettings:
     """
-    Class that saves general settings for plots 
+    Class that saves general settings for plots
     (currently only the path is saved)
 
     Attributes:
         path: Path where diagrams shall be saved
         active: True if plots shall be generated, else False
     """
+
     path: Path
     active: bool
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         """
         Creates new PlotSettings object with expanded path
-        
+
         Arguments:
-            path_expansion: Directory or file name that is appended to path of 
+            path_expansion: Directory or file name that is appended to path of
                             new object.
         """
         new_path = Path(self.path, path_expansion)

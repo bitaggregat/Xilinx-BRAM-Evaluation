@@ -1,5 +1,5 @@
 """
-Module contains functions that create diagrams and other visuals that are 
+Module contains functions that create diagrams and other visuals that are
 resused by different Statistic classes.
 Most of them are wrappers around matplotlib functions/objects.
 Usages of diagrams, that are specific to a single Statistic type (in other
@@ -131,7 +131,7 @@ def multi_boxplot(
     numpy arrays, indexed by a str indentifier (name).
 
     Arguments:
-        bit_stats_per_xlabel: dict[Description/Name of np.array: np.array of float]
+        bit_stats_per_xlabel: dict[Name of np.array: np.array of float]
         path: Path where diagram will be saved (filextension not included)
         ylabel: Label of y-axis of diagram
         title: Title of diagram
@@ -152,7 +152,7 @@ def histogram(
     ylabel: str,
     title: str,
     path: Path,
-    bins: int | str
+    bins: int | str,
 ) -> None:
     """
     Wrapper around plt.hist.
