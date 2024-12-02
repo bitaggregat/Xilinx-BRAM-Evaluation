@@ -37,9 +37,39 @@ save_constraints
 reset_run synth_1
 launch_runs synth_1 -jobs 8
 wait_on_run synth_1
+
 # run implementation and generate bitstreams
-launch_runs impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1 -jobs 8
+launch_runs impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1 -jobs 8 -to_step route_design
 wait_on_run impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1
+
 # generate bitstreams
-launch_runs impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1 -to_step write_bitstream -jobs 8
-wait_on_run impl_1 child_0_impl_1 child_1_impl_1 child_2_impl_1
+
+
+set_property BITSTREAM.GENERAL.COMPRESS FALSE [current_design]
+# Uncompressed partial bitstream with value ff
+# child_1_impl_1/bram_wrap_bram_wrap_ff_partial.bit
+set run_directory [get_property DIRECTORY [get_runs child_1_impl_1]]
+open_run child_1_impl_1
+write_bitstream -force $run_directory/bram_wrap_bram_wrap_ff.bit
+wait_on_run child_1_impl_1
+
+# Write other Bitstreams as compressed
+
+# child_1_impl_1/read_bram.bit (full bs ff)
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+write_bitstream -force $run_directory/read_bram.bit
+wait_on_run child_1_impl_1
+
+# /child_0_impl_1/read_bram.bit (full bs 00)
+set run_directory [get_property DIRECTORY [get_runs child_0_impl_1]]
+open_run child_0_impl_1
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+write_bitstream -force $run_directory/read_bram.bit
+wait_on_run child_0_impl_1
+
+# child_2_impl_1/bram_wrap_return_0_partial.bit (nop bram bs)
+set run_directory [get_property DIRECTORY [get_runs child_2_impl_1]]
+open_run child_2_impl_1
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+write_bitstream -force $run_directory/bram_wrap_return_0.bit
+wait_on_run child_2_impl_1
