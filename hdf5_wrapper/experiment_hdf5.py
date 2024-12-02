@@ -52,7 +52,7 @@ class Read:
         """
         Creates Read object from raw read.
         Args:
-            raw_read (bytes): Single read of bram startup value 
+            raw_read (bytes): Single read of bram startup value
         """
         uint8_read = np.frombuffer(raw_read, dtype=np.uint8)
         bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
@@ -120,7 +120,7 @@ class ReadSession:
         are added at once
 
         Args:
-            read_sessions: List of ReadSession's objects that shall be merged  
+            read_sessions: List of ReadSession's objects that shall be merged
         """
         merged_data_reads = list()
         merged_parity_reads = list()
@@ -145,7 +145,7 @@ class BramBlock:
         read_session_names: Names of all existings ReadSession's
     """
 
-    name: str 
+    name: str
     read_sessions: Dict[str, ReadSession]
     read_session_names: list[str]
 
@@ -185,7 +185,7 @@ class ExperimentContainer(ABC):
 
     Attributes:
         name: Name of experiment container (e.g. pblock_x or "device_y")
-        subcontainers: Subordinated containers (e.g. a device has multiple 
+        subcontainers: Subordinated containers (e.g. a device has multiple
                         pblocks and a pblock has multiple bram blocks)
         read_sessions: ReadSession objects mapped by their name
         read_session_names: Names of all existings ReadSession's
@@ -272,7 +272,7 @@ class Board(ExperimentContainer):
         uart_sn: Serial number of UART device used for measurements
         programming_interface: Serial number of jtag programming interface
         data: Date of measurement of board
-        subcontainers: See ExperimentContainer  
+        subcontainers: See ExperimentContainer
     """
 
     fpga: str

@@ -382,7 +382,7 @@ if { $obj != "" } {
 
 }
 set obj [get_runs synth_1]
-set_property -name "incremental_checkpoint" -value "$proj_dir/${_xil_proj_name_}.srcs/utils_1/imports/synth_1/read_bram.dcp" -objects $obj
+# set_property -name "incremental_checkpoint" -value "$proj_dir/${_xil_proj_name_}.srcs/utils_1/imports/synth_1/read_bram.dcp" -objects $obj
 set_property -name "auto_incremental_checkpoint" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
@@ -1586,7 +1586,7 @@ set_property -name "options.warn_on_violation" -value "1" -objects $obj
 set obj [get_runs return_0_impl_1]
 set_property -name "constrset" -value "return_0" -objects $obj
 set_property -name "include_in_archive" -value "0" -objects $obj
-set_property -name "auto_incremental_checkpoint.directory" -value "$proj_dir/${_xil_proj_name_}.srcs/utils_1/imports/return_00_impl_1" -objects $obj
+# set_property -name "auto_incremental_checkpoint.directory" -value "$proj_dir/${_xil_proj_name_}.srcs/utils_1/imports/return_00_impl_1" -objects $obj
 set_property -name "strategy" -value "Vivado Implementation Defaults" -objects $obj
 set_property -name "steps.write_bitstream.args.readback_file" -value "0" -objects $obj
 set_property -name "steps.write_bitstream.args.verbose" -value "0" -objects $obj

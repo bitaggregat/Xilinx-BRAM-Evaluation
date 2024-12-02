@@ -11,13 +11,10 @@ import numpy.typing as npt
 from .plotting import (
     stable_bit_per_read_step_plot,
     per_bit_idx_histogram,
-    histogram,
-    clear_plt
+    histogram
 )
 from .stats_base import SimpleStatistic, ComparisonStatistic, BitwiseStatistic
 from .stat_functions import (
-    interdistance,
-    intradistance,
     interdistance_bootstrap,
     intradistance_bootstrap,
     entropy_list,

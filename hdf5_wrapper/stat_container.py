@@ -129,34 +129,38 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
         """
         header = " & " + " & ".join(
             [
-                "\\textbf{" + stat_name.replace("_", "\_") + "}"
+                "\\textbf{" + stat_name.replace("_", "\\_") + "}"
                 for stat_name in MetaStatistic.statistic_method_names
             ]
         )
-        table_format = "c||" + "".join(
-            ["cl"] * len(MetaStatistic.statistic_method_names)
+        table_format = "l" + "".join(
+            ["c"] * len(MetaStatistic.statistic_method_names)
         )
 
         rows = [
             " & ".join(
-                [read_session_name.replace("_", "\_")]
+                [read_session_name.replace("_", "\\_")]
                 + [
                     str(meta_stat.stats[stat_name])
                     for stat_name in MetaStatistic.statistic_method_names
                 ]
             )
             + "\\\\\n"
-            for read_session_name, meta_stat in meta_stats_per_read_session.items()
+            for read_session_name, meta_stat
+            in meta_stats_per_read_session.items()
         ]
         with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
                 [
                     "\\begin{tabular}{|" + table_format + "|}\n",
                     header + "\\\\\n",
-                    "\\hline\n",
+                    "\\toprule\n",
                 ]
                 + rows
-                + ["\\end{tabular}\n"]
+                + [
+                    "\\bottomrule\n",
+                    "\\end{tabular}\n"
+                ]
             )
 
     def _plot(self) -> None:
@@ -459,7 +463,8 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             read_session_lists = {
                 read_session_name: [
                     subcontainer.read_sessions[read_session_name]
-                    for subcontainer in experiment_container.subcontainers.values()
+                    for subcontainer
+                    in experiment_container.subcontainers.values()
                 ]
                 for read_session_name in self.read_session_names
             }
@@ -490,7 +495,11 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
 
                         self.statistics[statistic_type] = (
                             MultiReadSessionStatistic(
-                                plot_settings=self.plot_settings.with_expanded_path(statistic_type._hdf5_group_name),
+                                plot_settings=(
+                                    self.plot_settings.with_expanded_path(
+                                        statistic_type._hdf5_group_name
+                                    )
+                                ),
                                 statistics=statistics,
                                 statistic_type=statistic_type,
                                 _read_session_names=self._read_session_names,
@@ -527,6 +536,7 @@ class BramBlockStat(MultiStatisticOwner):
         BitAliasingStatistic,
         BitFlipChanceStatistic
     ]
+
 
 class PBlockStat(StatAggregator):
     """

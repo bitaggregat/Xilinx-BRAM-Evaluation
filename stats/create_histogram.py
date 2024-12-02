@@ -235,4 +235,3 @@ if __name__ == "__main__":
                 display=args["output_file"] is None,
                 png_path=args["output_file"]
             )
-        

@@ -79,6 +79,7 @@ def create_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+
 def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
     """
     Generates PlotSettings object from arg_dict
@@ -158,4 +159,4 @@ def main(arg_dict: dict[str, Any]):
         # Start computing stats
         experiment_stats.add_to_hdf5_group(hdf5_file)
         experiment_stats.plot()
-        print("remove")
+        print("Experiment Stats: Done")

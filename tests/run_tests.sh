@@ -2,8 +2,8 @@
 
 
 # Test run
-# Tests will verify produced by this run
-#source run_device_analysis.sh tests/test_data/test_pblock_config.sh
+# Tests will verify content produced by this run:
+source run_device_analysis.sh tests/test_data/test_pblock_config.sh
 
 #######################################
 # Temperature test
@@ -13,7 +13,10 @@
 
 # Verify content of temperature files
 while IFS= read -r line || [[ -n "$line" ]]; do
-    if [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
+    # Ignore comments
+    if [[ "${line}" == "#"* ]]; then
+        continue
+    elif [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
         echo $line
         echo "Temperature test failed"
         exit 0
@@ -21,7 +24,10 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 done < "tests/temp_dir/boards/te0802/pblock_1/RAMB36_X2Y12/previous_value_ff_t=0/temperature.txt"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
-    if [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
+    # Ignore comments
+    if [[ "${line}" == "#"* ]]; then
+        continue
+    elif [ ${#line} -gt 9 ] || [[ ! $line =~ ^[0-9\.[:space:]]+$ ]]; then
         echo $line
         echo "Temperature test failed"
         exit 0

@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     if args["device"] is not None:
         # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
-        if args["device"] == "A503VSXV":
+        if args["device"] in ["A503VSXV", "A503VYYY", "A503VSBM"]:
             # This specific UART Adapter uses a different ftdi chip and port than dev boards
             # Making this more 'generic' could be a future TODO
             port = pyftdi.serialext.serial_for_url(
@@ -148,7 +148,6 @@ if __name__ == "__main__":
             else:
                 break
 
-        # print(data.hex())
         parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
 
         if args["output_path"] is not None:
@@ -159,12 +158,6 @@ if __name__ == "__main__":
             with open(parity_path, mode="wb") as f:
                 f.write(bytes.fromhex(parity))
 
-        # print(f"Length of data {len(data)}")
-        # print("Data bytes evaluation:\n")
-        # print(evaluate_readout(data.hex(), args["previous_value"]))
-        # print(f"{len(evaluate_readout(data.hex(), args['previous_value']))} bytes have flips")
-        # print("Parity bytes evaluation:\n")
-        # print(evaluate_readout(parity, args["previous_value"]))
     else:
         print(
             "No Serial Number specified. Call with '-s' to see possible serial numbers."
