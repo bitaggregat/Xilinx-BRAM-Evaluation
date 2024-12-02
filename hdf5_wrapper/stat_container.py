@@ -23,7 +23,7 @@ from .stats import (
     EntropyStatistic,
     BitStabilizationStatistic,
     BitAliasingStatistic,
-    BitFlipChanceStatistic
+    BitFlipChanceStatistic,
 )
 from .utility import PlotSettings
 
@@ -146,8 +146,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
                 ]
             )
             + "\\\\\n"
-            for read_session_name, meta_stat
-            in meta_stats_per_read_session.items()
+            for read_session_name, meta_stat in meta_stats_per_read_session.items()
         ]
         with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
@@ -157,10 +156,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
                     "\\toprule\n",
                 ]
                 + rows
-                + [
-                    "\\bottomrule\n",
-                    "\\end{tabular}\n"
-                ]
+                + ["\\bottomrule\n", "\\end{tabular}\n"]
             )
 
     def _plot(self) -> None:
@@ -280,8 +276,8 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
         name: Name of ExperimentContainer that was used for this object/class
         _read_session_names: List of existing read session names/keys
         used_statistics: List of Statistic types that will be calculated and
-                            potentially plotted by this MultiStatisticOwner 
-        allowed_statistics: List of Statistic types that may be added to 
+                            potentially plotted by this MultiStatisticOwner
+        allowed_statistics: List of Statistic types that may be added to
                             "used_statistics" by user
     """
 
@@ -463,8 +459,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             read_session_lists = {
                 read_session_name: [
                     subcontainer.read_sessions[read_session_name]
-                    for subcontainer
-                    in experiment_container.subcontainers.values()
+                    for subcontainer in experiment_container.subcontainers.values()
                 ]
                 for read_session_name in self.read_session_names
             }
@@ -521,8 +516,6 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             subowner.plot()
 
 
-
-
 class BramBlockStat(MultiStatisticOwner):
     """
     Attributes:
@@ -534,7 +527,7 @@ class BramBlockStat(MultiStatisticOwner):
         EntropyStatistic,
         BitStabilizationStatistic,
         BitAliasingStatistic,
-        BitFlipChanceStatistic
+        BitFlipChanceStatistic,
     ]
 
 
@@ -543,6 +536,7 @@ class PBlockStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -558,6 +552,7 @@ class BoardStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -573,6 +568,7 @@ class ExperimentStat(StatAggregator):
     Attributes:
         See parent classes
     """
+
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -582,12 +578,14 @@ class ExperimentStat(StatAggregator):
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
 
+
 class StatContainers(Enum):
     """
     Attributes:
         See parent classes
     """
+
     BramBlockStat = BramBlockStat
     PBlockStat = PBlockStat
-    BoardStat = BoardStat 
+    BoardStat = BoardStat
     ExperimentStat = ExperimentStat

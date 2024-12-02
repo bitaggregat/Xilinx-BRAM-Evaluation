@@ -1,7 +1,6 @@
 import random
 import numpy as np
 import numpy.typing as npt
-from enum import Enum, auto
 from scipy.spatial.distance import hamming
 from .experiment_hdf5 import Read
 
@@ -137,21 +136,22 @@ def bit_stabilization_count_over_time(
 
     return stable_bits_per_time_step
 
+
 def bit_aliasing(reads: list[Read]) -> list[float]:
     reads_values = [read.bits_flatted for read in reads]
     # TODO numpy only
     reads_length = len(reads)
-    return [float(num/reads_length) for num in np.sum(reads_values, axis=0)]
+    return [float(num / reads_length) for num in np.sum(reads_values, axis=0)]
 
 
 def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
     """
-    Determinates over a given list of Reads the probability to flip to 1 for 
+    Determinates over a given list of Reads the probability to flip to 1 for
     each bit.
 
     Arguments:
         reads: list of Read's of SUV's from bram
-    
+
     Returns:
         List of floats. Percentage for each bit to flip to 1.
         Values are indexed the same way as the input read values.
@@ -160,7 +160,4 @@ def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
     for read in reads:
         flip_total_vector = np.add(flip_total_vector, read.bits_flattened)
 
-    
-    return flip_total_vector/len(reads)
-
-
+    return flip_total_vector / len(reads)

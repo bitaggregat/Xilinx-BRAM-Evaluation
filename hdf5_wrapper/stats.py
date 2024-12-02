@@ -3,6 +3,7 @@ Contains classes that inherit from SimpleStatisitc, ComparisionStatistic or
 BitwiseStatistic.
 These are specialized Statistics for specific use cases
 """
+
 from pathlib import Path
 from enum import Enum
 import functools
@@ -11,7 +12,7 @@ import numpy.typing as npt
 from .plotting import (
     stable_bit_per_read_step_plot,
     per_bit_idx_histogram,
-    histogram
+    histogram,
 )
 from .stats_base import SimpleStatistic, ComparisonStatistic, BitwiseStatistic
 from .stat_functions import (
@@ -66,6 +67,7 @@ class BitAliasingStatistic(BitwiseStatistic):
     Attributes:
         See parent classes
     """
+
     _hdf5_group_name = "Bitaliasing"
     description = "TODO"
     stat_func = staticmethod(bit_aliasing)
@@ -101,7 +103,6 @@ class BitFlipChanceStatistic(BitwiseStatistic):
     "describes the number of Stable bits."
     stat_func = staticmethod(bit_flip_chance)
     stat_func_kwargs = {}
-
 
     # Alot of these count values will be used multiple times
     # Which is why we cache each of them as a class attribute
@@ -202,7 +203,7 @@ class BitFlipChanceStatistic(BitwiseStatistic):
         self, bit_stats: npt.NDArray[np.float64], bit_type: str
     ) -> None:
         """
-        Wrapper around per_bit_idx_histogram where part of the description 
+        Wrapper around per_bit_idx_histogram where part of the description
         attributes is already set.
 
         Arguments:
