@@ -2,7 +2,7 @@ import random
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import hamming
-from .experiment_hdf5 import Read
+from .experiment_hdf5 import Read, ReadSession
 
 
 def entropy_list(reads: list[Read]) -> npt.NDArray[np.float64]:
@@ -62,6 +62,8 @@ def interdistance(
     """
     Produces l*m interdistance values,
     where l, m are the lengths of "reads" and "other_reads"
+
+    Can be used for Uniquess
     """
     return np.fromiter(
         (
@@ -137,17 +139,11 @@ def bit_stabilization_count_over_time(
     return stable_bits_per_time_step
 
 
-def bit_aliasing(reads: list[Read]) -> list[float]:
-    reads_values = [read.bits_flatted for read in reads]
-    # TODO numpy only
-    reads_length = len(reads)
-    return [float(num / reads_length) for num in np.sum(reads_values, axis=0)]
-
-
 def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
     """
     Determinates over a given list of Reads the probability to flip to 1 for
     each bit.
+    This function can also be used to generate a Bit Aliasing Statistic
 
     Arguments:
         reads: list of Read's of SUV's from bram
@@ -185,3 +181,21 @@ def reliability(reads: list[Read]) -> np.float64:
     normalized_avg_intradistance = intradistance_sum/(len(reads) - 1)
     return 1 - normalized_avg_intradistance
     
+def hamming_weight(reads: list[Read]) -> npt.NDArray[np.float64]:
+    """
+    Computes hamming weight over bits of each read.
+    This can be used to compute the Uniformity of BRAMs SUVs
+
+    Arguments:
+        reads: list of Read samples
+    
+    Returns:
+        One hamming weight value per Read
+    """
+    return  np.fromiter(
+        (
+            np.sum(read.bits_flattened)/len(read.bits_flattened)
+            for read in reads
+        ),
+        np.float64
+    )
