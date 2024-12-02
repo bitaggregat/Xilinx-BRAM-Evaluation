@@ -303,6 +303,7 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
 
     def compute_stats(self, experiment_container: ExperimentContainer) -> None:
         for statistic_type in self.used_statistics:
+            print(statistic_type)
             if issubclass(statistic_type, SimpleStatistic):
                 statistics_per_read_session = dict()
                 for read_session_name in self._read_session_names:
