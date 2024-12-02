@@ -28,7 +28,7 @@ add_cells_to_pblock [get_pblocks $pblock] [get_cells -quiet [list bram_wrap]]
 for {set i $y_min_pos} {$i <= $y_max_pos} {incr i} {
     set_property PROHIBIT true [get_sites [format "RAMB36_X%sY%s" $x_pos $i]]
 }
-# Then unprohibit bram 18 block of index $bram_y_index
+# Then unprohibit bram 36 block of index $bram_y_index
 set_property PROHIBIT false [get_sites [format "RAMB36_X%sY%s" $x_pos $bram_y_index]]
 
 save_constraints

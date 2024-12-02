@@ -2,7 +2,8 @@ import unittest
 import numpy as np
 import h5py
 from pathlib import Path
-from hdf5_wrapper import Experiment, Read
+from hdf5_wrapper import Experiment
+from hdf5_wrapper.experiment_hdf5 import Read
 
 
 class TestExperiment(unittest.TestCase):
