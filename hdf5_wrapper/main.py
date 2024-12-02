@@ -101,4 +101,4 @@ def main(arg_dict: dict[str, Any]):
         # Start computing stats
         experiment_stats.add_to_hdf5_group(hdf5_file)
         experiment_stats.plot()
-        print("remove")
+        print("Experiment Stats: Done")
