@@ -2,7 +2,7 @@ import random
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import hamming
-from .experiment_hdf5 import Read, ReadSession
+from .experiment_hdf5 import Read
 from .utility import BitFlipType
 
 

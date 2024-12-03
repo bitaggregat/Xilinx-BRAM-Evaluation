@@ -38,8 +38,10 @@ def combine_data_and_parity_bits(
     else:
         return np.array(
             [
-                np.append(data_bits[parity_idx * 64 : (parity_idx + 1) * 64],
-                parity_bits[parity_idx * 8 : (parity_idx + 1)*8])
+                np.append(
+                    data_bits[parity_idx * 64: (parity_idx + 1) * 64],
+                    parity_bits[parity_idx * 8: (parity_idx + 1) * 8],
+                )
                 for parity_idx in range(0, 512)
             ],
             np.float64,

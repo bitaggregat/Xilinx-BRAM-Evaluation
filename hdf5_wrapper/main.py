@@ -94,7 +94,7 @@ def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
     Arguments:
         arg_dict: Argument dict gained from argparser
     """
-    if arg_dict["plot_path"] is None: 
+    if arg_dict["plot_path"] is None:
         return PlotSettings(
             None,
             False,
