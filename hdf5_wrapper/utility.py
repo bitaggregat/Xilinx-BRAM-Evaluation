@@ -87,7 +87,7 @@ class PlotSettings:
     path: Path
     active: bool
     heatmap_bit_display_setting: HeatmapBitDisplaySetting
-    heatmap_cmap: str
+    heatmap_cmap: str = ColorPresets.default
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         """
