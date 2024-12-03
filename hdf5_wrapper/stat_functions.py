@@ -3,6 +3,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import hamming
 from .experiment_hdf5 import Read, ReadSession
+from .utility import BitFlipType
 
 
 def entropy_list(reads: list[Read]) -> npt.NDArray[np.float64]:
@@ -139,7 +140,9 @@ def bit_stabilization_count_over_time(
     return stable_bits_per_time_step
 
 
-def bit_flip_chance(reads: list[Read], only_use_first_element: bool = False) -> npt.NDArray[np.float64]:
+def bit_flip_chance(
+    reads: list[Read], only_use_first_element: bool = False
+) -> npt.NDArray[np.float64]:
     """
     Determinates over a given list of Reads the probability to flip to 1 for
     each bit.
@@ -160,6 +163,29 @@ def bit_flip_chance(reads: list[Read], only_use_first_element: bool = False) -> 
 
     return flip_total_vector / len(reads)
 
+
+def stable_bits_per_idxs(
+    reads: list[Read], bit_flip_type: BitFlipType
+) -> npt.NDArray[np.float64]:
+    wsks_per_bit = bit_flip_chance(reads)
+    return np.fromiter(
+        (
+            1
+            if (
+                (
+                    bit_flip_type == BitFlipType.BOTH
+                    and (flip_prob == 0.0 or flip_prob == 1.0)
+                )
+                or (bit_flip_type == BitFlipType.ONE and flip_prob == 1.0)
+                or (bit_flip_type == BitFlipType.ZERO and flip_prob == 0.0)
+            )
+            else 0
+            for flip_prob in wsks_per_bit
+        ),
+        np.int64,
+    )
+
+
 def reliability(reads: list[Read]) -> np.float64:
     """
     Calculates reliability according to:
@@ -167,39 +193,42 @@ def reliability(reads: list[Read]) -> np.float64:
          the Performance of Physical Unclonable Functions"
 
     Where r_i/r_i,k,l will be compared to all other read samples.
-    We choose reads[0] as r_i, because we assume the first read to be the 
+    We choose reads[0] as r_i, because we assume the first read to be the
     "least influenced by aging"
 
     Arguments:
         reads: list of Read samples from a BRAM block
 
-    Returns: Reliability score v: 0 <= v <= 1.0, with 1.0 being the best 
+    Returns: Reliability score v: 0 <= v <= 1.0, with 1.0 being the best
                 possible reliability
     """
     r_i = reads[0].bits_flattened
     intradistance_sum = sum(
         [hamming(r_i, other_read.bits_flattened) for other_read in reads[1:]]
     )
-    normalized_avg_intradistance = intradistance_sum/(len(reads) - 1)
+    normalized_avg_intradistance = intradistance_sum / (len(reads) - 1)
     return 1 - normalized_avg_intradistance
 
-def hamming_weight(reads: list[Read], only_use_first_element: bool = False) -> npt.NDArray[np.float64]:
+
+def hamming_weight(
+    reads: list[Read], only_use_first_element: bool = False
+) -> npt.NDArray[np.float64]:
     """
     Computes hamming weight over bits of each read.
     This can be used to compute the Uniformity of BRAMs SUVs
 
     Arguments:
         reads: list of Read samples
-    
+
     Returns:
         One hamming weight value per Read
     """
     if only_use_first_element:
         reads = reads[:1]
-    return  np.fromiter(
+    return np.fromiter(
         (
-            np.sum(read.bits_flattened)/len(read.bits_flattened)
+            np.sum(read.bits_flattened) / len(read.bits_flattened)
             for read in reads
         ),
-        np.float64
+        np.float64,
     )

@@ -11,6 +11,10 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Self
 
+class ColorPresets:
+    default = "Greys"
+    one_flipping_bit = "Reds"
+    zero_flipping_bit = "Blues"
 
 def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
     """
@@ -58,6 +62,10 @@ class HeatmapBitDisplaySetting(Enum):
     SEPARATE = auto()
     BOTH = auto()
 
+class BitFlipType(Enum):
+    ONE = auto()
+    ZERO = auto()
+    BOTH = auto()
 
 @dataclass(frozen=True)
 class PlotSettings:
@@ -74,6 +82,7 @@ class PlotSettings:
     path: Path
     active: bool
     heatmap_bit_display_setting: HeatmapBitDisplaySetting
+    heatmap_cmap: str
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         """

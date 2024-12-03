@@ -6,6 +6,7 @@ These are specialized Statistics for specific use cases
 
 from pathlib import Path
 from enum import Enum
+from typing import Any
 import functools
 import numpy as np
 import numpy.typing as npt
@@ -15,6 +16,7 @@ from .plotting import (
     histogram,
     bit_heatmaps,
 )
+from .experiment_hdf5 import ReadSession
 from .stats_base import (
     SimpleStatistic,
     ComparisonStatistic,
@@ -28,7 +30,9 @@ from .stat_functions import (
     bit_stabilization_count_over_time,
     bit_flip_chance,
     hamming_weight,
+    stable_bits_per_idxs
 )
+from .utility import BitFlipType, ColorPresets, PlotSettings
 
 
 class IntradistanceStatistic(SimpleStatistic):
@@ -254,6 +258,53 @@ class BitFlipChanceStatistic(BitwiseStatistic):
         self.distribution_histogram(self.parity_stats, "parity")
 
 
+class StableBitStatistic(BitwiseStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Stable Bits"
+    description = "TODO"
+    stat_func = staticmethod(stable_bits_per_idxs)
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.BOTH}
+
+    def plot(self) -> None:
+        super().plot()
+        bit_heatmaps(
+            self.data_stats,
+            self.parity_stats,
+            self.plot_settings.heatmap_bit_display_setting,
+            "Number of Stable Bits per Bit Index",
+            self.plot_settings.path,
+            cmap=self.plot_settings.heatmap_cmap,
+        )
+
+
+class OneStableBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "One-stable Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.ONE}
+    plot_setting_additions = {"heatmap_cmap": ColorPresets.one_flipping_bit}
+
+
+class ZeroStableBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Zero-stable Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.ZERO}
+    plot_setting_additions = {"heatmap_cmap": ColorPresets.zero_flipping_bit}
+
+
 class UniformityStatisitc(SingleValueStatistic):
     """
     Attributes:
@@ -276,6 +327,7 @@ class BitAliasingStatistic(BitwiseStatistic):
     description = "TODO"
     stat_func = staticmethod(bit_flip_chance)
     stat_func_kwargs = {"only_use_first_element": True}
+
 
     def plot(self) -> None:
         super().plot()

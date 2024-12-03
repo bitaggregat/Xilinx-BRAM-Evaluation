@@ -13,7 +13,7 @@ import numpy.typing as npt
 import numpy as np
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-from .utility import HeatmapBitDisplaySetting, combine_data_and_parity_bits
+from .utility import HeatmapBitDisplaySetting, combine_data_and_parity_bits, ColorPresets
 
 
 def clear_plt(fig: pltf.Figure) -> None:
@@ -78,6 +78,7 @@ def per_bit_idx_histogram(
     ylabel: str,
     title: str,
     path: Path,
+    use_log: bool = False,
 ) -> None:
     """
     Creates a histogram with one bar per bit index.
@@ -91,8 +92,13 @@ def per_bit_idx_histogram(
         ylabel: Label of ordinate
         title: Title of plot
         path: Path of figure
+        use_log: Puts all values through log n (useful if values are
+                    very unbalancedly distributed)
     """
-    x_values = [i for i in range(len(bit_stats))]
+    if use_log:
+        x_values = [np.log(i) if i != 0 else 0 for i in range(len(bit_stats))]
+    else:
+        x_values = [i for i in range(len(bit_stats))]
 
     plt.xlim(0, len(bit_stats))
     fig, ax = plt.subplots()
@@ -248,13 +254,14 @@ def add_label_band(ax, top, bottom, label, *, spine_pos=-0.05, tip_pos=-0.02):
 def heatmap_per_bit(
     bit_stats: npt.NDArray[np.float64],
     metric: str,
-    bits_per_column: int
+    bits_per_column: int,
+    cmap: str
 ) -> tuple[plt.figure, plt.axes]:
     """ """
 
     two_d_array = np.split(bit_stats, bits_per_column)
     fig, ax = plt.subplots()
-    im = ax.imshow(two_d_array, cmap="binary")
+    im = ax.imshow(two_d_array, cmap="Greys")
     ax.tick_params(
         axis="both",
         which="both",
@@ -266,7 +273,6 @@ def heatmap_per_bit(
     cbar.ax.set_ylabel(metric, rotation=-90, va="bottom")
     fig.tight_layout()
     return fig, ax
-    
 
 
 def bit_heatmaps(
@@ -275,6 +281,7 @@ def bit_heatmaps(
     bit_display_setting: HeatmapBitDisplaySetting,
     metric: str,
     path: Path,
+    cmap = ColorPresets.default
 ) -> None:
     """ """
 
@@ -285,12 +292,15 @@ def bit_heatmaps(
         fig, ax = heatmap_per_bit(
             combine_data_and_parity_bits(data_bit_stats, parity_bit_stats),
             metric=metric,
-            bits_per_column=72
+            bits_per_column=72,
+            cmap=cmap
         )
         add_label_band(ax=ax, top=0, bottom=63.75, label="data bits")
         add_label_band(ax=ax, top=64.25, bottom=72, label="parity bits")
         fig.savefig(
-            Path(path, "heat_map_parity_and_data_bits_combined").with_suffix(".png"),
+            Path(path, "heat_map_parity_and_data_bits_combined").with_suffix(
+                ".png"
+            ),
             format="png",
             dpi=900,
         )
@@ -308,6 +318,7 @@ def bit_heatmaps(
                 metric=metric,
                 bits_per_column=64,
                 path=path.with_name(path.name + bit_type),
+                cmap=cmap
             )
             fig.savefig(
                 Path(path, f"heat_map_{bit_type}").with_suffix(".png"),
