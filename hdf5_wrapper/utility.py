@@ -13,6 +13,14 @@ from typing import Self
 
 
 class ColorPresets:
+    """
+    Enum that contains color default settings for specific use cases.
+
+    Attributes:
+        default: default default
+        one_flipping_bit: default color for bits that flip to 1
+        zero_flipping_bit: default color for bits that flip to 0
+    """
     default = "Greys"
     one_flipping_bit = "Reds"
     zero_flipping_bit = "Blues"
@@ -30,6 +38,17 @@ def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
 def combine_data_and_parity_bits(
     data_bits: npt.NDArray[np.float64], parity_bits: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:
+    """
+    Combines data and parity bits in a specific order.
+    (The order is our assumption of the physical order of the grid in the bram)
+
+    Arguments:
+        data_bits: Some stat values indexed by data bit indices
+        parity_bits: Some stat values indexed by parity bit indices
+
+    Returns:
+        data and parity bits combined according to our assumption of the grid
+    """
     if len(data_bits) != 64 * 512 or len(parity_bits) != 64 * 64:
         raise ValueError(
             "Length of either parity or data bits is incorrect "
@@ -69,6 +88,10 @@ class HeatmapBitDisplaySetting(Enum):
 
 
 class BitFlipType(Enum):
+    """
+    Sets values that can be used for settings of functions or plots.
+    Some stat function will care about the direction that a bit flips.
+    """
     ONE = auto()
     ZERO = auto()
     BOTH = auto()
@@ -84,6 +107,7 @@ class PlotSettings:
         path: Path where diagrams shall be saved
         active: True if plots shall be generated, else False
         heat_map_bit_display_setting: See HeatMapBitDisplaySetting Enum class
+        heatmap_cmap: name of color map that will be used for heatmaps
     """
 
     path: Path

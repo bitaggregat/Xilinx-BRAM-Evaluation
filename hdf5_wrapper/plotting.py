@@ -262,7 +262,19 @@ def heatmap_per_bit(
     bits_per_column: int,
     cmap: str,
 ) -> tuple[plt.figure, plt.axes]:
-    """ """
+    """
+    Creates (incomplete) heatmap figure of bits for some BitwiseStatistic.
+    Incomplete because colorbar and saving has to be handled by other function
+
+    Arguments:
+        bit_stats: Stats with one value per bit idx
+        metric: Name of Statistic metric (will be inserted in diagram)
+        bits_per_column: Height of heatmap/assumption of dimension of bram grid
+        cmap: Name of matplot color map that shall be used
+
+    Returns:
+        Figure and axes of (incomplete) heatmap
+    """
 
     two_d_array = np.split(bit_stats, bits_per_column)
     fig, ax = plt.subplots()
@@ -288,7 +300,19 @@ def bit_heatmaps(
     path: Path,
     cmap=ColorPresets.default,
 ) -> None:
-    """ """
+    """
+    Wrapper around heatmap_per_bit. 
+    Handles saving of figure, arrangement of bits of different type and
+    colorbar
+
+    Arguments:
+        data_bit_stats: Stats of data bits ordered by bit idx
+        parity_bit_stats: Stats of parity bits ordered by bit idx
+        bit_display_setting: See HeatmapBitDisplaySetting Enum
+        metric: Name of Statistic metric (will be inserted in diagram)
+        path: Path where diagram(s) shall be saved
+        cmap: Name of matplot color map that shall be used
+    """
 
     if (
         bit_display_setting == HeatmapBitDisplaySetting.BOTH

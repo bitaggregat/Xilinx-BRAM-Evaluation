@@ -301,7 +301,10 @@ class StableBitStatistic(BitwiseStatistic):
     @abstractmethod
     def from_merge(cls, stats: list[Self]) -> Self:
         """
-        This merge as
+        This merge is similar to BitwiseStatistic.from_merge,
+        the main difference being that the values are not normalized by the
+        number of samples.
+        -> Because we want to get a distribution from total counts
         """
         data_read_stats_list = [
             bitwise_statistic.data_read_stat for bitwise_statistic in stats

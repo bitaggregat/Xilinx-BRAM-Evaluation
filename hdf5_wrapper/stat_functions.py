@@ -166,7 +166,19 @@ def bit_flip_chance(
 def stable_bits_per_idxs(
     reads: list[Read], bit_flip_type: BitFlipType
 ) -> npt.NDArray[np.float64]:
-    wsks_per_bit = bit_flip_chance(reads)
+    """
+    Function that gives overview of stable bits of a set of Read samples.
+
+    Arguments:
+        reads: Read samples
+        bit_flip_type: Sets what kind of stable bits are analyzed 
+                        (See BitFlipType Enum)
+
+    Returns:
+        Numpy of length of single sample of read. Each index is 1 if the bit at
+        said index was stable (and 0 otherwise)
+    """
+    prob_per_bit = bit_flip_chance(reads)
     return np.fromiter(
         (
             1
@@ -179,7 +191,7 @@ def stable_bits_per_idxs(
                 or (bit_flip_type == BitFlipType.ZERO and flip_prob == 0.0)
             )
             else 0
-            for flip_prob in wsks_per_bit
+            for flip_prob in prob_per_bit
         ),
         np.int64,
     )
