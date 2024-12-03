@@ -41,15 +41,14 @@ def intradistance_bootstrap(
 
     Less compute time expensive alternative to "intradistance"
     """
-    k = int(min(k, (len(reads) ** 2 - len(reads) / 2)))
-
+    k = int(min(k, ((len(reads) ** 2 - len(reads)) / 2)))
     return np.fromiter(
         (
             hamming(
-                *[
+                *(
                     read.bits_flattened
-                    for read in tuple(random.choices(reads, k=2))
-                ]
+                    for read in tuple(random.sample(reads, k=2))
+                )
             )
             for _ in range(k)
         ),

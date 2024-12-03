@@ -6,13 +6,32 @@ from hdf5_wrapper.stat_functions import (
     bit_flip_chance,
     stable_bits_per_idxs,
     hamming_weight,
-    reliability
+    reliability,
+    interdistance_bootstrap,
+    intradistance_bootstrap,
 )
 from hdf5_wrapper.experiment_hdf5 import Read
 from hdf5_wrapper.utility import BitFlipType
 
 
 class TestStatFunctions(unittest.TestCase):
+    reads_homogene_00 = [
+        Read.from_raw(b"\x00\x00\x00"),
+        Read.from_raw(b"\x00\x00\x00"),
+    ]
+    reads_homogene_ff = [
+        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xff\xff\xff"),
+    ]
+    reads_heterogene = [
+        Read.from_raw(b"\xff\x00\xff"),
+        Read.from_raw(b"\x00\xff\x00"),
+    ]
+    reads_heterogene_similar = [
+        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xf0\x0f\xf0"),
+    ]
+
     def test_bit_stabilization_count_over_time(self) -> None:
         reads = [
             Read.from_raw(b"\xbe\xee"),
@@ -128,7 +147,11 @@ class TestStatFunctions(unittest.TestCase):
             Read.from_raw(b"\xfe"),
             Read.from_raw(b"\xf3"),
         ]
-        expected_1 = 1 - sum([4/8, 7/8, 4/8, 3/8, 1, 4/8, 4/8, 4/8, 4/8])/9
+        expected_1 = (
+            1
+            - sum([4 / 8, 7 / 8, 4 / 8, 3 / 8, 1, 4 / 8, 4 / 8, 4 / 8, 4 / 8])
+            / 9
+        )
         self.assertEqual(expected_1, reliability(reads_1))
 
         reads_2 = [
@@ -143,5 +166,50 @@ class TestStatFunctions(unittest.TestCase):
             Read.from_raw(b"\xab"),
             Read.from_raw(b"\xa8"),
         ]
-        expected_2 = 1 - sum([0, 0, 0, 0, 0, 1/8, 1/8, 1/8])/9
+        expected_2 = 1 - sum([0, 0, 0, 0, 0, 1 / 8, 1 / 8, 1 / 8, 1 / 8]) / 9
         self.assertEqual(expected_2, reliability(reads_2))
+
+    def test_intradistance_bootstrap(self) -> None:
+        nptest.assert_array_equal(
+            intradistance_bootstrap(self.reads_homogene_00), np.array([0])
+        )
+
+        nptest.assert_array_equal(
+            intradistance_bootstrap(self.reads_heterogene), np.array([1.0])
+        )
+        nptest.assert_array_equal(
+            intradistance_bootstrap(self.reads_heterogene_similar),
+            np.array([0.5]),
+        )
+
+    def test_interdistance_bootstrap(self) -> None:
+        nptest.assert_array_equal(
+            interdistance_bootstrap(
+                self.reads_homogene_00, self.reads_homogene_ff, k=2
+            ),
+            np.array([1, 1]),
+        )
+
+        nptest.assert_array_equal(
+            interdistance_bootstrap(
+                self.reads_homogene_00, self.reads_homogene_00, k=2
+            ),
+            np.array([0, 0]),
+        )
+
+        self.assertIn(
+            list(
+                interdistance_bootstrap(
+                    self.reads_heterogene_similar, self.reads_homogene_00, k=2
+                )
+            ),
+            [[0, 0.5], [0.5, 0], [0.5, 0.5], [0, 0]],
+        )
+        self.assertIn(
+            list(
+                interdistance_bootstrap(
+                    self.reads_heterogene_similar, self.reads_heterogene, k=2
+                )
+            ),
+            [[2 / 3, 0.5], [0.5, 2 / 3], [0.5, 0.5], [2 / 3, 2 / 3]],
+        )
