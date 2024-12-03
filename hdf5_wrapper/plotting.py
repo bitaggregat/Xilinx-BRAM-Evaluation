@@ -178,6 +178,7 @@ def histogram(
         title: Title of the diagram
         path: Path where diagram will be saved (file type not included)
         bins: Number of bins (int) or predefined bin estimation method as str
+        log: Sets whether or not values should be scaled by log n
     """
     fig, ax = plt.subplots()
 
