@@ -36,12 +36,12 @@ def combine_data_and_parity_bits(
             f"({len(data_bits)}, {len(parity_bits)})"
         )
     else:
-        return np.fromiter(
-            (
-                data_bits[parity_idx * 8 : (parity_idx + 8) * 8]
-                + parity_bits[parity_idx : parity_idx + 8]
-                for parity_idx in range(0, 64, 8)
-            ),
+        return np.array(
+            [
+                np.append(data_bits[parity_idx * 64 : (parity_idx + 1) * 64],
+                parity_bits[parity_idx * 8 : (parity_idx + 1)*8])
+                for parity_idx in range(0, 512)
+            ],
             np.float64,
         ).flatten()
 
