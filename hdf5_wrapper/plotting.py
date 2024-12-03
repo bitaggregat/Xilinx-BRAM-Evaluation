@@ -13,7 +13,11 @@ import numpy.typing as npt
 import numpy as np
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-from .utility import HeatmapBitDisplaySetting, combine_data_and_parity_bits, ColorPresets
+from .utility import (
+    HeatmapBitDisplaySetting,
+    combine_data_and_parity_bits,
+    ColorPresets,
+)
 
 
 def clear_plt(fig: pltf.Figure) -> None:
@@ -162,7 +166,7 @@ def histogram(
     title: str,
     path: Path,
     bins: int | str,
-    log: bool = False
+    log: bool = False,
 ) -> None:
     """
     Wrapper around plt.hist.
@@ -256,7 +260,7 @@ def heatmap_per_bit(
     bit_stats: npt.NDArray[np.float64],
     metric: str,
     bits_per_column: int,
-    cmap: str
+    cmap: str,
 ) -> tuple[plt.figure, plt.axes]:
     """ """
 
@@ -282,7 +286,7 @@ def bit_heatmaps(
     bit_display_setting: HeatmapBitDisplaySetting,
     metric: str,
     path: Path,
-    cmap = ColorPresets.default
+    cmap=ColorPresets.default,
 ) -> None:
     """ """
 
@@ -294,7 +298,7 @@ def bit_heatmaps(
             combine_data_and_parity_bits(data_bit_stats, parity_bit_stats),
             metric=metric,
             bits_per_column=72,
-            cmap=cmap
+            cmap=cmap,
         )
         add_label_band(ax=ax, top=0, bottom=63.75, label="data bits")
         add_label_band(ax=ax, top=64.25, bottom=72, label="parity bits")
@@ -319,7 +323,7 @@ def bit_heatmaps(
                 metric=metric,
                 bits_per_column=64,
                 path=path.with_name(path.name + bit_type),
-                cmap=cmap
+                cmap=cmap,
             )
             fig.savefig(
                 Path(path, f"heat_map_{bit_type}").with_suffix(".png"),

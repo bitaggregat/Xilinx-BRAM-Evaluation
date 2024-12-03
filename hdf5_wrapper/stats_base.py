@@ -11,8 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
-from .utility import PlotSettings, HeatmapBitDisplaySetting
-from .plotting import heat_map_per_bit
+from .utility import PlotSettings
 
 
 class MetaStatistic(HDF5Convertible, Plottable):
@@ -117,7 +116,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         parity_stats: Stats of parity bits, gained through "stat_func"
         mergable: Indicates if "from_merge" method can be used on multiple
                     instances of this "Statistic" class
-        plot_setting_additions: Some classes may want to overwrite 
+        plot_setting_additions: Some classes may want to overwrite
                                 plot settings statically. This dict + init of
                                 this base class allow the latter.
     """
@@ -139,6 +138,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         if self.plot_setting_additions is not None:
             for key, value in self.plot_setting_additions.items():
                 setattr(self.plot_settings, key, value)
+
     @property
     def meta_stats(self) -> dict[str, MetaStatistic]:
         # We use just in time calculation for this attribute,
@@ -320,7 +320,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
         plot_settings: PlotSettings,
         read_session: ReadSession = None,
         data_read_stat: Any = None,
-        parity_read_stat: Any = None
+        parity_read_stat: Any = None,
     ) -> None:
         super().__init__(
             plot_settings, read_session, data_read_stat, parity_read_stat
@@ -348,6 +348,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
         def div_and_float_cast(x: float) -> float:
             return float(x / len(stats))
+
         divide_function = div_and_float_cast
         new_data_read_stats = list(map(divide_function, data_read_stats_sum))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
@@ -356,7 +357,6 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
         )
 
         return cls(None, new_data_read_stats, new_parity_read_stats)
-
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):

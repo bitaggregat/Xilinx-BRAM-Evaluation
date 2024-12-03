@@ -7,7 +7,7 @@ These are specialized Statistics for specific use cases
 from abc import abstractmethod
 from pathlib import Path
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 import functools
 import numpy as np
 import numpy.typing as npt
@@ -17,7 +17,6 @@ from .plotting import (
     histogram,
     bit_heatmaps,
 )
-from .experiment_hdf5 import ReadSession
 from .stats_base import (
     SimpleStatistic,
     ComparisonStatistic,
@@ -33,7 +32,7 @@ from .stat_functions import (
     hamming_weight,
     stable_bits_per_idxs,
 )
-from .utility import BitFlipType, ColorPresets, PlotSettings
+from .utility import BitFlipType, ColorPresets
 
 
 class IntradistanceStatistic(SimpleStatistic):
@@ -295,7 +294,7 @@ class StableBitStatistic(BitwiseStatistic):
                     f"{bit_type}_stable_bit_idx_distribution",
                 ),
                 bins="auto",
-                log=True
+                log=True,
             )
 
     @classmethod
@@ -386,3 +385,7 @@ class StatisticTypes(Enum):
     BitAliasingStatistic = BitAliasingStatistic
     BitStabilizationStatistic = BitStabilizationStatistic
     BitFlipChanceStatistic = BitFlipChanceStatistic
+    UniformityStatisitc = UniformityStatisitc
+    StableBitStatistic = StableBitStatistic
+    ZeroStableBitStatistic = ZeroStableBitStatistic
+    OneStableBitStatistic = OneStableBitStatistic

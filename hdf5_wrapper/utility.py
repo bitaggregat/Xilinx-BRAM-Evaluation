@@ -11,10 +11,12 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Self
 
+
 class ColorPresets:
     default = "Greys"
     one_flipping_bit = "Reds"
     zero_flipping_bit = "Blues"
+
 
 def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
     """
@@ -30,7 +32,8 @@ def combine_data_and_parity_bits(
 ) -> npt.NDArray[np.float64]:
     if len(data_bits) != 64 * 512 or len(parity_bits) != 64 * 64:
         raise ValueError(
-            f"Length of either parity or data bits is incorrect ({len(data_bits)}, {len(parity_bits)})"
+            "Length of either parity or data bits is incorrect "
+            f"({len(data_bits)}, {len(parity_bits)})"
         )
     else:
         return np.fromiter(
@@ -62,10 +65,12 @@ class HeatmapBitDisplaySetting(Enum):
     SEPARATE = auto()
     BOTH = auto()
 
+
 class BitFlipType(Enum):
     ONE = auto()
     ZERO = auto()
     BOTH = auto()
+
 
 @dataclass(frozen=True)
 class PlotSettings:

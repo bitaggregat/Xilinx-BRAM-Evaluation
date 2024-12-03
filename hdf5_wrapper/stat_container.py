@@ -146,7 +146,8 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
                 ]
             )
             + "\\\\\n"
-            for read_session_name, meta_stat in meta_stats_per_read_session.items()
+            for read_session_name, meta_stat
+            in meta_stats_per_read_session.items()
         ]
         with open(path.with_suffix(".tex"), mode="w") as f:
             f.writelines(
@@ -458,7 +459,8 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             read_session_lists = {
                 read_session_name: [
                     subcontainer.read_sessions[read_session_name]
-                    for subcontainer in experiment_container.subcontainers.values()
+                    for subcontainer
+                    in experiment_container.subcontainers.values()
                 ]
                 for read_session_name in self.read_session_names
             }
