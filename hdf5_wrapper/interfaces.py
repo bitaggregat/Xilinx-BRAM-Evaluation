@@ -41,6 +41,9 @@ class Plottable(ABC):
     Abstract class for objects that can create plots from their data
     - e.g. a EntropyStatistic obj should create a box plot
     - e.g. a MetaStats obj should create a latex table in their plot method
+
+    Attributes:
+        plot_settings: Object that contains settings (e.g. path) for plotting
     """
 
     plot_settings: PlotSettings

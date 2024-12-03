@@ -35,6 +35,10 @@ class Read:
         return self.bits.flatten()
 
     @cached_property
+    def bits_flattened_bool(self) -> npt.NDArray[np.bool_]:
+        return np.array(self.bits_flattened(), dtype=bool)
+
+    @cached_property
     def entropy(self) -> np.float64:
         """
         Counts 1's and 0's in read value.
