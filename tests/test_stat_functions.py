@@ -1,0 +1,147 @@
+import unittest
+import numpy as np
+import numpy.testing as nptest
+from hdf5_wrapper.stat_functions import (
+    bit_stabilization_count_over_time,
+    bit_flip_chance,
+    stable_bits_per_idxs,
+    hamming_weight,
+    reliability
+)
+from hdf5_wrapper.experiment_hdf5 import Read
+from hdf5_wrapper.utility import BitFlipType
+
+
+class TestStatFunctions(unittest.TestCase):
+    def test_bit_stabilization_count_over_time(self) -> None:
+        reads = [
+            Read.from_raw(b"\xbe\xee"),
+            Read.from_raw(b"\xae\xef"),
+            Read.from_raw(b"\xbe\xfe"),
+            Read.from_raw(b"\xae\xef"),
+            Read.from_raw(b"\xbe\xfe"),
+            Read.from_raw(b"\xbe\xef"),
+            Read.from_raw(b"\xbe\xee"),
+            Read.from_raw(b"\xbe\xee"),
+            Read.from_raw(b"\xbe\xee"),
+            Read.from_raw(b"\xbe\xef"),
+        ]
+        # Index of read from which bit became stable:
+        #   0000|0000|0005|0009
+        # "stabilized bits per index" if minimal duration is 5:
+        expected_result = np.array([13, 0, 0, 0, 1, 1, 0, 0, 0, 0])
+        result = bit_stabilization_count_over_time(
+            reads, stable_after_n_reads=5
+        )
+
+        nptest.assert_array_equal(result, expected_result)
+
+        expected_result = np.array([13, 0, 0, 0, 1, 1, 0, 0, 0, 1])
+        result = bit_stabilization_count_over_time(
+            reads, stable_after_n_reads=1
+        )
+
+        nptest.assert_array_equal(result, expected_result)
+
+        expected_result = np.array([13, 0, 0, 0, 1, 1, 0, 0, 0, 1])
+        result = bit_stabilization_count_over_time(
+            reads, stable_after_n_reads=0
+        )
+
+        nptest.assert_array_equal(result, expected_result)
+
+    def test_bit_flip_chance(self) -> None:
+        test_reads = [Read.from_raw(b"\xf0")] * 5000 + [
+            Read.from_raw(b"\xff")
+        ] * 5000
+
+        expected_result = np.array(
+            [1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.5], dtype=np.float64
+        )
+        result = bit_flip_chance(test_reads)
+
+        nptest.assert_array_equal(expected_result, result)
+
+    def test_stable_bits_per_idxs(self) -> None:
+        reads = [
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xa8"),
+        ]
+        stable_bits_both = stable_bits_per_idxs(
+            reads, bit_flip_type=BitFlipType.BOTH
+        )
+        expected_bits_both = np.array([1, 1, 1, 1, 1, 1, 0, 0])
+        nptest.assert_array_equal(stable_bits_both, expected_bits_both)
+
+        stable_bits_zero = stable_bits_per_idxs(
+            reads, bit_flip_type=BitFlipType.ZERO
+        )
+        expected_bits_zero = np.array([0, 1, 0, 1, 0, 1, 0, 0])
+        nptest.assert_array_equal(stable_bits_zero, expected_bits_zero)
+
+        stable_bits_one = stable_bits_per_idxs(
+            reads, bit_flip_type=BitFlipType.ONE
+        )
+        expected_bits_one = np.array([1, 0, 1, 0, 1, 0, 0, 0])
+        nptest.assert_array_equal(stable_bits_one, expected_bits_one)
+
+    def test_hamming_weight(self) -> None:
+        reads = [
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\x18"),
+            Read.from_raw(b"\x37"),
+            Read.from_raw(b"\xff"),
+            Read.from_raw(b"\x52"),
+            Read.from_raw(b"\x55"),
+            Read.from_raw(b"\x93"),
+            Read.from_raw(b"\xc4"),
+            Read.from_raw(b"\xfe"),
+            Read.from_raw(b"\xf3"),
+        ]
+        expected = np.array(
+            [0.5, 0.25, 5 / 8, 1, 3 / 8, 0.5, 0.5, 3 / 8, 7 / 8, 6 / 8]
+        )
+        nptest.assert_array_equal(expected, hamming_weight(reads))
+
+        nptest.assert_array_equal(
+            expected[:1], hamming_weight(reads, only_use_first_element=True)
+        )
+
+    def test_reliability(self) -> None:
+        reads_1 = [
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\x18"),
+            Read.from_raw(b"\x37"),
+            Read.from_raw(b"\xff"),
+            Read.from_raw(b"\x52"),
+            Read.from_raw(b"\x55"),
+            Read.from_raw(b"\x93"),
+            Read.from_raw(b"\xc4"),
+            Read.from_raw(b"\xfe"),
+            Read.from_raw(b"\xf3"),
+        ]
+        expected_1 = 1 - sum([4/8, 7/8, 4/8, 3/8, 1, 4/8, 4/8, 4/8, 4/8])/9
+        self.assertEqual(expected_1, reliability(reads_1))
+
+        reads_2 = [
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xaa"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xab"),
+            Read.from_raw(b"\xa8"),
+        ]
+        expected_2 = 1 - sum([0, 0, 0, 0, 0, 1/8, 1/8, 1/8])/9
+        self.assertEqual(expected_2, reliability(reads_2))
