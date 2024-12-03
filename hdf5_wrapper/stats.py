@@ -13,15 +13,21 @@ from .plotting import (
     stable_bit_per_read_step_plot,
     per_bit_idx_histogram,
     histogram,
+    bit_heatmaps,
 )
-from .stats_base import SimpleStatistic, ComparisonStatistic, BitwiseStatistic
+from .stats_base import (
+    SimpleStatistic,
+    ComparisonStatistic,
+    BitwiseStatistic,
+    SingleValueStatistic,
+)
 from .stat_functions import (
     interdistance_bootstrap,
     intradistance_bootstrap,
     entropy_list,
     bit_stabilization_count_over_time,
-    bit_aliasing,
     bit_flip_chance,
+    hamming_weight,
 )
 
 
@@ -59,19 +65,6 @@ class InterdistanceStatistic(ComparisonStatistic):
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)
     stat_func_kwargs = {"k": 100000}
-
-
-class BitAliasingStatistic(BitwiseStatistic):
-    """
-    WIP: scheduled for next merge
-    Attributes:
-        See parent classes
-    """
-
-    _hdf5_group_name = "Bitaliasing"
-    description = "TODO"
-    stat_func = staticmethod(bit_aliasing)
-    stat_func_kwargs = {"k": 100}
 
 
 class BitStabilizationStatistic(SimpleStatistic):
@@ -259,6 +252,40 @@ class BitFlipChanceStatistic(BitwiseStatistic):
 
         self.distribution_histogram(self.data_stats, "data")
         self.distribution_histogram(self.parity_stats, "parity")
+
+
+class UniformityStatisitc(SingleValueStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Uniformity"
+    description = "TODO"
+    stat_func = staticmethod(hamming_weight)
+    stat_func_kwargs = {"only_use_first_element": True}
+
+
+class BitAliasingStatistic(BitwiseStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Bit-aliasing"
+    description = "TODO"
+    stat_func = staticmethod(bit_flip_chance)
+    stat_func_kwargs = {"only_use_first_element": True}
+
+    def plot(self) -> None:
+        super().plot()
+        bit_heatmaps(
+            self.data_stats,
+            self.parity_stats,
+            self.plot_settings.heatmap_bit_display_setting,
+            "Bit-aliasing per Bit Index",
+            self.plot_settings.path,
+        )
 
 
 class StatisticTypes(Enum):

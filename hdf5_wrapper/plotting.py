@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import matplotlib.figure as pltf
 import numpy.typing as npt
 import numpy as np
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
+from .utility import HeatmapBitDisplaySetting, combine_data_and_parity_bits
 
 
 def clear_plt(fig: pltf.Figure) -> None:
@@ -171,3 +174,145 @@ def histogram(
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
     fig.savefig(path.with_suffix(".svg"), format="svg")
     clear_plt(fig=fig)
+
+
+def add_label_band(ax, top, bottom, label, *, spine_pos=-0.05, tip_pos=-0.02):
+    """
+    ##################################################
+    SOURCED FROM: https://stackoverflow.com/a/67237650
+    ##################################################
+    Helper function to add bracket around y-tick labels.
+
+    Arguments
+    ----------
+    ax : matplotlib.Axes
+        The axes to add the bracket to
+
+    top, bottom : floats
+        The positions in *data* space to bracket on the y-axis
+
+    label : str
+        The label to add to the bracket
+
+    spine_pos, tip_pos : float, optional
+        The position in *axes fraction* of the spine and tips of the bracket.
+        These will typically be negative
+
+    Returns
+    -------
+    bracket : matplotlib.patches.PathPatch
+        The "bracket" Aritst.  Modify this Artist to change the color etc of
+        the bracket from the defaults.
+
+    txt : matplotlib.text.Text
+        The label Artist.  Modify this to change the color etc of the label
+        from the defaults.
+
+    """
+    # grab the yaxis blended transform
+    transform = ax.get_yaxis_transform()
+
+    # add the bracket
+    bracket = mpatches.PathPatch(
+        mpath.Path(
+            [
+                [tip_pos, top],
+                [spine_pos, top],
+                [spine_pos, bottom],
+                [tip_pos, bottom],
+            ]
+        ),
+        transform=transform,
+        clip_on=False,
+        facecolor="none",
+        edgecolor="k",
+        linewidth=2,
+    )
+    ax.add_artist(bracket)
+
+    # add the label
+    txt = ax.text(
+        spine_pos,
+        (top + bottom) / 2,
+        label,
+        ha="right",
+        va="center",
+        rotation="vertical",
+        clip_on=False,
+        transform=transform,
+    )
+
+    return bracket, txt
+
+
+def heatmap_per_bit(
+    bit_stats: npt.NDArray[np.float64],
+    metric: str,
+    bits_per_column: int
+) -> tuple[plt.figure, plt.axes]:
+    """ """
+
+    two_d_array = np.split(bit_stats, bits_per_column)
+    fig, ax = plt.subplots()
+    im = ax.imshow(two_d_array, cmap="binary")
+    ax.tick_params(
+        axis="both",
+        which="both",
+        bottom=False,
+        top=False,
+        labelbottom=False,
+    )
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel(metric, rotation=-90, va="bottom")
+    fig.tight_layout()
+    return fig, ax
+    
+
+
+def bit_heatmaps(
+    data_bit_stats: npt.NDArray[np.float64],
+    parity_bit_stats: npt.NDArray[np.float64],
+    bit_display_setting: HeatmapBitDisplaySetting,
+    metric: str,
+    path: Path,
+) -> None:
+    """ """
+
+    if (
+        bit_display_setting == HeatmapBitDisplaySetting.BOTH
+        or bit_display_setting == HeatmapBitDisplaySetting.MERGE
+    ):
+        fig, ax = heatmap_per_bit(
+            combine_data_and_parity_bits(data_bit_stats, parity_bit_stats),
+            metric=metric,
+            bits_per_column=72
+        )
+        add_label_band(ax=ax, top=0, bottom=63.75, label="data bits")
+        add_label_band(ax=ax, top=64.25, bottom=72, label="parity bits")
+        fig.savefig(
+            Path(path, "heat_map_parity_and_data_bits_combined").with_suffix(".png"),
+            format="png",
+            dpi=900,
+        )
+        clear_plt(fig)
+    if (
+        bit_display_setting == HeatmapBitDisplaySetting.BOTH
+        or bit_display_setting == HeatmapBitDisplaySetting.SEPARATE
+    ):
+        for bit_type, bit_stats in [
+            ("data", data_bit_stats),
+            ("parity", parity_bit_stats),
+        ]:
+            fig, ax = heatmap_per_bit(
+                bit_stats=bit_stats,
+                metric=metric,
+                bits_per_column=64,
+                path=path.with_name(path.name + bit_type),
+            )
+            fig.savefig(
+                Path(path, f"heat_map_{bit_type}").with_suffix(".png"),
+                format="png",
+                dpi=900,
+            )
+
+            clear_plt(fig)

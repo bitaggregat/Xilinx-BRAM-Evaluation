@@ -11,7 +11,8 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
-from .utility import PlotSettings
+from .utility import PlotSettings, HeatmapBitDisplaySetting
+from .plotting import heat_map_per_bit
 
 
 class MetaStatistic(HDF5Convertible, Plottable):
@@ -344,6 +345,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
         )
 
         return cls(None, new_data_read_stats, new_parity_read_stats)
+
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):

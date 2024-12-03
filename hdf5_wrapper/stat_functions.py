@@ -139,7 +139,7 @@ def bit_stabilization_count_over_time(
     return stable_bits_per_time_step
 
 
-def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
+def bit_flip_chance(reads: list[Read], only_use_first_element: bool = False) -> npt.NDArray[np.float64]:
     """
     Determinates over a given list of Reads the probability to flip to 1 for
     each bit.
@@ -152,6 +152,8 @@ def bit_flip_chance(reads: list[Read]) -> npt.NDArray[np.float64]:
         List of floats. Percentage for each bit to flip to 1.
         Values are indexed the same way as the input read values.
     """
+    if only_use_first_element:
+        reads = reads[:1]
     flip_total_vector = np.zeros(len(reads[0].bits_flattened), dtype=np.uint64)
     for read in reads:
         flip_total_vector = np.add(flip_total_vector, read.bits_flattened)
@@ -180,8 +182,8 @@ def reliability(reads: list[Read]) -> np.float64:
     )
     normalized_avg_intradistance = intradistance_sum/(len(reads) - 1)
     return 1 - normalized_avg_intradistance
-    
-def hamming_weight(reads: list[Read]) -> npt.NDArray[np.float64]:
+
+def hamming_weight(reads: list[Read], only_use_first_element: bool = False) -> npt.NDArray[np.float64]:
     """
     Computes hamming weight over bits of each read.
     This can be used to compute the Uniformity of BRAMs SUVs
@@ -192,6 +194,8 @@ def hamming_weight(reads: list[Read]) -> npt.NDArray[np.float64]:
     Returns:
         One hamming weight value per Read
     """
+    if only_use_first_element:
+        reads = reads[:1]
     return  np.fromiter(
         (
             np.sum(read.bits_flattened)/len(read.bits_flattened)
