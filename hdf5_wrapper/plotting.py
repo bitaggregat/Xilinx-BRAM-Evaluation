@@ -162,6 +162,7 @@ def histogram(
     title: str,
     path: Path,
     bins: int | str,
+    log: bool = False
 ) -> None:
     """
     Wrapper around plt.hist.
@@ -176,7 +177,7 @@ def histogram(
     """
     fig, ax = plt.subplots()
 
-    ax.hist(bit_stats, bins=bins, edgecolor="black", linewidth=1.2)
+    ax.hist(bit_stats, bins=bins, edgecolor="black", linewidth=1.2, log=log)
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
     fig.savefig(path.with_suffix(".svg"), format="svg")
     clear_plt(fig=fig)
@@ -261,7 +262,7 @@ def heatmap_per_bit(
 
     two_d_array = np.split(bit_stats, bits_per_column)
     fig, ax = plt.subplots()
-    im = ax.imshow(two_d_array, cmap="Greys")
+    im = ax.imshow(two_d_array, cmap=cmap)
     ax.tick_params(
         axis="both",
         which="both",

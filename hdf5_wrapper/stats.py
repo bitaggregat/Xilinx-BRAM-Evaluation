@@ -4,9 +4,10 @@ BitwiseStatistic.
 These are specialized Statistics for specific use cases
 """
 
+from abc import abstractmethod
 from pathlib import Path
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 import functools
 import numpy as np
 import numpy.typing as npt
@@ -30,7 +31,7 @@ from .stat_functions import (
     bit_stabilization_count_over_time,
     bit_flip_chance,
     hamming_weight,
-    stable_bits_per_idxs
+    stable_bits_per_idxs,
 )
 from .utility import BitFlipType, ColorPresets, PlotSettings
 
@@ -279,6 +280,40 @@ class StableBitStatistic(BitwiseStatistic):
             self.plot_settings.path,
             cmap=self.plot_settings.heatmap_cmap,
         )
+        for bit_type, bit_stats in [
+            ("data", self.data_stats),
+            ("parity", self.parity_stats),
+        ]:
+            histogram(
+                bit_stats,
+                xlabel="TODO",
+                ylabel="TODO",
+                title="Distribution Stable Bits Bit Index",
+                path=Path(
+                    self.plot_settings.path,
+                    f"{bit_type}_stable_bit_idx_distribution",
+                ),
+                bins="auto",
+                log=True
+            )
+
+    @classmethod
+    @abstractmethod
+    def from_merge(cls, stats: list[Self]) -> Self:
+        """
+        This merge as
+        """
+        data_read_stats_list = [
+            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+        ]
+        parity_read_stats_list = [
+            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+        ]
+
+        data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
+        parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
+
+        return cls(None, data_read_stats_sum, parity_read_stats_sum)
 
 
 class OneStableBitStatistic(StableBitStatistic):
@@ -327,7 +362,6 @@ class BitAliasingStatistic(BitwiseStatistic):
     description = "TODO"
     stat_func = staticmethod(bit_flip_chance)
     stat_func_kwargs = {"only_use_first_element": True}
-
 
     def plot(self) -> None:
         super().plot()
