@@ -346,7 +346,9 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
         data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
 
-        divide_function = lambda x: float(x / len(stats))
+        def div_and_float_cast(x: float) -> float:
+            return float(x / len(stats))
+        divide_function = div_and_float_cast
         new_data_read_stats = list(map(divide_function, data_read_stats_sum))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
         new_parity_read_stats = list(
