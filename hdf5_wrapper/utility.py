@@ -22,8 +22,8 @@ class ColorPresets:
         zero_flipping_bit: default color for bits that flip to 0
     """
     default = "Greys"
-    one_flipping_bit = "Reds"
-    zero_flipping_bit = "Blues"
+    one_flipping_bit = "hot"
+    zero_flipping_bit = "cool"
 
 
 def add_commit_to_hdf5_group(parent: h5py.Group) -> None:
@@ -58,10 +58,10 @@ def combine_data_and_parity_bits(
         return np.array(
             [
                 np.append(
-                    data_bits[parity_idx * 64: (parity_idx + 1) * 64],
-                    parity_bits[parity_idx * 8: (parity_idx + 1) * 8],
+                    data_bits[parity_idx * 32: (parity_idx + 1) * 32],
+                    parity_bits[parity_idx * 4: (parity_idx + 1) * 4],
                 )
-                for parity_idx in range(0, 512)
+                for parity_idx in range(0, 1024)
             ],
             np.float64,
         ).flatten()
@@ -97,7 +97,7 @@ class BitFlipType(Enum):
     BOTH = auto()
 
 
-@dataclass(frozen=True)
+@dataclass
 class PlotSettings:
     """
     Class that saves general settings for plots
