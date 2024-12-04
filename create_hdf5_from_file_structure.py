@@ -287,3 +287,4 @@ if __name__ == "__main__":
             root_group,
             not arg_dict["ignore_bitstreams"],
         )
+        derive_read_session_names(root_group)
