@@ -133,6 +133,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
     parity_stats: npt.NDArray[np.float64]
     mergable = False  # Declares if subclass is allowed to call "from_merge"
     plot_setting_additions: dict[str, Any] = None
+    meta_statable: bool = True
 
     def __init__(self) -> None:
         if self.plot_setting_additions is not None:
@@ -188,9 +189,10 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         raise NotImplementedError
 
     def _plot(self) -> None:
-        meta_stats = self.meta_stats
-        for bit_type in ["Data", "Parity"]:
-            meta_stats[bit_type].plot()
+        if self.meta_statable:
+            meta_stats = self.meta_stats
+            for bit_type in ["Data", "Parity"]:
+                meta_stats[bit_type].plot()
 
 
 class SimpleStatistic(Statistic, metaclass=ABCMeta):
@@ -216,7 +218,6 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         - ReadSession
         - already precalculated data and parity stats
         """
-        super().__init__()
         self.plot_settings = plot_settings
         if read_session is not None:
             self.data_stats = self.stat_func(
@@ -233,6 +234,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         else:
             self.data_stats = data_stats
             self.parity_stats = parity_stats
+        super().__init__()
 
     @classmethod
     def from_merge(
@@ -279,6 +281,7 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
     mergable = True
     data_stats: float = None
     parity_stats: float = None
+    meta_statable: bool = False
 
     @property
     def meta_stats(self) -> dict[str, MetaStatistic]:
@@ -294,7 +297,7 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
         cls, stats: list[Self], plot_settings: PlotSettings
     ) -> Self:
         data_values = [stat.data_stats for stat in stats]
-        parity_values = [stats.parity_stats for stat in stats]
+        parity_values = [stat.parity_stats for stat in stats]
         return cls(
             plot_settings=plot_settings,
             data_stats=sum(data_values) / len(data_values),
@@ -332,16 +335,16 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
             )
 
     @classmethod
-    def from_merge(cls, stats: list[Self]) -> Self:
+    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
         """
         Combines stats by adding each value in their lists
         (like adding two vectors)
         """
         data_read_stats_list = [
-            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+            bitwise_statistic.data_stats for bitwise_statistic in stats
         ]
         parity_read_stats_list = [
-            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+            bitwise_statistic.parity_stats for bitwise_statistic in stats
         ]
 
         data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
@@ -350,13 +353,13 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
             return float(x / len(stats))
 
         divide_function = div_and_float_cast
-        new_data_read_stats = list(map(divide_function, data_read_stats_sum))
+        new_data_read_stats = np.array(list(map(divide_function, data_read_stats_sum)))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
-        new_parity_read_stats = list(
+        new_parity_read_stats = np.array(list(
             map(divide_function, parity_read_stats_sum)
-        )
+        ))
 
-        return cls(None, new_data_read_stats, new_parity_read_stats)
+        return cls(plot_settings, None, new_data_read_stats, new_parity_read_stats)
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):

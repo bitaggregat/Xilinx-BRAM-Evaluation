@@ -55,6 +55,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
     _hdf5_group_name: str = field(init=False, default="Meta Statistic")
 
     def __post_init__(self) -> None:
+
         # Simple check to help securing the produced datas correctness
         # This may cost some extra time,
         # but it is worth it because correctness is our highest priority
@@ -266,7 +267,8 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
         self.meta_stats.add_to_hdf5_group(multi_group)
 
     def _plot(self) -> None:
-        self.meta_stats.plot()
+        if self.statistic_type.meta_statable:
+            self.meta_stats.plot()
         for statistic in self.statistics.values():
             statistic.plot()
 

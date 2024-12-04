@@ -32,7 +32,7 @@ from .stat_functions import (
     hamming_weight,
     stable_bits_per_idxs,
 )
-from .utility import BitFlipType, ColorPresets
+from .utility import BitFlipType, ColorPresets, PlotSettings
 
 
 class IntradistanceStatistic(SimpleStatistic):
@@ -298,8 +298,7 @@ class StableBitStatistic(BitwiseStatistic):
             )
 
     @classmethod
-    @abstractmethod
-    def from_merge(cls, stats: list[Self]) -> Self:
+    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
         """
         This merge is similar to BitwiseStatistic.from_merge,
         the main difference being that the values are not normalized by the
@@ -307,16 +306,16 @@ class StableBitStatistic(BitwiseStatistic):
         -> Because we want to get a distribution from total counts
         """
         data_read_stats_list = [
-            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+            bitwise_statistic.data_stats for bitwise_statistic in stats
         ]
         parity_read_stats_list = [
-            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+            bitwise_statistic.parity_stats for bitwise_statistic in stats
         ]
 
-        data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
-        parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
+        data_read_stats_sum = np.array(list(map(sum, zip(*data_read_stats_list))))
+        parity_read_stats_sum = np.array(list(map(sum, zip(*parity_read_stats_list))))
 
-        return cls(None, data_read_stats_sum, parity_read_stats_sum)
+        return cls(plot_settings, None, data_read_stats_sum, parity_read_stats_sum)
 
 
 class OneStableBitStatistic(StableBitStatistic):
@@ -364,7 +363,7 @@ class BitAliasingStatistic(BitwiseStatistic):
     _hdf5_group_name = "Bit-aliasing"
     description = "TODO"
     stat_func = staticmethod(bit_flip_chance)
-    stat_func_kwargs = {"only_use_first_element": True}
+    stat_func_kwargs = {"only_use_first_element": False}
 
     def plot(self) -> None:
         super().plot()
