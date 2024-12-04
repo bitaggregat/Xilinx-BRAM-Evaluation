@@ -314,7 +314,6 @@ def bit_heatmaps(
         path: Path where diagram(s) shall be saved
         cmap: Name of matplot color map that shall be used
     """
-
     if (
         bit_display_setting == HeatmapBitDisplaySetting.BOTH
         or bit_display_setting == HeatmapBitDisplaySetting.MERGE
@@ -322,11 +321,11 @@ def bit_heatmaps(
         fig, ax = heatmap_per_bit(
             combine_data_and_parity_bits(data_bit_stats, parity_bit_stats),
             metric=metric,
-            bits_per_column=72,
+            bits_per_column=1024,
             cmap=cmap,
         )
-        add_label_band(ax=ax, top=0, bottom=63.75, label="data bits")
-        add_label_band(ax=ax, top=64.25, bottom=72, label="parity bits")
+        add_label_band(ax=ax, top=0, bottom=32, label="data bits")
+        add_label_band(ax=ax, top=33, bottom=36, label="parity bits")
         fig.savefig(
             Path(path, "heat_map_parity_and_data_bits_combined").with_suffix(
                 ".png"
@@ -339,15 +338,14 @@ def bit_heatmaps(
         bit_display_setting == HeatmapBitDisplaySetting.BOTH
         or bit_display_setting == HeatmapBitDisplaySetting.SEPARATE
     ):
-        for bit_type, bit_stats in [
-            ("data", data_bit_stats),
-            ("parity", parity_bit_stats),
+        for bit_type, bit_stats, column_size in [
+            ("data", data_bit_stats, 1024),
+            ("parity", parity_bit_stats, 1024),
         ]:
             fig, ax = heatmap_per_bit(
                 bit_stats=bit_stats,
                 metric=metric,
-                bits_per_column=64,
-                path=path.with_name(path.name + bit_type),
+                bits_per_column=column_size,
                 cmap=cmap,
             )
             fig.savefig(
