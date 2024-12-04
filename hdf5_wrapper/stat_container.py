@@ -24,7 +24,7 @@ from .stats import (
     BitStabilizationStatistic,
     BitAliasingStatistic,
     BitFlipChanceStatistic,
-    UniformityStatisitc,
+    UniformityStatistic,
     StableBitStatistic,
     ZeroStableBitStatistic,
     OneStableBitStatistic
@@ -533,7 +533,7 @@ class BramBlockStat(MultiStatisticOwner):
         BitStabilizationStatistic,
         BitAliasingStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic
@@ -552,7 +552,7 @@ class PBlockStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic
@@ -573,7 +573,7 @@ class BoardStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic
@@ -594,7 +594,7 @@ class ExperimentStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic

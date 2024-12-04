@@ -1,5 +1,5 @@
 """
-Contains classes that inherit from SimpleStatisitc, ComparisionStatistic or
+Contains classes that inherit from SimpleStatistic, ComparisionStatistic or
 BitwiseStatistic.
 These are specialized Statistics for specific use cases
 """
@@ -343,7 +343,7 @@ class ZeroStableBitStatistic(StableBitStatistic):
     plot_setting_additions = {"heatmap_cmap": ColorPresets.zero_flipping_bit}
 
 
-class UniformityStatisitc(SingleValueStatistic):
+class UniformityStatistic(SingleValueStatistic):
     """
     Attributes:
         See parent classes
@@ -388,7 +388,7 @@ class StatisticTypes(Enum):
     BitAliasingStatistic = BitAliasingStatistic
     BitStabilizationStatistic = BitStabilizationStatistic
     BitFlipChanceStatistic = BitFlipChanceStatistic
-    UniformityStatisitc = UniformityStatisitc
+    UniformityStatistic = UniformityStatistic
     StableBitStatistic = StableBitStatistic
     ZeroStableBitStatistic = ZeroStableBitStatistic
     OneStableBitStatistic = OneStableBitStatistic
