@@ -11,6 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
+from .plotting import box_plot
 from .utility import PlotSettings
 
 
@@ -39,6 +40,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
     statistic_method_names = sorted(list(statistic_methods.keys()))
     stats: dict[str, np.float64] = None
     bit_type: str
+    values: npt.NDArray[np.float64]
 
     def __init__(
         self,
@@ -47,6 +49,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
         bit_type: str,
     ) -> None:
         super().__init__(plot_settings)
+        self.values = values
         self.stats = {
             stat_name: method(values)
             for stat_name, method in self.statistic_methods.items()
@@ -101,6 +104,12 @@ class MetaStatistic(HDF5Convertible, Plottable):
         self.meta_stat_latex_table(
             Path(self.plot_settings.path, f"{self.bit_type}_meta_stats")
         )
+        box_plot(
+                    bit_stats=self.values,
+                    path=self.plot_settings.path,
+                    ylabel="TODO",
+                    title=f"{self.bit_type}_boxplot",
+                )
 
 
 class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
@@ -191,8 +200,12 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
     def _plot(self) -> None:
         if self.meta_statable:
             meta_stats = self.meta_stats
-            for bit_type in ["Data", "Parity"]:
+            for bit_type, bit_stats in [
+                ("Data", self.data_stats),
+                ("Parity", self.parity_stats),
+            ]:
                 meta_stats[bit_type].plot()
+
 
 
 class SimpleStatistic(Statistic, metaclass=ABCMeta):
@@ -282,10 +295,26 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
     data_stats: float = None
     parity_stats: float = None
     meta_statable: bool = False
+    subcontainer_data_stats: npt.NDArray[np.float64] = None
+    subcontainer_parity_stats: npt.NDArray[np.float64] = None
 
     @property
     def meta_stats(self) -> dict[str, MetaStatistic]:
-        raise NotImplementedError
+        if self.meta_statable:
+            return {
+                "Data": MetaStatistic(
+                    self.subcontainer_data_stats,
+                    self.plot_settings.with_expanded_path("subcontainer_meta_stats"),
+                    bit_type="data",
+                ),
+                "Parity": MetaStatistic(
+                    self.subcontainer_parity_stats,
+                    self.plot_settings.with_expanded_path("subcontainer_meta_stats"),
+                    bit_type="parity",
+                ),
+            }
+        else:
+            raise NotImplementedError
 
     def add_to_hdf5_group(self, parent: h5py.Group) -> None:
         statistic_group = parent.create_group(self._hdf5_group_name)
@@ -296,13 +325,21 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
     def from_merge(
         cls, stats: list[Self], plot_settings: PlotSettings
     ) -> Self:
-        data_values = [stat.data_stats for stat in stats]
-        parity_values = [stat.parity_stats for stat in stats]
-        return cls(
+        if all([stat.meta_statable for stat in stats]):
+            data_values = np.concatenate([stat.subcontainer_data_stats for stat in stats])
+            parity_values = np.concatenate([stat.subcontainer_parity_stats for stat in stats])
+        else:
+            data_values = np.array([stat.data_stats for stat in stats])
+            parity_values = np.array([stat.parity_stats for stat in stats])
+        new_object = cls(
             plot_settings=plot_settings,
-            data_stats=sum(data_values) / len(data_values),
-            parity_stats=sum(parity_values) / len(parity_values),
+            data_stats=np.sum(data_values) / len(data_values),
+            parity_stats=np.sum(parity_values) / len(parity_values),
         )
+        new_object.subcontainer_data_stats = data_values
+        new_object.subcontainer_parity_stats = parity_values
+        new_object.meta_statable = True
+        return new_object
 
 
 class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
@@ -335,7 +372,9 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
             )
 
     @classmethod
-    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         """
         Combines stats by adding each value in their lists
         (like adding two vectors)
@@ -353,13 +392,17 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
             return float(x / len(stats))
 
         divide_function = div_and_float_cast
-        new_data_read_stats = np.array(list(map(divide_function, data_read_stats_sum)))
+        new_data_read_stats = np.array(
+            list(map(divide_function, data_read_stats_sum))
+        )
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
-        new_parity_read_stats = np.array(list(
-            map(divide_function, parity_read_stats_sum)
-        ))
+        new_parity_read_stats = np.array(
+            list(map(divide_function, parity_read_stats_sum))
+        )
 
-        return cls(plot_settings, None, new_data_read_stats, new_parity_read_stats)
+        return cls(
+            plot_settings, None, new_data_read_stats, new_parity_read_stats
+        )
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):
