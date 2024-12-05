@@ -223,7 +223,7 @@ def reliability(reads: list[Read]) -> np.float64:
 
 def hamming_weight(
     reads: list[Read], only_use_first_element: bool = False
-) -> npt.NDArray[np.float64]:
+) -> np.float64:
     """
     Computes hamming weight over bits of each read.
     This can be used to compute the Uniformity of BRAMs SUVs
@@ -236,10 +236,13 @@ def hamming_weight(
     """
     if only_use_first_element:
         reads = reads[:1]
-    return np.fromiter(
-        (
-            np.sum(read.bits_flattened) / len(read.bits_flattened)
-            for read in reads
-        ),
-        np.float64,
-    )
+        return np.sum(reads[0].bits_flattened) / len(reads[0].bits_flattened)
+    else:
+        hamming_weights = np.fromiter(
+            (
+                np.sum(read.bits_flattened) / len(read.bits_flattened)
+                for read in reads
+            ),
+            np.float64,
+        )
+        return np.average(hamming_weights)

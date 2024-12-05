@@ -30,6 +30,7 @@ from .stat_functions import (
     bit_stabilization_count_over_time,
     bit_flip_chance,
     hamming_weight,
+    reliability,
     stable_bits_per_idxs,
 )
 from .utility import BitFlipType, ColorPresets, PlotSettings
@@ -288,17 +289,29 @@ class StableBitStatistic(BitwiseStatistic):
                 bit_stats,
                 xlabel="TODO",
                 ylabel="TODO",
-                title="Distribution Stable Bits Bit Index",
+                title="Distribution of Counts of Stable Bits per Bit Index",
+                path=Path(
+                    self.plot_settings.path,
+                    f"{bit_type}_stable_bit_idx_count_distribution",
+                ),
+                bins=self.plot_settings.bram_count,
+                log=False,
+            )
+            per_bit_idx_histogram(
+                bit_stats,
+                xlabel="TODO",
+                ylabel="TODO",
+                title="Distribution of stable bits per bit idx",
                 path=Path(
                     self.plot_settings.path,
                     f"{bit_type}_stable_bit_idx_distribution",
                 ),
-                bins="auto",
-                log=True,
             )
 
     @classmethod
-    def from_merge(cls, stats: list[Self], plot_settings: PlotSettings) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         """
         This merge is similar to BitwiseStatistic.from_merge,
         the main difference being that the values are not normalized by the
@@ -312,10 +325,16 @@ class StableBitStatistic(BitwiseStatistic):
             bitwise_statistic.parity_stats for bitwise_statistic in stats
         ]
 
-        data_read_stats_sum = np.array(list(map(sum, zip(*data_read_stats_list))))
-        parity_read_stats_sum = np.array(list(map(sum, zip(*parity_read_stats_list))))
+        data_read_stats_sum = np.array(
+            list(map(sum, zip(*data_read_stats_list)))
+        )
+        parity_read_stats_sum = np.array(
+            list(map(sum, zip(*parity_read_stats_list)))
+        )
 
-        return cls(plot_settings, None, data_read_stats_sum, parity_read_stats_sum)
+        return cls(
+            plot_settings, None, data_read_stats_sum, parity_read_stats_sum
+        )
 
 
 class OneStableBitStatistic(StableBitStatistic):
@@ -375,6 +394,16 @@ class BitAliasingStatistic(BitwiseStatistic):
             self.plot_settings.path,
         )
 
+class ReliabilityStatistic(SingleValueStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Reliability"
+    description = "TODO"
+    stat_func = staticmethod(reliability)
+    stat_func_kwargs = {}
 
 class StatisticTypes(Enum):
     """
@@ -391,3 +420,4 @@ class StatisticTypes(Enum):
     StableBitStatistic = StableBitStatistic
     ZeroStableBitStatistic = ZeroStableBitStatistic
     OneStableBitStatistic = OneStableBitStatistic
+    ReliabilityStatistic = ReliabilityStatistic

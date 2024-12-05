@@ -114,6 +114,7 @@ class PlotSettings:
     active: bool
     heatmap_bit_display_setting: HeatmapBitDisplaySetting
     heatmap_cmap: str = ColorPresets.default
+    bram_count: int = None
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         """
@@ -129,4 +130,6 @@ class PlotSettings:
             new_path,
             self.active,
             heatmap_bit_display_setting=self.heatmap_bit_display_setting,
+            heatmap_cmap=self.heatmap_cmap,
+            bram_count=self.bram_count
         )
