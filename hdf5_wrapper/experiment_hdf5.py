@@ -148,6 +148,7 @@ class BramBlock:
     name: str
     read_sessions: Dict[str, ReadSession]
     read_session_names: list[str]
+    bram_count: int = field(init=False, default=1)
 
     @classmethod
     def from_hdf5(
@@ -192,6 +193,7 @@ class ExperimentContainer(ABC):
     """
 
     name: str
+    bram_count: int
     subcontainers: dict[str, Self | BramBlock]
     read_session_names: list[str]
     read_sessions: dict[str, ReadSession] = field(default_factory=dict)
@@ -208,7 +210,6 @@ class ExperimentContainer(ABC):
                     ]
                 )
             )
-
 
 @dataclass(frozen=True, kw_only=True)
 class PBlock(ExperimentContainer):
@@ -233,32 +234,18 @@ class PBlock(ExperimentContainer):
             for key in hdf5_group
             if "RAMB36" in key
         }
+        bram_count = sum(
+            [
+                bram.bram_count
+                for bram in bram_blocks.values()
+            ]
+        )
         return cls(
             name=name,
+            bram_count=bram_count,
             subcontainers=bram_blocks,
             read_session_names=read_session_names,
         )
-
-    def flatten(self) -> Dict[str, ReadSession]:
-        """
-        Merges read sessions of all brams for each keyword
-
-        Returns:
-            Adds up flatten
-        """
-        return {
-            read_session_key: reduce(
-                # adds all lists into a single one
-                lambda x, y: x + y,
-                [
-                    bram_block.read_sessions[read_session_key]
-                    for bram_block in self.subcontainers.values()
-                ],
-            )
-            for read_session_key in self.subcontainers.values()[
-                0
-            ].read_sessions
-        }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -314,22 +301,17 @@ class Board(ExperimentContainer):
             for key in hdf5_group
             if "pblock" in key
         }
+        bram_count = sum(
+            [
+                pblock.bram_count
+                for pblock in pblocks.values()
+            ]
+        )
+        kwargs["bram_count"] = bram_count
         kwargs["subcontainers"] = pblocks
         kwargs["read_session_names"] = read_session_names
 
         return cls(**kwargs)
-
-    def flatten(self) -> Dict[str, ReadSession]:
-        """
-        Merges read sessions of all brams of all pblocks for each keyword
-        """
-        return {
-            read_session_key: reduce(
-                lambda x, y: x + y,
-                [pblock.flatten() for pblock in self.subcontainers.values()],
-            )
-            for read_session_key in self.subcontainers.values()[0].flatten()
-        }
 
 
 @dataclass(frozen=True)
@@ -364,9 +346,15 @@ class Experiment(ExperimentContainer):
             )
             for board in hdf5_group["boards"]
         }
-
+        bram_count = sum(
+            [
+                board.bram_count
+                for board in boards.values()
+            ]
+        )
         return cls(
             name="experiment",
+            bram_count=bram_count,
             subcontainers=boards,
             commit=commit,
             read_session_names=read_session_names,
