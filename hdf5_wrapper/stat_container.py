@@ -27,7 +27,8 @@ from .stats import (
     UniformityStatistic,
     StableBitStatistic,
     ZeroStableBitStatistic,
-    OneStableBitStatistic
+    OneStableBitStatistic,
+    ReliabilityStatistic
 )
 from .utility import PlotSettings
 
@@ -302,9 +303,6 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
         plot_settings: PlotSettings,
     ) -> None:
         super().__init__(plot_settings)
-        self._read_session_names = experiment_container.read_session_names
-        self.name = experiment_container.name
-        self.statistics = dict()
         self.compute_stats(experiment_container)
 
     def compute_stats(self, experiment_container: ExperimentContainer) -> None:
@@ -385,18 +383,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     subowner_type: Type[MultiStatisticOwner]
     subowner_identifier: str
 
-    def __init__(
-        self,
-        experiment_container: ExperimentContainer,
-        plot_settings: PlotSettings,
-    ) -> None:
-        super().__init__(
-            experiment_container=experiment_container,
-            plot_settings=plot_settings,
-        )
-        self._read_session_names = experiment_container.read_session_names
-        self.name = experiment_container.name
-        self.statistics = dict()
+    def compute_stats(self, experiment_container: ExperimentContainer) -> None:
         self.subowners = [
             self.subowner_type(
                 plot_settings=self.plot_settings.with_expanded_path(
@@ -528,7 +515,7 @@ class BramBlockStat(MultiStatisticOwner):
     Attributes:
         See parent classes
     """
-
+    
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
@@ -538,7 +525,8 @@ class BramBlockStat(MultiStatisticOwner):
         UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic
     ]
 
 
@@ -557,7 +545,8 @@ class PBlockStat(StatAggregator):
         UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic
     ]
     subowner_type = BramBlockStat
     subowner_identifier = "BRAM Statistics"
@@ -578,7 +567,8 @@ class BoardStat(StatAggregator):
         UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic
     ]
     subowner_type = PBlockStat
     subowner_identifier = "PBlock Statistics"
@@ -599,7 +589,8 @@ class ExperimentStat(StatAggregator):
         UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic
     ]
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
