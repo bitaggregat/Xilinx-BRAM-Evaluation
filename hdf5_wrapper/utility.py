@@ -55,11 +55,12 @@ def combine_data_and_parity_bits(
             f"({len(data_bits)}, {len(parity_bits)})"
         )
     else:
+        #parity_bits = np.roll(parity_bits, -8)
         return np.array(
             [
                 np.append(
                     data_bits[parity_idx * 32: (parity_idx + 1) * 32],
-                    parity_bits[parity_idx * 4: (parity_idx + 1) * 4],
+                    parity_bits[(parity_idx)* 4: (parity_idx+1) * 4]
                 )
                 for parity_idx in range(0, 1024)
             ],
@@ -95,6 +96,8 @@ class BitFlipType(Enum):
     ONE = auto()
     ZERO = auto()
     BOTH = auto()
+    UNSTABLE = auto()
+    VERY_UNSTABLE = auto()
 
 
 @dataclass
@@ -115,6 +118,8 @@ class PlotSettings:
     heatmap_bit_display_setting: HeatmapBitDisplaySetting
     heatmap_cmap: str = ColorPresets.default
     bram_count: int = None
+    title: str = None
+    entity_name: str = None
 
     def with_expanded_path(self, path_expansion: str) -> Self:
         """
@@ -131,5 +136,7 @@ class PlotSettings:
             self.active,
             heatmap_bit_display_setting=self.heatmap_bit_display_setting,
             heatmap_cmap=self.heatmap_cmap,
-            bram_count=self.bram_count
+            bram_count=self.bram_count,
+            entity_name=self.entity_name,
+            title=self.title
         )

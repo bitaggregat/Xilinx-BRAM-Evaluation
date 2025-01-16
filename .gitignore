@@ -80,7 +80,9 @@ build/*
 #Reports
 #########
 !*.rpt
-!*.txt
+!*temperature.txt
+*count.txt
+*value.txt
 !*.vdi
 #########
 #C-files

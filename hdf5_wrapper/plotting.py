@@ -7,17 +7,24 @@ words code that is not generic in any way), will not be included in this module
 """
 
 from pathlib import Path
+import matplotlib
+
+matplotlib.use("agg")
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import matplotlib.figure as pltf
 import numpy.typing as npt
 import numpy as np
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
+import time
+import gc
 from .utility import (
     HeatmapBitDisplaySetting,
     combine_data_and_parity_bits,
     ColorPresets,
 )
+from typing import Type
 
 
 def clear_plt(fig: pltf.Figure) -> None:
@@ -29,9 +36,8 @@ def clear_plt(fig: pltf.Figure) -> None:
     Arguments:
         fig: pltf.Figure that will be closed
     """
-    plt.close(fig=fig)
     plt.clf()
-    plt.cla()
+    gc.collect()
 
 
 def stable_bit_per_read_step_plot(
@@ -58,7 +64,7 @@ def stable_bit_per_read_step_plot(
     # TODO bit type list
     bits_over_time = np.cumsum(bit_stats)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=1, clear=True)
     x = np.arange(1, len(bit_stats) + 1 - stable_after_n_reads)
     y = bits_over_time[:-stable_after_n_reads]
 
@@ -105,7 +111,7 @@ def per_bit_idx_histogram(
         x_values = [i for i in range(len(bit_stats))]
 
     plt.xlim(0, len(bit_stats))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=1, clear=True)
 
     ax.bar(x_values, bit_stats, color="g")
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
@@ -125,7 +131,7 @@ def box_plot(
         ylabel: Label of y-axis of diagram
         title: Title of diagram
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=1, clear=True)
 
     ax.boxplot(bit_stats)
     ax.set(ylabel=ylabel, title=title)
@@ -149,13 +155,14 @@ def multi_boxplot(
         ylabel: Label of y-axis of diagram
         title: Title of diagram
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=1, clear=True)
     xlabels = [xlabel for xlabel in bit_stats_per_xlabel]
     data = [bit_stats_per_xlabel[xlabel] for xlabel in xlabels]
     ax.boxplot(data)
-    ax.set(ylabel=ylabel, title=title)
-    ax.set_xticklabels(xlabels, rotation=45, fontsize=8)
-    fig.savefig(Path(path, f"{title}.svg"), format="svg")
+    ax.set(ylabel=ylabel, )#title=title)
+    ax.set_xticklabels(xlabels, fontsize=8)
+    fig.savefig(Path(path, f"{title}.png"), format="png",
+                dpi=900)
     clear_plt(fig=fig)
 
 
@@ -180,10 +187,17 @@ def histogram(
         bins: Number of bins (int) or predefined bin estimation method as str
         log: Sets whether or not values should be scaled by log n
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=1, clear=True)
 
-    ax.hist(bit_stats, bins=bins, edgecolor="black", linewidth=1.2, log=log)
+    ax.hist(
+        bit_stats,
+        bins=range(bins + 1),
+        edgecolor="black",
+        linewidth=1.2,
+        log=log,
+    )
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
+    fig.tight_layout()
     fig.savefig(path.with_suffix(".svg"), format="svg")
     clear_plt(fig=fig)
 
@@ -262,6 +276,7 @@ def heatmap_per_bit(
     metric: str,
     bits_per_column: int,
     cmap: str,
+    norm: matplotlib.colors.Normalize = None,
 ) -> tuple[plt.figure, plt.axes]:
     """
     Creates (incomplete) heatmap figure of bits for some BitwiseStatistic.
@@ -278,19 +293,84 @@ def heatmap_per_bit(
     """
 
     two_d_array = np.split(bit_stats, bits_per_column)
-    fig, ax = plt.subplots()
-    im = ax.imshow(two_d_array, cmap=cmap)
+    fig, ax = plt.subplots(num=1, clear=True)
+    im = ax.imshow(two_d_array, cmap=cmap, norm=norm)
     ax.tick_params(
         axis="both",
         which="both",
-        bottom=False,
+        bottom=True,
         top=False,
-        labelbottom=False,
+        left=True,
+        labelbottom=True,
+        labelleft=True,
+        labelsize=6,
+        width=0.4,
+        length=2,
     )
+    # ax.spines[:].set_visible(False)
+    ax.set_xticks(
+        ticks=np.arange(0, 512, 32), labels=[str(i) for i in range(0, 512, 32)]
+    )
+    ax.set_yticks(
+        ticks=np.arange(0, 64, 32), labels=[str(i) for i in range(0, 64, 32)]
+    )
+
+    [x.set_linewidth(0.175) for x in ax.spines.values()]
     cbar = ax.figure.colorbar(im, ax=ax)
     cbar.ax.set_ylabel(metric, rotation=-90, va="bottom")
-    fig.tight_layout()
+    plt.tight_layout()
     return fig, ax
+
+
+def heatmap_per_bit_inplace(
+    ax,
+    bit_stats: npt.NDArray[np.float64],
+    metric: str,
+    bits_per_column: int,
+    cmap: str,
+    norm: matplotlib.colors.Normalize = None,
+    title: str = "",
+) -> tuple[plt.figure, plt.axes]:
+    """
+    Creates (incomplete) heatmap figure of bits for some BitwiseStatistic.
+    Incomplete because colorbar and saving has to be handled by other function
+
+    Arguments:
+        bit_stats: Stats with one value per bit idx
+        metric: Name of Statistic metric (will be inserted in diagram)
+        bits_per_column: Height of heatmap/assumption of dimension of bram grid
+        cmap: Name of matplot color map that shall be used
+
+    Returns:
+        Figure and axes of (incomplete) heatmap
+    """
+
+    two_d_array = np.split(bit_stats, bits_per_column)
+    im = ax.imshow(two_d_array, cmap=cmap, norm=norm)
+    ax.tick_params(
+        axis="both",
+        which="both",
+        bottom=True,
+        top=False,
+        left=True,
+        labelbottom=True,
+        labelleft=True,
+        labelsize=6,
+        width=0.4,
+        length=2,
+    )
+    ax.invert_yaxis()
+    print(title)
+    ax.set_title(title, fontsize=8)
+    # ax.spines[:].set_visible(False)
+    ax.set_xticks(
+        ticks=np.arange(0, 512, 32), labels=[str(i) for i in range(0, 512, 32)]
+    )
+    ax.set_yticks(
+        ticks=np.arange(0, 64, 32), labels=[str(i) for i in range(0, 64, 32)]
+    )
+
+    [x.set_linewidth(0.175) for x in ax.spines.values()]
 
 
 def bit_heatmaps(
@@ -299,10 +379,10 @@ def bit_heatmaps(
     bit_display_setting: HeatmapBitDisplaySetting,
     metric: str,
     path: Path,
-    cmap=ColorPresets.default,
+    cmap: str = ColorPresets.default,
 ) -> None:
     """
-    Wrapper around heatmap_per_bit. 
+    Wrapper around heatmap_per_bit.
     Handles saving of figure, arrangement of bits of different type and
     colorbar
 
@@ -314,6 +394,7 @@ def bit_heatmaps(
         path: Path where diagram(s) shall be saved
         cmap: Name of matplot color map that shall be used
     """
+
     if (
         bit_display_setting == HeatmapBitDisplaySetting.BOTH
         or bit_display_setting == HeatmapBitDisplaySetting.MERGE
@@ -321,11 +402,11 @@ def bit_heatmaps(
         fig, ax = heatmap_per_bit(
             combine_data_and_parity_bits(data_bit_stats, parity_bit_stats),
             metric=metric,
-            bits_per_column=1024,
+            bits_per_column=64,
             cmap=cmap,
         )
-        add_label_band(ax=ax, top=0, bottom=32, label="data bits")
-        add_label_band(ax=ax, top=33, bottom=36, label="parity bits")
+        # add_label_band(ax=ax, top=0, bottom=32, label="data bits")
+        # add_label_band(ax=ax, top=33, bottom=36, label="parity bits")
         fig.savefig(
             Path(path, "heat_map_parity_and_data_bits_combined").with_suffix(
                 ".png"
@@ -339,8 +420,8 @@ def bit_heatmaps(
         or bit_display_setting == HeatmapBitDisplaySetting.SEPARATE
     ):
         for bit_type, bit_stats, column_size in [
-            ("data", data_bit_stats, 1024),
-            ("parity", parity_bit_stats, 1024),
+            ("data", data_bit_stats, 64),
+            ("parity", parity_bit_stats, 64),
         ]:
             fig, ax = heatmap_per_bit(
                 bit_stats=bit_stats,
@@ -355,3 +436,140 @@ def bit_heatmaps(
             )
 
             clear_plt(fig)
+
+
+def single_value_to_file(
+    value: np.float64, path: Path, description: str
+) -> None:
+    with open(Path(path, description).with_suffix(".txt"), mode="w") as f:
+        f.write(str(value))
+
+
+def multi_bit_heatmap(
+    bit_stats: dict,
+    path: Path,
+    cmap: str = ColorPresets.default,
+    entity_name: str = "",
+) -> None:
+    base_fig, base_ax = plt.subplots(layout="constrained")
+    axs = base_fig.subplots(len(bit_stats), 1)
+    vmin = 1
+    vmax = 0
+    plt.rcParams["figure.constrained_layout.use"] = True
+    # Find min and max for norm
+    for bit_stat in bit_stats.values():
+        vmin = min(min(bit_stat), vmin)
+        vmax = max(max(bit_stat), vmax)
+    norm = matplotlib.colors.Normalize(vmin, vmax)
+
+    for idx, board in enumerate(bit_stats):
+        temp_ax = axs[idx]
+        heatmap_per_bit_inplace(
+            ax=temp_ax,
+            bit_stats=bit_stats[board],
+            metric="Count of bit at bit index",
+            bits_per_column=64,
+            cmap=cmap,
+            norm=norm,
+            title=board,
+        )
+
+    base_ax.spines[:].set_visible(False)
+    base_ax.tick_params(
+        bottom=False, top=False, left=False, labelbottom=False, labelleft=False
+    )
+    #base_fig.suptitle(f"Frequency of Bit types on BRAMs of {entity_name}")
+    cbar = base_fig.colorbar(matplotlib.cm.ScalarMappable(norm, cmap), ax=axs)
+    cbar.ax.set_ylabel(
+        f"Bit-aliasing (%)",
+        rotation=-90,
+        va="bottom",
+    )
+    base_fig.savefig(
+        Path(path, f"heat_map_bit-aliasing_multi_device_datastats").with_suffix(".png"),
+        format="png",
+        dpi=900,
+    )
+
+def multi_bit_heatmap2(
+    bit_stats: dict,
+    path: Path,
+    cmap: str = ColorPresets.default,
+    entity_name: str = "",
+) -> None:
+    base_fig, base_ax = plt.subplots(layout="constrained")
+    axs = base_fig.subplots(len(bit_stats), 1)
+    vmin = 1
+    vmax = 0
+    plt.rcParams["figure.constrained_layout.use"] = True
+    # Find min and max for norm
+    for bit_stat in bit_stats.values():
+        vmin = min(min(bit_stat), vmin)
+        vmax = max(max(bit_stat), vmax)
+    norm = matplotlib.colors.Normalize(vmin, vmax)
+
+    for idx, board in enumerate(bit_stats):
+        temp_ax = axs[idx]
+        heatmap_per_bit_inplace(
+            ax=temp_ax,
+            bit_stats=bit_stats[board],
+            metric="Count of bit at bit index",
+            bits_per_column=64,
+            cmap=cmap,
+            norm=norm,
+            title=board,
+        )
+
+    base_ax.spines[:].set_visible(False)
+    base_ax.tick_params(
+        bottom=False, top=False, left=False, labelbottom=False, labelleft=False
+    )
+    #base_fig.suptitle(f"Frequency of Bit types on BRAMs of {entity_name}")
+    cbar = base_fig.colorbar(matplotlib.cm.ScalarMappable(norm, cmap), ax=axs)
+    cbar.ax.set_ylabel(
+        f"Bit-aliasing (%)",
+        rotation=-90,
+        va="bottom",
+    )
+    base_fig.savefig(
+        Path(path, f"heat_map_bit-aliasing_multi_device_datastats").with_suffix(".png"),
+        format="png",
+        dpi=900,
+    )
+
+def single_value_bar_plot(
+    values: dict[str, list[np.float64]],
+    labels: list[str],
+    title: str,
+    path: Path,
+) -> None:
+    # values = {
+    #    'initial value 00': (38.79, 48.83, 47.50),
+    #    'initial value ff': (18.35, 18.43, 14.98),
+    #    'after 9000 intializations': (189.95, 195.82, 217.19),
+    # }
+
+    x = np.arange(len(labels))  # the label locations
+    width = 1/7  # the width of the bars
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout="constrained")
+
+    for attribute, measurement in values.items():
+        offset = width * multiplier
+        rects = ax.bar(x + offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=6)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel("Reliability (%)")
+    ax.set_title(title)
+    ax.set_xticks(x + width * 2.5, labels)
+    ax.legend()#loc="upper left", ncols=len(values))
+    ax.set_ylim(90, 94)
+
+    fig.savefig(path.with_suffix(".png"),
+        format="png",
+        dpi=900,
+    )
+    clear_plt(fig)

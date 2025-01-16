@@ -57,7 +57,9 @@ def intradistance_bootstrap(
 
 
 def interdistance(
-    reads: list[Read], other_reads: list[Read]
+    reads: list[Read],
+    other_reads: list[Read],
+    only_use_first_element: bool = False,
 ) -> npt.NDArray[np.float64]:
     """
     Produces l*m interdistance values,
@@ -65,6 +67,10 @@ def interdistance(
 
     Can be used for Uniquess
     """
+    if only_use_first_element:
+        reads = reads[:1]
+        other_reads = other_reads[:1]
+
     return np.fromiter(
         (
             hamming(read_x.bits_flattened, read_y.bits_flattened)
@@ -171,7 +177,7 @@ def stable_bits_per_idxs(
 
     Arguments:
         reads: Read samples
-        bit_flip_type: Sets what kind of stable bits are analyzed 
+        bit_flip_type: Sets what kind of stable bits are analyzed
                         (See BitFlipType Enum)
 
     Returns:
@@ -189,6 +195,15 @@ def stable_bits_per_idxs(
                 )
                 or (bit_flip_type == BitFlipType.ONE and flip_prob == 1.0)
                 or (bit_flip_type == BitFlipType.ZERO and flip_prob == 0.0)
+                or (
+                    bit_flip_type == BitFlipType.UNSTABLE
+                    and flip_prob != 1.0
+                    and flip_prob != 0.0
+                )
+                or (
+                    bit_flip_type == BitFlipType.VERY_UNSTABLE
+                    and 0.25 < flip_prob < 0.75
+                )
             )
             else 0
             for flip_prob in prob_per_bit
