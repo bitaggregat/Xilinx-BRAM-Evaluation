@@ -136,6 +136,7 @@ class TestPlotting(unittest.TestCase):
                 "IntradistanceStatistic",
                 "EntropyStatistic",
             ],
+            "heatmap_bit_display_setting": "BOTH",
         }
 
         main(arg_dict)

@@ -116,6 +116,9 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         parity_stats: Stats of parity bits, gained through "stat_func"
         mergable: Indicates if "from_merge" method can be used on multiple
                     instances of this "Statistic" class
+        plot_setting_additions: Some classes may want to overwrite
+                                plot settings statically. This dict + init of
+                                this base class allow the latter.
     """
 
     description: str
@@ -129,6 +132,12 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
     data_stats: npt.NDArray[np.float64]
     parity_stats: npt.NDArray[np.float64]
     mergable = False  # Declares if subclass is allowed to call "from_merge"
+    plot_setting_additions: dict[str, Any] = None
+
+    def __init__(self) -> None:
+        if self.plot_setting_additions is not None:
+            for key, value in self.plot_setting_additions.items():
+                setattr(self.plot_settings, key, value)
 
     @property
     def meta_stats(self) -> dict[str, MetaStatistic]:
@@ -207,6 +216,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         - ReadSession
         - already precalculated data and parity stats
         """
+        super().__init__()
         self.plot_settings = plot_settings
         if read_session is not None:
             self.data_stats = self.stat_func(
@@ -256,6 +266,42 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
             )
 
 
+class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
+    """
+    Statistics whose result is a single value.
+        - e.g. a single float f: 0 <= f <= 1.0, for reliability.
+    We treat this case as a special case because they should be handled
+    differently:
+        - no metastatistics for a single value
+        - handled differently when being added to hdf5
+    """
+
+    mergable = True
+    data_stats: float = None
+    parity_stats: float = None
+
+    @property
+    def meta_stats(self) -> dict[str, MetaStatistic]:
+        raise NotImplementedError
+
+    def add_to_hdf5_group(self, parent: h5py.Group) -> None:
+        statistic_group = parent.create_group(self._hdf5_group_name)
+        statistic_group.attrs["parity_stats"] = self.parity_stats
+        statistic_group.attrs["data_stats"] = self.data_stats
+
+    @classmethod
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
+        data_values = [stat.data_stats for stat in stats]
+        parity_values = [stats.parity_stats for stat in stats]
+        return cls(
+            plot_settings=plot_settings,
+            data_stats=sum(data_values) / len(data_values),
+            parity_stats=sum(parity_values) / len(parity_values),
+        )
+
+
 class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
     """
     Statistic where a value is generated for each bit.
@@ -271,13 +317,13 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
     def __init__(
         self,
+        plot_settings: PlotSettings,
         read_session: ReadSession = None,
         data_read_stat: Any = None,
         parity_read_stat: Any = None,
-        stat_func_kwargs: dict[str, Any] = {},
     ) -> None:
         super().__init__(
-            read_session, data_read_stat, parity_read_stat, stat_func_kwargs
+            plot_settings, read_session, data_read_stat, parity_read_stat
         )
         if len(self.data_stats) != 4096 * 8 or len(self.parity_stats) != 4096:
             raise Exception(
@@ -302,6 +348,7 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
 
         def div_and_float_cast(x: float) -> float:
             return float(x / len(stats))
+
         divide_function = div_and_float_cast
         new_data_read_stats = list(map(divide_function, data_read_stats_sum))
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
@@ -336,6 +383,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
     def __init__(
         self, read_sessions: list[ReadSession], plot_settings: PlotSettings
     ) -> None:
+        super().__init__()
         self.plot_settings = plot_settings
 
         self.compare(read_sessions)

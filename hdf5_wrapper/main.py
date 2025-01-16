@@ -10,7 +10,7 @@ from hdf5_wrapper import (
     IntradistanceStatistic,
     add_commit_to_hdf5_group,
 )
-from hdf5_wrapper.utility import PlotSettings
+from hdf5_wrapper.utility import PlotSettings, HeatmapBitDisplaySetting
 from hdf5_wrapper.stats import StatisticTypes
 from hdf5_wrapper.stat_container import StatContainers
 
@@ -76,6 +76,14 @@ def create_arg_parser() -> argparse.ArgumentParser:
         f"Possible stats are: {[t.name for t in StatisticTypes]}",
         nargs="*",
     )
+    parser.add_argument(
+        "--heatmap_bit_display_setting",
+        required=False,
+        help="Sets how data and parity bits are displayed in heatmap diagrams"
+        "See HeatmapBitDisplaySetting class\n"
+        f"Possible stats are: {[s.name for s in HeatmapBitDisplaySetting]}",
+        default=HeatmapBitDisplaySetting.MERGE.name,
+    )
     return parser
 
 
@@ -87,9 +95,20 @@ def generate_plot_settings(arg_dict: dict[str, Any]) -> PlotSettings:
         arg_dict: Argument dict gained from argparser
     """
     if arg_dict["plot_path"] is None:
-        return PlotSettings(None, False)
+        return PlotSettings(
+            None,
+            False,
+            None,
+        )
     else:
-        return PlotSettings(arg_dict["plot_path"], True)
+        heatmap_bit_display_setting = HeatmapBitDisplaySetting[
+            arg_dict["heatmap_bit_display_setting"]
+        ]
+        return PlotSettings(
+            arg_dict["plot_path"],
+            True,
+            heatmap_bit_display_setting=heatmap_bit_display_setting,
+        )
 
 
 def select_stats(arg_dict: dict[str, Any]) -> None:

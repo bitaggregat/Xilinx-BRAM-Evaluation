@@ -4,8 +4,10 @@ BitwiseStatistic.
 These are specialized Statistics for specific use cases
 """
 
+from abc import abstractmethod
 from pathlib import Path
 from enum import Enum
+from typing import Self
 import functools
 import numpy as np
 import numpy.typing as npt
@@ -13,16 +15,24 @@ from .plotting import (
     stable_bit_per_read_step_plot,
     per_bit_idx_histogram,
     histogram,
+    bit_heatmaps,
 )
-from .stats_base import SimpleStatistic, ComparisonStatistic, BitwiseStatistic
+from .stats_base import (
+    SimpleStatistic,
+    ComparisonStatistic,
+    BitwiseStatistic,
+    SingleValueStatistic,
+)
 from .stat_functions import (
     interdistance_bootstrap,
     intradistance_bootstrap,
     entropy_list,
     bit_stabilization_count_over_time,
-    bit_aliasing,
     bit_flip_chance,
+    hamming_weight,
+    stable_bits_per_idxs,
 )
+from .utility import BitFlipType, ColorPresets
 
 
 class IntradistanceStatistic(SimpleStatistic):
@@ -59,19 +69,6 @@ class InterdistanceStatistic(ComparisonStatistic):
     description = "Interdistance values between Bootstrap of two sets of SUV's"
     stat_func = staticmethod(interdistance_bootstrap)
     stat_func_kwargs = {"k": 100000}
-
-
-class BitAliasingStatistic(BitwiseStatistic):
-    """
-    WIP: scheduled for next merge
-    Attributes:
-        See parent classes
-    """
-
-    _hdf5_group_name = "Bitaliasing"
-    description = "TODO"
-    stat_func = staticmethod(bit_aliasing)
-    stat_func_kwargs = {"k": 100}
 
 
 class BitStabilizationStatistic(SimpleStatistic):
@@ -262,6 +259,124 @@ class BitFlipChanceStatistic(BitwiseStatistic):
         self.distribution_histogram(self.parity_stats, "parity")
 
 
+class StableBitStatistic(BitwiseStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Stable Bits"
+    description = "TODO"
+    stat_func = staticmethod(stable_bits_per_idxs)
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.BOTH}
+
+    def plot(self) -> None:
+        super().plot()
+        bit_heatmaps(
+            self.data_stats,
+            self.parity_stats,
+            self.plot_settings.heatmap_bit_display_setting,
+            "Number of Stable Bits per Bit Index",
+            self.plot_settings.path,
+            cmap=self.plot_settings.heatmap_cmap,
+        )
+        for bit_type, bit_stats in [
+            ("data", self.data_stats),
+            ("parity", self.parity_stats),
+        ]:
+            histogram(
+                bit_stats,
+                xlabel="TODO",
+                ylabel="TODO",
+                title="Distribution Stable Bits Bit Index",
+                path=Path(
+                    self.plot_settings.path,
+                    f"{bit_type}_stable_bit_idx_distribution",
+                ),
+                bins="auto",
+                log=True,
+            )
+
+    @classmethod
+    @abstractmethod
+    def from_merge(cls, stats: list[Self]) -> Self:
+        """
+        This merge is similar to BitwiseStatistic.from_merge,
+        the main difference being that the values are not normalized by the
+        number of samples.
+        -> Because we want to get a distribution from total counts
+        """
+        data_read_stats_list = [
+            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+        ]
+        parity_read_stats_list = [
+            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+        ]
+
+        data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
+        parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
+
+        return cls(None, data_read_stats_sum, parity_read_stats_sum)
+
+
+class OneStableBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "One-stable Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.ONE}
+    plot_setting_additions = {"heatmap_cmap": ColorPresets.one_flipping_bit}
+
+
+class ZeroStableBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Zero-stable Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.ZERO}
+    plot_setting_additions = {"heatmap_cmap": ColorPresets.zero_flipping_bit}
+
+
+class UniformityStatisitc(SingleValueStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Uniformity"
+    description = "TODO"
+    stat_func = staticmethod(hamming_weight)
+    stat_func_kwargs = {"only_use_first_element": True}
+
+
+class BitAliasingStatistic(BitwiseStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Bit-aliasing"
+    description = "TODO"
+    stat_func = staticmethod(bit_flip_chance)
+    stat_func_kwargs = {"only_use_first_element": True}
+
+    def plot(self) -> None:
+        super().plot()
+        bit_heatmaps(
+            self.data_stats,
+            self.parity_stats,
+            self.plot_settings.heatmap_bit_display_setting,
+            "Bit-aliasing per Bit Index",
+            self.plot_settings.path,
+        )
+
+
 class StatisticTypes(Enum):
     """
     Lists all Statistics types that are selectable by user
@@ -273,3 +388,7 @@ class StatisticTypes(Enum):
     BitAliasingStatistic = BitAliasingStatistic
     BitStabilizationStatistic = BitStabilizationStatistic
     BitFlipChanceStatistic = BitFlipChanceStatistic
+    UniformityStatisitc = UniformityStatisitc
+    StableBitStatistic = StableBitStatistic
+    ZeroStableBitStatistic = ZeroStableBitStatistic
+    OneStableBitStatistic = OneStableBitStatistic

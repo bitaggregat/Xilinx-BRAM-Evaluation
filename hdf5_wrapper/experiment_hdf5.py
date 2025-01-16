@@ -28,7 +28,7 @@ class Read:
 
     raw_read: bytes
     # Not noted in type hint because numpy type hinting best practice
-    bits: npt.NDArray
+    bits: npt.NDArray[np.int64]
 
     @cached_property
     def bits_flattened(self) -> npt.NDArray[np.float64]:
@@ -55,7 +55,8 @@ class Read:
             raw_read (bytes): Single read of bram startup value
         """
         uint8_read = np.frombuffer(raw_read, dtype=np.uint8)
-        bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
+        temp_bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
+        bits = temp_bits.astype(np.int64)
         return cls(raw_read, bits)
 
 

@@ -24,6 +24,10 @@ from .stats import (
     BitStabilizationStatistic,
     BitAliasingStatistic,
     BitFlipChanceStatistic,
+    UniformityStatisitc,
+    StableBitStatistic,
+    ZeroStableBitStatistic,
+    OneStableBitStatistic
 )
 from .utility import PlotSettings
 
@@ -529,6 +533,10 @@ class BramBlockStat(MultiStatisticOwner):
         BitStabilizationStatistic,
         BitAliasingStatistic,
         BitFlipChanceStatistic,
+        UniformityStatisitc,
+        StableBitStatistic,
+        ZeroStableBitStatistic,
+        OneStableBitStatistic
     ]
 
 
@@ -543,6 +551,11 @@ class PBlockStat(StatAggregator):
         EntropyStatistic,
         BitAliasingStatistic,
         InterdistanceStatistic,
+        BitFlipChanceStatistic,
+        UniformityStatisitc,
+        StableBitStatistic,
+        ZeroStableBitStatistic,
+        OneStableBitStatistic
     ]
     subowner_type = BramBlockStat
     subowner_identifier = "BRAM Statistics"
@@ -559,6 +572,11 @@ class BoardStat(StatAggregator):
         EntropyStatistic,
         BitAliasingStatistic,
         InterdistanceStatistic,
+        BitFlipChanceStatistic,
+        UniformityStatisitc,
+        StableBitStatistic,
+        ZeroStableBitStatistic,
+        OneStableBitStatistic
     ]
     subowner_type = PBlockStat
     subowner_identifier = "PBlock Statistics"
@@ -575,6 +593,11 @@ class ExperimentStat(StatAggregator):
         EntropyStatistic,
         BitAliasingStatistic,
         InterdistanceStatistic,
+        BitFlipChanceStatistic,
+        UniformityStatisitc,
+        StableBitStatistic,
+        ZeroStableBitStatistic,
+        OneStableBitStatistic
     ]
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
