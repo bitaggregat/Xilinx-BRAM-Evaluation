@@ -11,6 +11,7 @@ import serial
 import argparse
 import os
 from pathlib import Path
+import struct
 
 from typing import Tuple, List
 
@@ -74,7 +75,7 @@ def find_transmission_start(port) -> Tuple[bytes, bytes]:
 
         if temp_byte == b";" and last_two_bytes == [b"\x00", b"\x00"]:
             # Found start
-            data = port.read(4)
+            data = port.read(2)
             parity = port.read(1)
 
             return data, parity
@@ -85,8 +86,15 @@ def find_transmission_start(port) -> Tuple[bytes, bytes]:
 
 def read_batch(port) -> Tuple[bytes, bytes, bytes]:
     header = port.read(3)
-    data = port.read(4)
+
+    
+    data = port.read(2)
     parity = port.read(1)
+
+    if header[2:] != b";":
+        wrong_char_found = header[2:]
+        raise Exception("Something failed during readout. "
+        f"Delimiter char not found in header. Instead found {wrong_char_found}")
     return data, parity, header
 
 
@@ -137,18 +145,21 @@ if __name__ == "__main__":
             )
 
         data, temp_parity = find_transmission_start(port)
-        parity = temp_parity.hex()[1]
+        parity = f"{int.from_bytes(temp_parity, byteorder='big'):02b}".format()[::-1]
+
         header = None
         while True:
             temp_data, temp_parity, header = read_batch(port)
 
             if header != b"\x00\x00;":  # and b";" in header:
                 data += temp_data
-                parity += temp_parity.hex()[1]
+                parity += f"{int.from_bytes(temp_parity, byteorder='big'):02b}".format()[::-1]
             else:
                 break
-
-        parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
+        
+        parity_result = b''
+        for i in range(0, len(parity), 8):
+            parity_result += int(parity[i:i+8][::-1], 2).to_bytes(byteorder="big")
 
         if args["output_path"] is not None:
             data_path, parity_path = prepare_paths(args["output_path"])
@@ -156,7 +167,7 @@ if __name__ == "__main__":
             with open(data_path, mode="wb") as f:
                 f.write(data)
             with open(parity_path, mode="wb") as f:
-                f.write(bytes.fromhex(parity))
+                f.write(parity_result)
 
     else:
         print(
