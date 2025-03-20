@@ -40,13 +40,13 @@ module read_bram(
     reg [7:0]   r_bram_dout     ;
     reg [7:0]   r_led           ;
     reg         batch_done      ;
-    reg [35:0]  bram_batch      ;
+    reg [17:0]  bram_batch      ;
 
     /*****************************Wire************************************/
     wire        w_clk           ;
     wire        w_resetn        ;
     wire        w_uart_busy     ;
-    wire [35:0] w_bram_dout     ;
+    wire [17:0] w_bram_dout     ;
     wire [7:0]  w_uart_txdata   ;
     wire        rx_received     ;
     wire        send_enable     ;
@@ -122,11 +122,12 @@ module read_bram(
                 2: r_bram_dout <= 8'h3b;                        // delimiter character
                 3: r_bram_dout <= bram_batch[7:0];              // data byte 1
                 4: r_bram_dout <= bram_batch[15:8];             // data byte 2
-                5: r_bram_dout <= bram_batch[23:16];            // data byte 3
-                6: r_bram_dout <= bram_batch[31:24];            // data byte 4
-                7: r_bram_dout <= {4'b0000, bram_batch[35:32]}; // filler + 4 parity bits
+                5: r_bram_dout <= {6'b0, bram_batch[17:16]}; // filler + 4 parity bits
+                //5: r_bram_dout <= bram_batch[23:16];            // data byte 3
+                //6: r_bram_dout <= bram_batch[31:24];            // data byte 4
+                //7: r_bram_dout <= {4'b0000, bram_batch[35:32]}; // filler + 4 parity bits
             endcase
-            if(count_in_batch == 7)begin
+            if(count_in_batch == 5)begin
                 batch_done <= 1'b1;
             end
         end

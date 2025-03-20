@@ -131,7 +131,6 @@ set_property SNAPPING_MODE ON [get_pblocks pblock_2]
 
 
 create_pblock pblock_3
-add_cells_to_pblock [get_pblocks pblock_3] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_3] -add {SLICE_X1Y60:SLICE_X3Y119}
 resize_pblock [get_pblocks pblock_3] -add {RAMB18_X0Y24:RAMB18_X0Y47}
 resize_pblock [get_pblocks pblock_3] -add {RAMB36_X0Y12:RAMB36_X0Y23}
@@ -157,7 +156,8 @@ resize_pblock [get_pblocks pblock_7] -add {RAMB18_X0Y48:RAMB18_X0Y71}
 resize_pblock [get_pblocks pblock_7] -add {RAMB36_X0Y24:RAMB36_X0Y35}
 set_property SNAPPING_MODE ON [get_pblocks pblock_7]
 create_pblock pblock_8
-resize_pblock [get_pblocks pblock_8] -add {SLICE_X8Y120:SLICE_X14Y179}
+add_cells_to_pblock [get_pblocks pblock_8] [get_cells -quiet [list bram_wrap]]
+resize_pblock [get_pblocks pblock_8] -add {SLICE_X8Y120:SLICE_X16Y179}
 resize_pblock [get_pblocks pblock_8] -add {RAMB18_X1Y48:RAMB18_X1Y71}
 resize_pblock [get_pblocks pblock_8] -add {RAMB36_X1Y24:RAMB36_X1Y35}
 set_property SNAPPING_MODE ON [get_pblocks pblock_8]
@@ -414,7 +414,6 @@ set_property PROHIBIT true [get_sites RAMB36_X0Y34]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y24]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y25]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y26]
 
@@ -459,3 +458,38 @@ set_property PROHIBIT true [get_sites RAMB36_X2Y34]
 
 
 
+
+set_property PROHIBIT true [get_sites SLICE_X1Y119]
+set_property PROHIBIT true [get_sites SLICE_X2Y119]
+set_property PROHIBIT true [get_sites SLICE_X3Y119]
+set_property PROHIBIT true [get_sites SLICE_X1Y60]
+set_property PROHIBIT true [get_sites SLICE_X2Y60]
+set_property PROHIBIT true [get_sites SLICE_X3Y60]
+
+
+set_property PROHIBIT true [get_sites SLICE_X15Y120]
+set_property PROHIBIT true [get_bels RAMB18_X1Y62/RAMBFIFO18]
+
+set_property PROHIBIT true [get_sites RAMB18_X1Y62]
+set_property PROHIBIT true [get_bels RAMB18_X1Y64/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y65/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y67/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y66/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y68/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y69/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y70/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y71/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y61/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y60/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y59/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y58/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y57/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y56/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y55/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y54/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y53/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y52/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y51/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y50/RAMBFIFO18]
+set_property PROHIBIT true [get_bels RAMB18_X1Y49/RAMB18E2_U]
+set_property PROHIBIT true [get_bels RAMB18_X1Y48/RAMBFIFO18]
