@@ -75,8 +75,8 @@ module read_bram(
                 
     parameter   NO_RESET = 1'b0,
                 RESETTING = 1'b1;
-    parameter TICKS_PER_BIT        = 3472;//400e6/115200
-    parameter TICKS_PER_BIT_SIZE   = $bits(TICKS_PER_BIT);
+    localparam TICKS_PER_BIT        = 3472;//400e6/115200
+    localparam TICKS_PER_BIT_SIZE   = $clog2(TICKS_PER_BIT+1);
                 
     
     always@(posedge w_clk)begin
