@@ -48,6 +48,7 @@ module read_bram(
     wire        w_uart_busy     ;
     wire [35:0] w_bram_dout     ;
     wire [7:0]  w_uart_txdata   ;
+    wire        tx_done         ;
     wire        rx_received     ;
     wire        send_enable     ;
 
@@ -160,6 +161,7 @@ module read_bram(
         .clk_in1(sys_clk_p)
     );
         
+    /*
     new_uart_tx new_uart(
         .CLK_50M(w_clk),  
         .rst_n(w_resetn),   
@@ -169,6 +171,19 @@ module read_bram(
         .req(r_uart_enable),
         .busy(w_uart_busy),
         .TX(uart_txd)
+    );
+    */
+    uart_tx
+    #(
+		.TICKS_PER_BIT(TICKS_PER_BIT),
+		.TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+    ) tx (
+    	.i_clk(w_clk),
+    	.i_start(r_uart_enable),
+    	.i_data(w_uart_txdata),
+    	.o_done(tx_done),
+    	.o_busy(w_uart_busy),
+    	.o_dout(uart_txd)
     );
     
     uart_rx 
