@@ -4,8 +4,8 @@ module read_bram
 )
 (
 	input clk_i,
-	input rx_i,
-	output tx_o,
+	input uart_rx_i,
+	output uart_tx_o,
 	output [7:0] led_o
 );
 	localparam TICKS_PER_BIT_SIZE = $clog2(TICKS_PER_BIT+1);
@@ -14,9 +14,9 @@ module read_bram
 	localparam STATE_SEND = 4'b0001;
 	localparam STATE_WAIT = 4'b0011;
 	
-	reg [3:0] state = STATE_WAIT_RX, state_next = STATE_WAIT_RX;
+	reg [3:0] state = STATE_WAIT_RX, next_state = STATE_WAIT_RX;
 	reg tx_start;
-	reg tx_data;
+	reg [7:0] tx_data;
 	
 	wire fast_clk;
 	wire [7:0] rx_data;
@@ -28,7 +28,7 @@ module read_bram
 	// state transition
 	always @(posedge fast_clk)
 	begin
-		state <= state_next;
+		state <= next_state;
 	end
 	
 	// determine next state
@@ -65,30 +65,30 @@ module read_bram
 			tx_start <= 1'b1;
 		end
 		endcase
-	end
-	
-	uart_rx
-	#(
-		.TICKS_PER_BIT(TICKS_PER_BIT),
-		.TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
-	) rx (
-		.i_clk(fast_clk),
-		.i_enable(1'b1),
-		.i_din(rx_i),
-		.o_rxdata(rx_data),
-		.o_recvdata(rx_done)
-	);
-	
-	uart_tx
-	#(
-		.TICKS_PER_BIT(TICKS_PER_BIT),
-		.TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
-	) rx (
-		.i_clk(fast_clk),
-		.i_start(tx_start),
-		.i_data(tx_data),
-		.o_done(tx_done),
-		.o_dout(tx_o),
-	);
+    end
+    
+    uart_rx
+    #(
+        .TICKS_PER_BIT(TICKS_PER_BIT),
+        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+    ) rx (
+        .i_clk(fast_clk),
+        .i_enable(1'b1),
+        .i_din(uart_rx_i),
+        .o_rxdata(rx_data),
+        .o_recvdata(rx_done)
+    );
+    
+    uart_tx
+    #(
+        .TICKS_PER_BIT(TICKS_PER_BIT),
+        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+    ) tx (
+        .i_clk(fast_clk),
+        .i_start(tx_start),
+        .i_data(tx_data),
+        .o_done(tx_done),
+        .o_dout(uart_tx_o)
+    );
 
 endmodule
