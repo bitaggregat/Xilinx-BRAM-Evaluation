@@ -85,22 +85,25 @@ module tb_read_bram(
         #(T/2);
     end
     
-    /*
-    task wait_busy_timeout;
+    task recv_timeout(input [7:0] expected);
     begin
-        fork: wait_timeout
+        fork: r_timeout
         begin
-            wait(busy == 1'b0);
-            disable wait_timeout;
+            wait(from_dut_done == 1'b1);
+            @(negedge from_dut_done);
+            if (from_dut_data == expected)
+                $display("PASSED: received 0x%x", expected);
+            else
+                $display("ERROR: wrong value received 0x%x != 0x%x", from_dut_data, expected);
+            disable r_timeout;
         end
         begin
-            #(16*TICKS_PER_BIT) $display("ERROR: timeout for transmission of value 0x%x", expected);
+            #(16*T*TICKS_PER_BIT) $display("ERROR: timeout for transmission of value 0x%x", expected);
             $finish;
         end
         join
     end
     endtask
-    */
     
     initial
     begin
@@ -134,22 +137,11 @@ module tb_read_bram(
         @(posedge to_dut_done);
         
         // receive
-        fork: wait_receive
-        begin
-            wait(from_dut_done == 1'b1);
-            disable wait_receive;
-        end
-        begin
-            #(14*T*TICKS_PER_BIT) $display("ERROR: expected submission missing");
-            $finish;
-        end
-        join
-        
-        @(negedge clk);
-        if (from_dut_data == 8'h43)
-            $display("PASSED");
-        else
-            $display("ERROR: wrong value received 0x%x", from_dut_data);
+        recv_timeout(8'hf7);
+        recv_timeout(8'hea);
+        recv_timeout(8'heb);
+        recv_timeout(8'haf);
+        recv_timeout(8'h0c);
         
         @(negedge clk);
         @(negedge clk);
