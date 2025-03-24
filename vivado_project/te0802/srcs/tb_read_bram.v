@@ -31,6 +31,11 @@ module tb_read_bram(
     
     reg clk;
     
+    integer i, j;
+    reg [255:0] expected_raw [0:127];
+    reg [31:0] expected_bram [0:1023];
+    reg [3:0] expected_par [0:1023];
+    
     wire uart_rx;
     reg to_dut_start;
     reg [7:0] to_dut_data;
@@ -41,6 +46,7 @@ module tb_read_bram(
     wire from_dut_done;
     
     wire [7:0] led;
+    
     
     read_bram
     #(
@@ -92,7 +98,8 @@ module tb_read_bram(
             wait(from_dut_done == 1'b1);
             @(negedge from_dut_done);
             if (from_dut_data == expected)
-                $display("PASSED: received 0x%x", expected);
+                //$display("PASSED: received 0x%x", expected);
+                ;
             else
                 $display("ERROR: wrong value received 0x%x != 0x%x", from_dut_data, expected);
             disable r_timeout;
@@ -107,6 +114,28 @@ module tb_read_bram(
     
     initial
     begin
+        // read expected data
+        $readmemh("data.mem", expected_raw);
+        for(i=0; i<128; i=i+1)
+        begin
+            expected_bram[i*8] = expected_raw[i][31:0];
+            expected_bram[i*8+1] = expected_raw[i][63:32];
+            expected_bram[i*8+2] = expected_raw[i][95:64];
+            expected_bram[i*8+3] = expected_raw[i][127:96];
+            expected_bram[i*8+4] = expected_raw[i][159:128];
+            expected_bram[i*8+5] = expected_raw[i][191:160];
+            expected_bram[i*8+6] = expected_raw[i][223:192];
+            expected_bram[i*8+7] = expected_raw[i][255:224];
+        end
+        
+        for(i=0; i<16; i=i+1)
+        begin
+            for(j=0; j<64; j=j+1)
+            begin
+                expected_par[i*64+j] = expected_raw[i] >> 4*j;
+            end
+        end
+        
         // send u
         to_dut_data = 8'h40;
         @(negedge clk);
@@ -137,11 +166,15 @@ module tb_read_bram(
         @(posedge to_dut_done);
         
         // receive
-        recv_timeout(8'hf7);
-        recv_timeout(8'hea);
-        recv_timeout(8'heb);
-        recv_timeout(8'haf);
-        recv_timeout(8'h0c);
+        for(i=0; i<1024; i=i+1)
+        begin
+            //$display("%d", i);
+            recv_timeout(expected_bram[i][7:0]);
+            recv_timeout(expected_bram[i][15:8]);
+            recv_timeout(expected_bram[i][23:16]);
+            recv_timeout(expected_bram[i][31:24]);
+            recv_timeout({4'h0, expected_par[i]});
+        end
         
         @(negedge clk);
         @(negedge clk);

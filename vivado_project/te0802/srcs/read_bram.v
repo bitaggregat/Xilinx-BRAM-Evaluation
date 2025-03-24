@@ -26,11 +26,13 @@ module read_bram
 	reg tx_start;
 	reg [7:0] tx_data;
 	reg [35:0] batch_data;
+	reg [9:0] bram_addr;
 	
 	wire fast_clk;
 	wire [7:0] rx_data;
 	wire rx_done;
 	wire tx_done;
+	wire [35:0] bram_data;
 	
 	assign fast_clk = clk_i;
 	
@@ -82,7 +84,12 @@ module read_bram
 			next_state = STATE_WAIT_PAR;
 		STATE_WAIT_PAR:
 			if (tx_done)
-				next_state = STATE_WAIT_RX;
+			begin
+				if (bram_addr == 10'h0)
+				    next_state = STATE_WAIT_RX;
+				else
+				    next_state = STATE_SEND_0;
+			end
 			else
 				next_state = STATE_WAIT_PAR;
 		endcase
@@ -93,14 +100,21 @@ module read_bram
 	begin
 		tx_data <= tx_data;
 		tx_start <= 1'b0;
-		batch_data <= 36'hcafebeaf7;
+		bram_addr <= bram_addr;
+		batch_data <= batch_data;
 		case(next_state)
-		STATE_WAIT_RX, STATE_WAIT_0, STATE_WAIT_1, STATE_WAIT_2, STATE_WAIT_3, STATE_WAIT_PAR:
+		STATE_WAIT_RX:
+		begin
+            bram_addr <= 10'h0;
+		end
+		STATE_WAIT_0, STATE_WAIT_1, STATE_WAIT_2, STATE_WAIT_3, STATE_WAIT_PAR:
 			; // defaults
 		STATE_SEND_0:
 		begin
-			tx_data <= batch_data[7:0];
+		    batch_data <= bram_data;
+			tx_data <= bram_data[7:0];
 			tx_start <= 1'b1;
+			bram_addr <= bram_addr + 1;
 		end
 		STATE_SEND_1:
 		begin
@@ -147,6 +161,13 @@ module read_bram
         .i_data(tx_data),
         .o_done(tx_done),
         .o_dout(uart_tx_o)
+    );
+    
+    
+    bram_read_test bram_wrap(
+        .clka(fast_clk),
+        .addra(bram_addr),
+        .douta(bram_data) 
     );
 
 endmodule
