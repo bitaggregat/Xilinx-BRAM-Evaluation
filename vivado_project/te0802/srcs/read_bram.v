@@ -35,7 +35,7 @@ module read_bram
     wire tx_done;
     wire [35:0] bram_data;
     
-    assign fast_clk = clk_i;
+    //assign fast_clk = clk_i;
     
     // state transition
     always @(posedge fast_clk)
@@ -147,6 +147,12 @@ module read_bram
         end
         endcase
     end
+    
+    clk_wiz_1 clock
+    (
+        .clk_out1(fast_clk),
+        .clk_in1(clk_i)
+    );
     
     uart_rx
     #(

@@ -51,7 +51,7 @@ module tb_read_bram(
     
     read_bram
     #(
-        .TICKS_PER_BIT(TICKS_PER_BIT)
+        .TICKS_PER_BIT(TICKS_PER_BIT*16)
     ) dut (
         .clk_i(clk),
         .uart_rx_i(uart_rx),
