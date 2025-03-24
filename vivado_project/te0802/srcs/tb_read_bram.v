@@ -24,7 +24,7 @@ module tb_read_bram(
 
     );
     
-    localparam T=2;
+    localparam T=40;
     localparam TICKS_PER_BIT = 4;
     localparam TICKS_PER_BIT_SIZE = $clog2(TICKS_PER_BIT+1);
     
