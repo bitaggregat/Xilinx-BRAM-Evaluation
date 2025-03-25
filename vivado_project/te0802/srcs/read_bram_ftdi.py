@@ -59,6 +59,7 @@ def find_transmission_start(port) -> Tuple[bytes, bytes]:
     # Write 's' to start  transfer
     port.write(b"s")
 
+
 def get_crc(crc_prev, data):
     """Compute CRC
 
@@ -86,7 +87,7 @@ def get_crc(crc_prev, data):
     ret[1] = crc_prev[0] ^ crc_prev[2] ^ data[0] ^ data[2] ^ data[6] ^ data[7] ^ data[9] ^ data[13] ^ data[14] ^ data[16] ^ data[20] ^ data[21] ^ data[23] ^ data[27] ^ data[28] ^ data[30] ^ data[34] ^ data[35]
     ret[2] = crc_prev[0] ^ crc_prev[3] ^ data[0] ^ data[3] ^ data[5] ^ data[6] ^ data[7] ^ data[10] ^ data[12] ^ data[13] ^ data[14] ^ data[17] ^ data[19] ^ data[20] ^ data[21] ^ data[24] ^ data[26] ^ data[27] ^ data[28] ^ data[31] ^ data[33] ^ data[34] ^ data[35]
     ret[3] = crc_prev[0] ^ data[0] ^ data[4] ^ data[5] ^ data[7] ^ data[11] ^ data[12] ^ data[14] ^ data[18] ^ data[19] ^ data[21] ^ data[25] ^ data[26] ^ data[28] ^ data[32] ^ data[33] ^ data[35]
-    return ret.x[0]
+    return ret.x
 
 def read_batch(port, prev_crc) -> Tuple[bytes, bytes, bytes]:
     data = port.read(4)
@@ -149,6 +150,7 @@ if __name__ == "__main__":
         find_transmission_start(port)
         data = b""
         parity = ""
+        crc = b'\x00'
         for _ in range(1024):
             temp_data, temp_parity, crc = read_batch(port, crc)
 
