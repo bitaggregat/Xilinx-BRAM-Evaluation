@@ -1,6 +1,6 @@
 module read_bram
 #(
-	parameter TICKS_PER_BIT = 3472 //400e6/115200
+	parameter TICKS_PER_BIT = 133 //400e6/3e6
 )
 (
     input clk_i,
@@ -8,7 +8,6 @@ module read_bram
     output uart_tx_o,
     output [7:0] led_o
 );
-    localparam TICKS_PER_BIT_SIZE = $clog2(TICKS_PER_BIT+1);
     
     localparam STATE_WAIT_RX = 4'b0000;
     localparam STATE_SEND_0 = 4'b0001;
@@ -36,6 +35,7 @@ module read_bram
     wire [35:0] bram_data;
     
     //assign fast_clk = clk_i;
+    assign led_o = 8'h00;
     
     // state transition
     always @(posedge fast_clk)
@@ -148,7 +148,7 @@ module read_bram
         endcase
     end
     
-    clk_wiz_1 clock
+    clk_wiz_0 clock
     (
         .clk_out1(fast_clk),
         .clk_in1(clk_i)
@@ -156,28 +156,24 @@ module read_bram
     
     uart_rx
     #(
-        .TICKS_PER_BIT(TICKS_PER_BIT),
-        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+        .CLK_PER_BIT(TICKS_PER_BIT)
     ) rx (
-        .i_clk(fast_clk),
-        .i_enable(1'b1),
-        .i_din(uart_rx_i),
-        .o_rxdata(rx_data),
-        .o_recvdata(rx_done)
+        .clk(fast_clk),
+        .rx(uart_rx_i),
+        .data(rx_data),
+        .rx_done(rx_done)
     );
     
     uart_tx
     #(
-        .TICKS_PER_BIT(TICKS_PER_BIT),
-        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+        .CLK_PER_BIT(TICKS_PER_BIT)
     ) tx (
-        .i_clk(fast_clk),
-        .i_start(tx_start),
-        .i_data(tx_data),
-        .o_done(tx_done),
-        .o_dout(uart_tx_o)
+        .clk(fast_clk),
+        .tx_start(tx_start),
+        .data(tx_data),
+        .tx_done(tx_done),
+        .tx(uart_tx_o)
     );
-    
     
     bram_read_test bram_wrap(
         .clka(fast_clk),

@@ -26,7 +26,6 @@ module tb_read_bram(
     
     localparam T=40;
     localparam TICKS_PER_BIT = 4;
-    localparam TICKS_PER_BIT_SIZE = $clog2(TICKS_PER_BIT+1);
     
     
     reg clk;
@@ -61,29 +60,25 @@ module tb_read_bram(
     
     uart_tx 
 	#(
-        .TICKS_PER_BIT(TICKS_PER_BIT),
-        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+        .CLK_PER_BIT(TICKS_PER_BIT)
     ) uart_to_dut (
-        .i_clk(clk),
-        .i_start(to_dut_start),
-        .i_data(to_dut_data),
-        .o_done(to_dut_done),
-        .o_dout(uart_rx)     
+        .clk(clk),
+        .tx_start(to_dut_start),
+        .data(to_dut_data),
+        .tx_done(to_dut_done),
+        .tx(uart_rx)     
     );
     
     uart_rx
 	#(
-        .TICKS_PER_BIT(TICKS_PER_BIT),
-        .TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
+        .CLK_PER_BIT(TICKS_PER_BIT)
     ) uart_from_dut (
-        .i_clk(clk),
-        .i_enable(1'b1),
-        .i_din(uart_tx),
-        .o_rxdata(from_dut_data),
-        .o_recvdata(from_dut_done)
+        .clk(clk),
+        .rx(uart_tx),
+        .data(from_dut_data),
+        .rx_done(from_dut_done)
     );
     
-
     always
     begin
         clk = 1'b1;
@@ -125,6 +120,31 @@ module tb_read_bram(
         crc_func[3] = crc_prev[0] ^ data[0] ^ data[4] ^ data[5] ^ data[7] ^ data[11] ^ data[12] ^ data[14] ^ data[18] ^ data[19] ^ data[21] ^ data[25] ^ data[26] ^ data[28] ^ data[32] ^ data[33] ^ data[35];
     end
     endfunction
+    
+    task normal_readout;
+    begin
+        // send s
+        to_dut_data = 8'h73;
+        @(negedge clk);
+        to_dut_start = 1'b1;
+        @(negedge clk);
+        to_dut_start = 1'b0;
+        @(posedge to_dut_done);
+        
+        // receive
+        crc = 4'h0;
+        for(i=0; i<1024; i=i+1)
+        begin
+            //$display("%d", i);
+            crc = crc_func(crc, {expected_par[i], expected_bram[i]});
+            recv_timeout(expected_bram[i][7:0]);
+            recv_timeout(expected_bram[i][15:8]);
+            recv_timeout(expected_bram[i][23:16]);
+            recv_timeout(expected_bram[i][31:24]);
+            recv_timeout({crc, expected_par[i]});
+        end
+    end
+    endtask
     
     initial
     begin
@@ -171,26 +191,9 @@ module tb_read_bram(
         end
         join
         
-        // send s
-        to_dut_data = 8'h73;
-        @(negedge clk);
-        to_dut_start = 1'b1;
-        @(negedge clk);
-        to_dut_start = 1'b0;
-        @(posedge to_dut_done);
-        
-        // receive
-        crc = 4'h0;
-        for(i=0; i<1024; i=i+1)
-        begin
-            //$display("%d", i);
-            crc = crc_func(crc, {expected_par[i], expected_bram[i]});
-            recv_timeout(expected_bram[i][7:0]);
-            recv_timeout(expected_bram[i][15:8]);
-            recv_timeout(expected_bram[i][23:16]);
-            recv_timeout(expected_bram[i][31:24]);
-            recv_timeout({crc, expected_par[i]});
-        end
+        normal_readout();
+        // consecutive readout
+        normal_readout();
         
         @(negedge clk);
         @(negedge clk);
