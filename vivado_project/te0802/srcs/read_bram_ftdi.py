@@ -10,6 +10,9 @@ import pyftdi.ftdi
 import serial
 import argparse
 import os
+import sys
+
+from contextlib import ExitStack
 from pathlib import Path
 
 from typing import Tuple, List
@@ -58,6 +61,7 @@ def evaluate_readout(data: str, previous_value: str) -> List[Tuple[str, int]]:
 def find_transmission_start(port) -> Tuple[bytes, bytes]:
     # Write 's' to start  transfer
     port.write(b"s")
+    port.flush()
 
 
 def get_crc(crc_prev, data):
@@ -89,16 +93,38 @@ def get_crc(crc_prev, data):
     ret[3] = crc_prev[0] ^ data[0] ^ data[4] ^ data[5] ^ data[7] ^ data[11] ^ data[12] ^ data[14] ^ data[18] ^ data[19] ^ data[21] ^ data[25] ^ data[26] ^ data[28] ^ data[32] ^ data[33] ^ data[35]
     return ret.x
 
+
 def read_batch(port, prev_crc) -> Tuple[bytes, bytes, bytes]:
-    data = port.read(4)
-    tmp = port.read(1)[0]
+    batch = port.read(5)
+    if len(data) != 5:
+        raise Exception(f"Received {data}, but expected 5 bytes")
+    return process_batch(batch, prev_crc)
+
+
+def process_batch(batch, prev_crc) -> Tuple[bytes, bytes, bytes]:
+    tmp = batch[4]
+    data = batch[:4]
     
     parity = (tmp & 0xF).to_bytes()
-    send_crc = (tmp >> 4).to_bytes()
+    sent_crc = (tmp >> 4).to_bytes()
     
     crc = get_crc(prev_crc, data+parity)
+    if sent_crc != crc:
+        print(f"Warning: mismatched CRC: 0x{crc[0]:02x} != 0x{sent_crc[0]:02x}")
     
     return data, parity, crc
+
+
+def read_data(port, count) -> bytes:
+    todo = count
+    data = []
+    
+    while todo > 0:
+        part = port.read(min(todo, 4096))
+        data.append(part)
+        todo -= len(part)
+    
+    return b"".join(data)
 
 
 def prepare_paths(input_path: str) -> Tuple[Path, Path]:
@@ -130,43 +156,57 @@ if __name__ == "__main__":
             print(f"\t{dev[0].description}: {dev[0].sn}")
         exit(0)
 
+    baudrate = 3000000
     if args["device"] is not None:
-        # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
-        if args["device"] in ["A503VSXV", "A503VYYY", "A503VSBM"]:
-            # This specific UART Adapter uses a different ftdi chip and port than dev boards
-            # Making this more 'generic' could be a future TODO
-            port = pyftdi.serialext.serial_for_url(
-                f'ftdi://ftdi:232r:{args["device"]}/1',
-                baudrate=115200,
-                parity=serial.PARITY_NONE,
-            )
-        else:
-            port = pyftdi.serialext.serial_for_url(
-                f'ftdi://ftdi:2232:{args["device"]}/2',
-                baudrate=115200,
-                parity=serial.PARITY_NONE,
-            )
-        
-        find_transmission_start(port)
-        data = b""
-        parity = ""
-        crc = b'\x00'
-        for _ in range(1024):
-            temp_data, temp_parity, crc = read_batch(port, crc)
+        with ExitStack() as stack:
+            # port = pyftdi.serialext.serial_for_url('ftdi://ftdi:2232:210183A89AC3/2 ', baudrate=9600, parity=serial.PARITY_EVEN)
+            if args["device"] in ["A503VSXV", "A503VYYY", "A503VSBM", "A801TJLF"]:
+                # This specific UART Adapter uses a different ftdi chip and port than dev boards
+                # Making this more 'generic' could be a future TODO
+                port = pyftdi.serialext.serial_for_url(
+                    f'ftdi://ftdi:232r:{args["device"]}/1',
+                    baudrate=baudrate,
+                    parity=serial.PARITY_NONE,
+                    timeout=0,
+                )
+            else:
+                port = pyftdi.serialext.serial_for_url(
+                    f'ftdi://ftdi:2232:{args["device"]}/2',
+                    baudrate=baudrate,
+                    parity=serial.PARITY_NONE,
+                )
+            print(port)
+            stack.enter_context(port)
+            port.reset_input_buffer()
+            port.reset_output_buffer()
+            #print(port)
+            
+            find_transmission_start(port)
+            goal = (4+1)*1024
+            raw_data = read_data(port, goal)
+            if len(raw_data) != goal:
+                raise Excption(f"{len(data)} from {goal} received")
+            
+            crc = b'\x00'
+            data = b""
+            parity = ""
+            for k, batch in enumerate([raw_data[i:i+5]for i in range(0, len(raw_data), 5)]):
+                temp_data, temp_parity, crc = process_batch(batch, crc)
+                print(k, "received", temp_data, temp_parity, crc)
 
-            data += temp_data
-            parity += temp_parity.hex()[1]
+                data += temp_data
+                parity += temp_parity.hex()[1]
 
-        parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
+            parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
 
-        if args["output_path"] is not None:
-            data_path, parity_path = prepare_paths(args["output_path"])
+            if args["output_path"] is not None:
+                data_path, parity_path = prepare_paths(args["output_path"])
 
-            with open(data_path, mode="wb") as f:
-                f.write(data)
-            with open(parity_path, mode="wb") as f:
-                f.write(bytes.fromhex(parity))
-
+                with open(data_path, mode="wb") as f:
+                    f.write(data)
+                with open(parity_path, mode="wb") as f:
+                    f.write(bytes.fromhex(parity))
+            
     else:
         print(
             "No Serial Number specified. Call with '-s' to see possible serial numbers."
