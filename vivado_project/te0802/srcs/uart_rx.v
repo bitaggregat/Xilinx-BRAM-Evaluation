@@ -33,6 +33,7 @@ module uart_rx
 	input rx,
 	output reg [7:0] data,
 	output reg rx_done
+	//output [2:0] out_state
 );
 	
 	localparam STATE_IDLE = 3'b000;
@@ -45,12 +46,16 @@ module uart_rx
 	reg [CLK_COUNTER_LENGTH-1:0] clk_counter;
 	reg [7:0] data_buf;
 	reg rx_buf;
+	//reg [3:0] rx_buf_extension;
 	reg [3:0] bit_counter;
+	
+	//assign out_state = state; 
 	
 	// use register for input since it's an clock domain crossing
 	always @(posedge clk)
 	begin
-		rx_buf <= rx;
+		//rx_buf_extension <= {rx_buf_extension[2:0], rx};
+	    rx_buf <= rx;//_buf_extension[3];
 	end
 	
 	always @(posedge clk)

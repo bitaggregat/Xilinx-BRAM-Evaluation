@@ -1,6 +1,6 @@
 module read_bram
 #(
-	parameter TICKS_PER_BIT = 133 //400e6/3e6
+	parameter TICKS_PER_BIT = 200 //400e6/3e6
 )
 (
     input clk_i,
@@ -34,8 +34,10 @@ module read_bram
     wire tx_done;
     wire [35:0] bram_data;
     
+    reg [7:0] current_rx_data;
+    
     //assign fast_clk = clk_i;
-    assign led_o = 8'h00;
+    assign led_o = current_rx_data;
     
     // state transition
     always @(posedge fast_clk)
@@ -51,6 +53,7 @@ module read_bram
         STATE_WAIT_RX:
             if (rx_done && rx_data==8'h73)// received 's'
                 next_state = STATE_SEND_0;
+                
             else
                 next_state = STATE_WAIT_RX;
         STATE_SEND_0:
@@ -107,6 +110,7 @@ module read_bram
         case(next_state)
         STATE_WAIT_RX:
         begin
+            current_rx_data <= 8'hff;
             bram_addr <= 10'h0;
             crc <= 4'h0;
         end
@@ -114,6 +118,8 @@ module read_bram
             ; // defaults
         STATE_SEND_0:
         begin
+            if (bram_addr == 10'h0)
+                    current_rx_data <= rx_data;
             batch_data <= bram_data;
             tx_data <= bram_data[7:0];
             tx_start <= 1'b1;
@@ -162,6 +168,7 @@ module read_bram
         .rx(uart_rx_i),
         .data(rx_data),
         .rx_done(rx_done)
+        //.out_state(led_o[2:0])
     );
     
     uart_tx
