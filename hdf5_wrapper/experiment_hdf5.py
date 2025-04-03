@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Self
 from scipy.stats import entropy
 from functools import cached_property, reduce
+from scipy.spatial.distance import hamming
 
 
 @dataclass(frozen=True)
@@ -28,17 +29,17 @@ class Read:
 
     raw_read: bytes
     # Not noted in type hint because numpy type hinting best practice
-    bits: npt.NDArray[np.int64]
+    bits: npt.NDArray[np.int8]
 
-    @cached_property
+    @property
     def bits_flattened(self) -> npt.NDArray[np.float64]:
         return self.bits.flatten()
 
-    @cached_property
+    @property
     def bits_flattened_bool(self) -> npt.NDArray[np.bool_]:
-        return np.array(self.bits_flattened(), dtype=bool)
+        return np.array(self.bits_flattened, dtype=bool)
 
-    @cached_property
+    @property
     def entropy(self) -> np.float64:
         """
         Counts 1's and 0's in read value.
@@ -48,16 +49,45 @@ class Read:
         return entropy(counts, base=2)
 
     @classmethod
-    def from_raw(cls, raw_read: bytes) -> Self:
+    def from_raw(
+        cls, raw_read: bytes, remove_signature_bits: bool = False
+    ) -> Self:
         """
         Creates Read object from raw read.
         Args:
             raw_read (bytes): Single read of bram startup value
         """
         uint8_read = np.frombuffer(raw_read, dtype=np.uint8)
-        temp_bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
-        bits = temp_bits.astype(np.int64)
+        bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
+        if remove_signature_bits:
+            bits = np.concatenate([bits[32:32*64], bits[33*64:-32]], axis=0)
         return cls(raw_read, bits)
+
+    def filter_stripe(self, filter_even_stripes: bool) -> Self:
+        new_bit_parts = []
+        sub_array_count = (len(self.bits)-8)/8
+        if filter_even_stripes:
+            new_bit_parts.append(self.bits[0:4])
+            temp_sub_arrays = np.array(np.split(self.bits[4:-4], sub_array_count))
+            new_bit_parts += [subarray for subarray in (temp_sub_arrays[1::2])]
+            new_bit_parts.append(self.bits[-4:])
+            new_bits = np.concatenate(new_bit_parts, axis=0)
+        else:
+            temp_sub_arrays = np.array(np.split(self.bits[4:-4], sub_array_count))
+            new_bits = np.array([subarray for subarray in (temp_sub_arrays[::2])])
+        return Read(b"", new_bits)
+
+
+def reliability_with_predefined_value(
+    comparison_value: Read, reads: list[Read]
+) -> np.float64:
+    """ """
+    r_i = comparison_value.bits_flattened
+    intradistance_sum = sum(
+        [hamming(r_i, other_read.bits_flattened) for other_read in reads]
+    )
+    normalized_avg_intradistance = intradistance_sum / len(reads)
+    return (1 - normalized_avg_intradistance) * 100
 
 
 @dataclass(frozen=True)
@@ -88,13 +118,31 @@ class ReadSession:
     temperatures: List[float]
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py.Group) -> "ReadSession":
+    def from_hdf5(
+        cls,
+        hdf5_group: h5py.Group,
+        filter_even_stripes: bool = False,
+        filter_uneven_stripes: bool = False,
+    ) -> "ReadSession":
         """
         Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
         data_read_dataset = hdf5_group["data_reads"]
-        data_reads = [Read.from_raw(bytes(read)) for read in data_read_dataset]
+        if filter_even_stripes or filter_uneven_stripes:
+            data_reads = [Read.from_raw(bytes(read), remove_signature_bits=True) for read in data_read_dataset]
+        else:
+            data_reads = [Read.from_raw(bytes(read)) for read in data_read_dataset]
+        if filter_even_stripes:
+            data_reads = [
+                read.filter_stripe(filter_even_stripes=True)
+                for read in data_reads
+            ]
+        if filter_uneven_stripes:
+            data_reads = [
+                read.filter_stripe(filter_even_stripes=False)
+                for read in data_reads
+            ]
 
         parity_read_dataset = hdf5_group["parity_reads"]
         parity_reads = [
@@ -149,17 +197,50 @@ class BramBlock:
     name: str
     read_sessions: Dict[str, ReadSession]
     read_session_names: list[str]
+    bram_count: int = field(init=False, default=1)
+
+    @property
+    def read_sessions_unmerged(self) -> dict[str, list[ReadSession]]:
+        return {
+            read_session_name: [self.read_sessions[read_session_name]]
+            for read_session_name in self.read_session_names
+        }
+
+    def reliability_intercomparison(
+        self, base_session_name: str
+    ) -> dict[str, np.float64]:
+        comparison_element = self.read_sessions[base_session_name].data_reads[
+            0
+        ]
+        reliability_per_session_dict = dict()
+        for read_session in self.read_session_names:
+            reads = self.read_sessions[read_session].data_reads
+            if read_session == base_session_name:
+                reads = reads[1:]
+            reliability_per_session_dict[read_session] = (
+                reliability_with_predefined_value(comparison_element, reads)
+            )
+        return reliability_per_session_dict
 
     @classmethod
     def from_hdf5(
-        cls, hdf5_group: h5py.Group, name: str, read_session_names: list[str]
+        cls,
+        hdf5_group: h5py.Group,
+        name: str,
+        read_session_names: list[str],
+        filter_even_stripes: bool = False,
+        filter_uneven_stripes: bool = False,
     ) -> Self:
         """
         Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
         """
         read_sessions = {
-            key: ReadSession.from_hdf5(hdf5_group[key])
+            key: ReadSession.from_hdf5(
+                hdf5_group[key],
+                filter_even_stripes=filter_even_stripes,
+                filter_uneven_stripes=filter_uneven_stripes,
+            )
             for key in hdf5_group
             # Skip bs directory of experiment hdf5 file
             if key != "bitstreams"
@@ -193,9 +274,13 @@ class ExperimentContainer(ABC):
     """
 
     name: str
+    bram_count: int
     subcontainers: dict[str, Self | BramBlock]
     read_session_names: list[str]
     read_sessions: dict[str, ReadSession] = field(default_factory=dict)
+    read_sessions_unmerged: dict[str, list[ReadSession]] = field(
+        default_factory=dict
+    )
 
     def __post_init__(self) -> None:
         # Merge all ReadSession from Subcontainers in own ReadSession
@@ -210,6 +295,15 @@ class ExperimentContainer(ABC):
                 )
             )
 
+            self.read_sessions_unmerged[read_session_name] = [
+                read_session
+                for container in self.subcontainers.values()
+                for read_session in container.read_sessions_unmerged[
+                    read_session_name
+                ]
+            ]
+            pass
+
 
 @dataclass(frozen=True, kw_only=True)
 class PBlock(ExperimentContainer):
@@ -219,9 +313,29 @@ class PBlock(ExperimentContainer):
 
     subcontainers: Dict[str, BramBlock]
 
+    def reliability_intercomparison(
+        self, base_session_name: str
+    ) -> tuple[dict[str, list[np.float64]], list[str]]:
+        bram_names = list()
+        session_values = {
+            session_name: list() for session_name in self.read_session_names
+        }
+        print(session_values)
+        for bram in self.subcontainers.values():
+            bram_names.append(bram.name)
+            temp_reliability_values = bram.reliability_intercomparison(
+                base_session_name
+            )
+            for read_session, value in temp_reliability_values.items():
+                session_values[read_session].append(value)
+        print(session_values)
+        return session_values, bram_names
+
     @classmethod
     def from_hdf5(
-        cls, hdf5_group: h5py.Group, name: str, read_session_names: list[str]
+        cls, hdf5_group: h5py.Group, name: str, read_session_names: list[str],
+        filter_even_stripes: bool = False,
+        filter_uneven_stripes: bool = False
     ) -> Self:
         """
         Parses this object from a hdf5 subgroup, belonging
@@ -229,37 +343,20 @@ class PBlock(ExperimentContainer):
         """
         bram_blocks = {
             key: BramBlock.from_hdf5(
-                hdf5_group[key], key, read_session_names=read_session_names
+                hdf5_group[key], key, read_session_names=read_session_names,
+                filter_even_stripes=filter_even_stripes,
+                filter_uneven_stripes=filter_uneven_stripes
             )
             for key in hdf5_group
             if "RAMB36" in key
         }
+        bram_count = sum([bram.bram_count for bram in bram_blocks.values()])
         return cls(
             name=name,
+            bram_count=bram_count,
             subcontainers=bram_blocks,
             read_session_names=read_session_names,
         )
-
-    def flatten(self) -> Dict[str, ReadSession]:
-        """
-        Merges read sessions of all brams for each keyword
-
-        Returns:
-            Adds up flatten
-        """
-        return {
-            read_session_key: reduce(
-                # adds all lists into a single one
-                lambda x, y: x + y,
-                [
-                    bram_block.read_sessions[read_session_key]
-                    for bram_block in self.subcontainers.values()
-                ],
-            )
-            for read_session_key in self.subcontainers.values()[
-                0
-            ].read_sessions
-        }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -284,7 +381,9 @@ class Board(ExperimentContainer):
 
     @classmethod
     def from_hdf5(
-        cls, hdf5_group: h5py.Group, read_session_names: list[str]
+        cls, hdf5_group: h5py.Group, read_session_names: list[str],
+        filter_even_stripes: bool = False,
+        filter_uneven_stripes: bool = False
     ) -> Self:
         """
         Parses this object from a hdf5 subgroup,
@@ -310,27 +409,19 @@ class Board(ExperimentContainer):
 
         pblocks = {
             key: PBlock.from_hdf5(
-                hdf5_group[key], key, read_session_names=read_session_names
+                hdf5_group[key], key, read_session_names=read_session_names,
+                filter_even_stripes=filter_even_stripes,
+                filter_uneven_stripes=filter_uneven_stripes
             )
             for key in hdf5_group
             if "pblock" in key
         }
+        bram_count = sum([pblock.bram_count for pblock in pblocks.values()])
+        kwargs["bram_count"] = bram_count
         kwargs["subcontainers"] = pblocks
         kwargs["read_session_names"] = read_session_names
 
         return cls(**kwargs)
-
-    def flatten(self) -> Dict[str, ReadSession]:
-        """
-        Merges read sessions of all brams of all pblocks for each keyword
-        """
-        return {
-            read_session_key: reduce(
-                lambda x, y: x + y,
-                [pblock.flatten() for pblock in self.subcontainers.values()],
-            )
-            for read_session_key in self.subcontainers.values()[0].flatten()
-        }
 
 
 @dataclass(frozen=True)
@@ -348,7 +439,9 @@ class Experiment(ExperimentContainer):
     commit: str
 
     @classmethod
-    def from_hdf5(cls, hdf5_group: h5py.Group, commit: str) -> Self:
+    def from_hdf5(cls, hdf5_group: h5py.Group, commit: str,
+        filter_even_stripes: bool = False,
+        filter_uneven_stripes: bool = False) -> Self:
         """
         Parses this object from a hdf5 subgroup,
         belonging to a experiment hdf5 file
@@ -362,12 +455,15 @@ class Experiment(ExperimentContainer):
             board: Board.from_hdf5(
                 hdf5_group["boards"][board],
                 read_session_names=read_session_names,
+                filter_even_stripes=filter_even_stripes,
+                filter_uneven_stripes=filter_uneven_stripes
             )
             for board in hdf5_group["boards"]
         }
-
+        bram_count = sum([board.bram_count for board in boards.values()])
         return cls(
             name="experiment",
+            bram_count=bram_count,
             subcontainers=boards,
             commit=commit,
             read_session_names=read_session_names,
