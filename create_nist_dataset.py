@@ -92,7 +92,6 @@ def select_data(
         experiment: hdf5_wrapper.Experiment,
         groupe_setting: str
     ) -> bytes:
-    print("a")
     groupe_setting = pblock_groupes(groupe_setting)
 
 
@@ -147,11 +146,11 @@ def select_data(
 def main(args: Any) -> None:
     
     with h5py.File(args["input_hdf5"], "r") as f:
-        print("start")
+        print("Start")
         experiment = hdf5_wrapper.Experiment.from_hdf5(
             f, commit=f.attrs["commit"]
         )
-        print("help")
+        print("Finished opening hdf5 file.")
         created_data = select_data(
             args["setting"], 
             experiment, 
