@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Self, Type
 import h5py
-from .experiment_hdf5 import ExperimentContainer
+from .experiment_hdf5 import ExperimentContainer, Experiment
 from .interfaces import HDF5Convertible, Plottable
 from .stats_base import (
     MetaStatistic,
@@ -24,12 +24,16 @@ from .stats import (
     BitStabilizationStatistic,
     BitAliasingStatistic,
     BitFlipChanceStatistic,
-    UniformityStatisitc,
+    UniformityStatistic,
     StableBitStatistic,
     ZeroStableBitStatistic,
-    OneStableBitStatistic
+    OneStableBitStatistic,
+    ReliabilityStatistic,
+    UniquenessStatistic,
+    CombinedStableBitStatistic
 )
 from .utility import PlotSettings
+from .plotting import multi_bit_heatmap, multi_bit_heatmap2 
 
 
 @dataclass
@@ -55,6 +59,7 @@ class MultiReadSessionMetaStatistic(HDF5Convertible, Plottable):
     _hdf5_group_name: str = field(init=False, default="Meta Statistic")
 
     def __post_init__(self) -> None:
+
         # Simple check to help securing the produced datas correctness
         # This may cost some extra time,
         # but it is worth it because correctness is our highest priority
@@ -266,7 +271,8 @@ class MultiReadSessionStatistic(HDF5Convertible, Plottable):
         self.meta_stats.add_to_hdf5_group(multi_group)
 
     def _plot(self) -> None:
-        self.meta_stats.plot()
+        if self.statistic_type.meta_statable:
+            self.meta_stats.plot()
         for statistic in self.statistics.values():
             statistic.plot()
 
@@ -302,6 +308,8 @@ class MultiStatisticOwner(HDF5Convertible, Plottable, metaclass=ABCMeta):
         super().__init__(plot_settings)
         self._read_session_names = experiment_container.read_session_names
         self.name = experiment_container.name
+        self.plot_settings.bram_count = experiment_container.bram_count
+        self.plot_settings.entity_name = experiment_container.name
         self.statistics = dict()
         self.compute_stats(experiment_container)
 
@@ -383,18 +391,7 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
     subowner_type: Type[MultiStatisticOwner]
     subowner_identifier: str
 
-    def __init__(
-        self,
-        experiment_container: ExperimentContainer,
-        plot_settings: PlotSettings,
-    ) -> None:
-        super().__init__(
-            experiment_container=experiment_container,
-            plot_settings=plot_settings,
-        )
-        self._read_session_names = experiment_container.read_session_names
-        self.name = experiment_container.name
-        self.statistics = dict()
+    def compute_stats(self, experiment_container: ExperimentContainer) -> None:
         self.subowners = [
             self.subowner_type(
                 plot_settings=self.plot_settings.with_expanded_path(
@@ -460,14 +457,21 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
         else:
             # Gather read_sessions of same read_session_name
             # for each container
-            read_session_lists = {
-                read_session_name: [
-                    subcontainer.read_sessions[read_session_name]
-                    for subcontainer
-                    in experiment_container.subcontainers.values()
-                ]
-                for read_session_name in self.read_session_names
-            }
+            read_session_lists = experiment_container.read_sessions_unmerged
+            
+            # This below is the old version where values would be 
+            # compared between containers instead of among all 
+            # BRAMs of current container 
+            #{
+            #    read_session_name: [
+                    
+                    
+                    #subcontainer.read_sessions[read_session_name]
+                    #for subcontainer
+                    #in experiment_container.subcontainers.values()
+            #    ]
+            #    for read_session_name in self.read_session_names
+            #}
             if any(
                 [
                     len(read_session_list) <= 1
@@ -521,22 +525,25 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             subowner.plot()
 
 
+
 class BramBlockStat(MultiStatisticOwner):
     """
     Attributes:
         See parent classes
     """
-
+    
     allowed_statistics = [
         IntradistanceStatistic,
         EntropyStatistic,
         BitStabilizationStatistic,
         BitAliasingStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic,
+        CombinedStableBitStatistic
     ]
 
 
@@ -552,14 +559,22 @@ class PBlockStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic,
+        UniquenessStatistic,
+        CombinedStableBitStatistic
     ]
     subowner_type = BramBlockStat
     subowner_identifier = "BRAM Statistics"
 
+    def _plot(self) -> None:
+        for statistic in self.statistics.values():
+            statistic.plot()
+        for subowner in self.subowners[:2]:
+            subowner.plot()
 
 class BoardStat(StatAggregator):
     """
@@ -573,10 +588,13 @@ class BoardStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic,
+        UniquenessStatistic,
+        CombinedStableBitStatistic
     ]
     subowner_type = PBlockStat
     subowner_identifier = "PBlock Statistics"
@@ -594,13 +612,57 @@ class ExperimentStat(StatAggregator):
         BitAliasingStatistic,
         InterdistanceStatistic,
         BitFlipChanceStatistic,
-        UniformityStatisitc,
+        UniformityStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
-        OneStableBitStatistic
+        OneStableBitStatistic,
+        ReliabilityStatistic,
+        UniquenessStatistic,
+        CombinedStableBitStatistic
     ]
     subowner_type = BoardStat
     subowner_identifier = "Board Statistics"
+
+    def plot_bit_aliasing_heatmap_per_device(self) -> None:
+        data = {
+            subowner.name:
+            list(subowner.statistics[BitAliasingStatistic].statistics.values())[0].data_stats
+            for subowner in self.subowners
+        }
+        data = {
+            "Small (xczu1eg)": data["te0802"],
+            "Medium (xczu2cg)": data["read_bram_te0802_zu2cg"],
+            "Large (xczu9eg)": data["zcu102_eva_kit"],
+            "All devices": list(self.statistics[BitAliasingStatistic].statistics.values())[0].data_stats
+        }
+        multi_bit_heatmap(
+            bit_stats=data,
+            path=self.plot_settings.path,
+        )
+
+    def plot_bit_aliasing_heatmap_levelwise(self) -> None:
+        board = "te0802"
+        b = [
+            subowner for subowner in
+            self.subowners if subowner.name == board
+        ][0]
+        column = b.subowners[0]
+        bram_block = column.subowners[9]
+
+        data = {
+            "Small Board (xczu1eg)": list(b.statistics[BitAliasingStatistic].statistics.values())[0].data_stats,
+            "Single Column": list(column.statistics[BitAliasingStatistic].statistics.values())[0].data_stats,
+            f"Single {bram_block.name}": list(bram_block.statistics[BitAliasingStatistic].statistics.values())[0].data_stats
+        }
+        multi_bit_heatmap2(
+            bit_stats=data,
+            path=self.plot_settings.path,
+        )
+
+
+    #def _plot(self):
+        # super()._plot()
+    #    self.plot_bit_aliasing_heatmap_levelwise()
 
 
 class StatContainers(Enum):
@@ -613,3 +675,4 @@ class StatContainers(Enum):
     PBlockStat = PBlockStat
     BoardStat = BoardStat
     ExperimentStat = ExperimentStat
+
