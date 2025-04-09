@@ -593,15 +593,15 @@ class BoardStat(StatAggregator):
         InterdistanceStatistic,
         BitFlipChanceStatistic,
         UniformityStatistic,
+        ReliabilityStatistic,
+        UniquenessStatistic,
+        CombinedStableBitStatistic,
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic,
         UnstableBitStatistic,
         VeryUnstableBitStatistic,
-        RandomBitStatistic,
-        ReliabilityStatistic,
-        UniquenessStatistic,
-        CombinedStableBitStatistic
+        RandomBitStatistic
     ]
     subowner_type = PBlockStat
     subowner_identifier = "PBlock Statistics"
@@ -620,12 +620,6 @@ class ExperimentStat(StatAggregator):
         InterdistanceStatistic,
         BitFlipChanceStatistic,
         UniformityStatistic,
-        StableBitStatistic,
-        ZeroStableBitStatistic,
-        OneStableBitStatistic,
-        UnstableBitStatistic,
-        VeryUnstableBitStatistic,
-        RandomBitStatistic,
         ReliabilityStatistic,
         UniquenessStatistic,
         CombinedStableBitStatistic
@@ -670,8 +664,8 @@ class ExperimentStat(StatAggregator):
         )
 
 
-    #def _plot(self):
-    #    super()._plot()
+    def _plot(self):
+        super()._plot()
     #    self.plot_bit_aliasing_heatmap_levelwise()
 
 

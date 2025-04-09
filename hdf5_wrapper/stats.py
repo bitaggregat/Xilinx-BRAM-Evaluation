@@ -307,8 +307,6 @@ class StableBitStatistic(BitwiseStatistic):
         read_session=None,
         data_read_stat=None,
         parity_read_stat=None,
-        data_stable_bit_count=None,
-        parity_stable_bit_count=None,
         bram_count: int = 1,
         data_sample: npt.NDArray[np.int8] = None
     ):
@@ -335,14 +333,6 @@ class StableBitStatistic(BitwiseStatistic):
         else:
             self.data_sample = data_sample
 
-
-        if read_session is not None:
-            self.data_stable_bit_count = sum(self.data_stats)
-            self.parity_stable_bit_count = sum(self.parity_stats)
-
-        else:
-            self.data_stable_bit_count = data_stable_bit_count
-            self.parity_stable_bit_count = parity_stable_bit_count
         
 
     def _plot(self) -> None:
@@ -387,19 +377,27 @@ class StableBitStatistic(BitwiseStatistic):
             )
             '''
 
-        single_value_to_file(self.data_stable_bit_count,
-                    path=self.plot_settings.path,description="data_stable_bit_count")
-        single_value_to_file(self.parity_stable_bit_count,
-                    path=self.plot_settings.path, description="parity_stable_bit_count")
+
 
         if len(self.data_sample) > 0:
-            data_sample_bytes = np.packbits(self.data_sample).tobytes()
+            # The number of stable bits may not be dividable by 8
+            # But we don't want python to fill the missing bits with 0
+            # The latter could falsify statistics
+            # So we just cut them off
+            length = int(len(self.data_sample)/8)
+            rounded_data_sample = self.data_sample[:length]
+            data_sample_bytes = np.packbits(rounded_data_sample).tobytes()
         else:
             data_sample_bytes = b""
         bytes_to_file(data_sample_bytes,
                     path=self.plot_settings.path, description="data_sample")
         object_to_json_file(self.data_bit_indices,
                     path=self.plot_settings.path, description="idx.json")
+        
+        single_value_to_file(len(data_sample_bytes)*8,
+            path=self.plot_settings.path,description="data_stable_bit_count")
+        single_value_to_file(len(data_sample_bytes)*8,
+            path=self.plot_settings.path, description="parity_stable_bit_count")
 
         
 
@@ -426,8 +424,6 @@ class StableBitStatistic(BitwiseStatistic):
         parity_read_stats_sum = np.array(
             list(map(sum, zip(*parity_read_stats_list)))
         )
-        data_stable_bit_count = sum([stat.data_stable_bit_count for stat in stats])/len(stats)
-        parity_stable_bit_count = sum([stat.parity_stable_bit_count for stat in stats])/len(stats)
         bram_count = sum([stat.bram_count for stat in stats])
         data_samples = [stat.data_sample for stat in stats]
 
@@ -436,8 +432,6 @@ class StableBitStatistic(BitwiseStatistic):
 
         return cls(
             plot_settings, None, data_read_stats_sum, parity_read_stats_sum,
-            data_stable_bit_count = data_stable_bit_count,
-            parity_stable_bit_count = parity_stable_bit_count,
             bram_count = bram_count,
             data_sample = merged_data_sample
         )
