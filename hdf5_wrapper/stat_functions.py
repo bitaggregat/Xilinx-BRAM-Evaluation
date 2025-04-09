@@ -202,7 +202,11 @@ def stable_bits_per_idxs(
                 )
                 or (
                     bit_flip_type == BitFlipType.VERY_UNSTABLE
-                    and 0.25 < flip_prob < 0.75
+                    and 0.25 <= flip_prob < 0.75
+                )
+                or (
+                    bit_flip_type == BitFlipType.RANDOM
+                    and 0.4 <= flip_prob < 0.6
                 )
             )
             else 0

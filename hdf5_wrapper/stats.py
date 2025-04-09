@@ -11,13 +11,16 @@ from typing import Self, Type
 import functools
 import numpy as np
 import numpy.typing as npt
+import json
 from .plotting import (
     stable_bit_per_read_step_plot,
     per_bit_idx_histogram,
     histogram,
     bit_heatmaps,
     multi_bit_heatmap,
-    single_value_to_file
+    single_value_to_file,
+    bytes_to_file,
+    object_to_json_file
 )
 from .stats_base import (
     SimpleStatistic,
@@ -289,6 +292,15 @@ class StableBitStatistic(BitwiseStatistic):
         "bit_flip_type": BitFlipType.BOTH,
     }
 
+    # Counts how many brams are included in this entity (1 one for single bram)
+    bram_count = 1
+
+    # Bit indices of a specific feature (e.g indices of random or stable bits)
+    data_bit_indices = None
+    # Data sample from all brams are later concatenated and used for NIST tests
+    # To answer questions like: How is the quality of random bits?
+    data_sample = None
+
     def __init__(
         self,
         plot_settings,
@@ -296,17 +308,42 @@ class StableBitStatistic(BitwiseStatistic):
         data_read_stat=None,
         parity_read_stat=None,
         data_stable_bit_count=None,
-        parity_stable_bit_count=None
+        parity_stable_bit_count=None,
+        bram_count: int = 1,
+        data_sample: npt.NDArray[np.int8] = None
     ):
         super().__init__(
             plot_settings, read_session, data_read_stat, parity_read_stat
         )
+        self.bram_count = bram_count
+        self.data_bit_indices = [
+            idx for idx, value in enumerate(self.data_stats)
+            if value == self.bram_count
+        ]
+        if data_sample is None:
+            if self.bram_count != 1:
+                raise Exception(
+                    "Either bram count is 1 and data_sample is None, or" \
+                    "data_sample was provided and bram_count > 1." \
+                    "A mixture of both cases implies and error."
+                )
+            else:
+                self.data_sample = np.array([
+                    read_session.data_reads[0].bits[int(idx/8)][idx%8]
+                    for idx in self.data_bit_indices
+                ])
+        else:
+            self.data_sample = data_sample
+
+
         if read_session is not None:
             self.data_stable_bit_count = sum(self.data_stats)
             self.parity_stable_bit_count = sum(self.parity_stats)
+
         else:
             self.data_stable_bit_count = data_stable_bit_count
             self.parity_stable_bit_count = parity_stable_bit_count
+        
 
     def _plot(self) -> None:
         super()._plot()
@@ -349,10 +386,22 @@ class StableBitStatistic(BitwiseStatistic):
                 ),
             )
             '''
+
         single_value_to_file(self.data_stable_bit_count,
                     path=self.plot_settings.path,description="data_stable_bit_count")
         single_value_to_file(self.parity_stable_bit_count,
                     path=self.plot_settings.path, description="parity_stable_bit_count")
+
+        if len(self.data_sample) > 0:
+            data_sample_bytes = np.packbits(self.data_sample).tobytes()
+        else:
+            data_sample_bytes = b""
+        bytes_to_file(data_sample_bytes,
+                    path=self.plot_settings.path, description="data_sample")
+        object_to_json_file(self.data_bit_indices,
+                    path=self.plot_settings.path, description="idx.json")
+
+        
 
     @classmethod
     def from_merge(
@@ -379,11 +428,18 @@ class StableBitStatistic(BitwiseStatistic):
         )
         data_stable_bit_count = sum([stat.data_stable_bit_count for stat in stats])/len(stats)
         parity_stable_bit_count = sum([stat.parity_stable_bit_count for stat in stats])/len(stats)
+        bram_count = sum([stat.bram_count for stat in stats])
+        data_samples = [stat.data_sample for stat in stats]
+
+        merged_data_sample = np.concatenate(data_samples, axis=None)
+
 
         return cls(
             plot_settings, None, data_read_stats_sum, parity_read_stats_sum,
             data_stable_bit_count = data_stable_bit_count,
-            parity_stable_bit_count = parity_stable_bit_count
+            parity_stable_bit_count = parity_stable_bit_count,
+            bram_count = bram_count,
+            data_sample = merged_data_sample
         )
 
 
@@ -443,7 +499,21 @@ class VeryUnstableBitStatistic(StableBitStatistic):
     stat_func_kwargs = {"bit_flip_type": BitFlipType.VERY_UNSTABLE}
     plot_setting_additions = {
         "heatmap_cmap": ColorPresets.default,
-        "title": "X := Very Unstable Bits (0.25 < p < 0.75)",
+        "title": "X := Very Unstable Bits (0.25 <= p < 0.75)",
+    }
+
+class RandomBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Random Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.RANDOM}
+    plot_setting_additions = {
+        "heatmap_cmap": ColorPresets.default,
+        "title": "X := Random Bits (0.4 <= p < 0.6)",
     }
 
 
@@ -590,6 +660,9 @@ class StatisticTypes(Enum):
     StableBitStatistic = StableBitStatistic
     ZeroStableBitStatistic = ZeroStableBitStatistic
     OneStableBitStatistic = OneStableBitStatistic
+    UnstableBitStatistic = UnstableBitStatistic
+    VeryUnstableBitStatistic = VeryUnstableBitStatistic
+    RandomBitStatistic = RandomBitStatistic
     ReliabilityStatistic = ReliabilityStatistic
     UniquenessStatistic = UniquenessStatistic
     CombinedStableBitStatistic = CombinedStableBitStatistic

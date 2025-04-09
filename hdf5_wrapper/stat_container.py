@@ -28,6 +28,9 @@ from .stats import (
     StableBitStatistic,
     ZeroStableBitStatistic,
     OneStableBitStatistic,
+    UnstableBitStatistic,
+    VeryUnstableBitStatistic,
+    RandomBitStatistic,
     ReliabilityStatistic,
     UniquenessStatistic,
     CombinedStableBitStatistic
@@ -422,7 +425,6 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
         else:
             for statistic_type in self.used_statistics:
                 subowner_sample = self.subowners[0]
-
                 if (
                     statistic_type.mergable
                     and statistic_type in subowner_sample.statistics
@@ -519,8 +521,9 @@ class StatAggregator(MultiStatisticOwner, metaclass=ABCMeta):
             subowner.add_to_hdf5_group(subowner_group)
 
     def _plot(self) -> None:
-        for statistic in self.statistics.values():
-            statistic.plot()
+        if len(self.subowners) > 1:
+            for statistic in self.statistics.values():
+                statistic.plot()
         for subowner in self.subowners:
             subowner.plot()
 
@@ -542,6 +545,9 @@ class BramBlockStat(MultiStatisticOwner):
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic,
+        UnstableBitStatistic,
+        VeryUnstableBitStatistic,
+        RandomBitStatistic,
         ReliabilityStatistic,
         CombinedStableBitStatistic
     ]
@@ -563,6 +569,9 @@ class PBlockStat(StatAggregator):
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic,
+        UnstableBitStatistic,
+        VeryUnstableBitStatistic,
+        RandomBitStatistic,
         ReliabilityStatistic,
         UniquenessStatistic,
         CombinedStableBitStatistic
@@ -570,11 +579,6 @@ class PBlockStat(StatAggregator):
     subowner_type = BramBlockStat
     subowner_identifier = "BRAM Statistics"
 
-    def _plot(self) -> None:
-        for statistic in self.statistics.values():
-            statistic.plot()
-        for subowner in self.subowners[:2]:
-            subowner.plot()
 
 class BoardStat(StatAggregator):
     """
@@ -592,6 +596,9 @@ class BoardStat(StatAggregator):
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic,
+        UnstableBitStatistic,
+        VeryUnstableBitStatistic,
+        RandomBitStatistic,
         ReliabilityStatistic,
         UniquenessStatistic,
         CombinedStableBitStatistic
@@ -616,6 +623,9 @@ class ExperimentStat(StatAggregator):
         StableBitStatistic,
         ZeroStableBitStatistic,
         OneStableBitStatistic,
+        UnstableBitStatistic,
+        VeryUnstableBitStatistic,
+        RandomBitStatistic,
         ReliabilityStatistic,
         UniquenessStatistic,
         CombinedStableBitStatistic
@@ -661,7 +671,7 @@ class ExperimentStat(StatAggregator):
 
 
     #def _plot(self):
-        # super()._plot()
+    #    super()._plot()
     #    self.plot_bit_aliasing_heatmap_levelwise()
 
 

@@ -18,13 +18,14 @@ import numpy as np
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import time
+import json
 import gc
 from .utility import (
     HeatmapBitDisplaySetting,
     combine_data_and_parity_bits,
     ColorPresets,
 )
-from typing import Type
+from typing import Type, Any
 
 
 def clear_plt(fig: pltf.Figure) -> None:
@@ -444,6 +445,17 @@ def single_value_to_file(
     with open(Path(path, description).with_suffix(".txt"), mode="w") as f:
         f.write(str(value))
 
+def bytes_to_file(
+    value: bytes, path: Path, description: str
+) -> None:
+    with open(Path(path, description), mode="wb") as f:
+        f.write(value)
+
+def object_to_json_file(
+    value: Any, path: Path, description: str
+) -> None:
+    with open(Path(path, description), mode="w") as f:
+        json.dump(value, f)
 
 def multi_bit_heatmap(
     bit_stats: dict,
