@@ -11,6 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
+from .plotting import box_plot, single_value_to_file
 from .utility import PlotSettings
 
 
@@ -39,6 +40,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
     statistic_method_names = sorted(list(statistic_methods.keys()))
     stats: dict[str, np.float64] = None
     bit_type: str
+    values: npt.NDArray[np.float64]
 
     def __init__(
         self,
@@ -47,6 +49,7 @@ class MetaStatistic(HDF5Convertible, Plottable):
         bit_type: str,
     ) -> None:
         super().__init__(plot_settings)
+        self.values = values
         self.stats = {
             stat_name: method(values)
             for stat_name, method in self.statistic_methods.items()
@@ -101,6 +104,12 @@ class MetaStatistic(HDF5Convertible, Plottable):
         self.meta_stat_latex_table(
             Path(self.plot_settings.path, f"{self.bit_type}_meta_stats")
         )
+        box_plot(
+            bit_stats=self.values,
+            path=self.plot_settings.path,
+            ylabel="TODO",
+            title=f"{self.bit_type}_boxplot",
+        )
 
 
 class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
@@ -133,6 +142,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
     parity_stats: npt.NDArray[np.float64]
     mergable = False  # Declares if subclass is allowed to call "from_merge"
     plot_setting_additions: dict[str, Any] = None
+    meta_statable: bool = True
 
     def __init__(self) -> None:
         if self.plot_setting_additions is not None:
@@ -188,9 +198,13 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
         raise NotImplementedError
 
     def _plot(self) -> None:
-        meta_stats = self.meta_stats
-        for bit_type in ["Data", "Parity"]:
-            meta_stats[bit_type].plot()
+        if self.meta_statable:
+            meta_stats = self.meta_stats
+            for bit_type, bit_stats in [
+                ("Data", self.data_stats),
+                ("Parity", self.parity_stats),
+            ]:
+                meta_stats[bit_type].plot()
 
 
 class SimpleStatistic(Statistic, metaclass=ABCMeta):
@@ -216,7 +230,6 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         - ReadSession
         - already precalculated data and parity stats
         """
-        super().__init__()
         self.plot_settings = plot_settings
         if read_session is not None:
             self.data_stats = self.stat_func(
@@ -233,6 +246,7 @@ class SimpleStatistic(Statistic, metaclass=ABCMeta):
         else:
             self.data_stats = data_stats
             self.parity_stats = parity_stats
+        super().__init__()
 
     @classmethod
     def from_merge(
@@ -279,10 +293,31 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
     mergable = True
     data_stats: float = None
     parity_stats: float = None
+    meta_statable: bool = False
+    subcontainer_data_stats: npt.NDArray[np.float64] = None
+    subcontainer_parity_stats: npt.NDArray[np.float64] = None
 
     @property
     def meta_stats(self) -> dict[str, MetaStatistic]:
-        raise NotImplementedError
+        if self.meta_statable:
+            return {
+                "Data": MetaStatistic(
+                    self.subcontainer_data_stats,
+                    self.plot_settings.with_expanded_path(
+                        "subcontainer_meta_stats"
+                    ),
+                    bit_type="data",
+                ),
+                "Parity": MetaStatistic(
+                    self.subcontainer_parity_stats,
+                    self.plot_settings.with_expanded_path(
+                        "subcontainer_meta_stats"
+                    ),
+                    bit_type="parity",
+                ),
+            }
+        else:
+            raise NotImplementedError
 
     def add_to_hdf5_group(self, parent: h5py.Group) -> None:
         statistic_group = parent.create_group(self._hdf5_group_name)
@@ -293,12 +328,33 @@ class SingleValueStatistic(SimpleStatistic, metaclass=ABCMeta):
     def from_merge(
         cls, stats: list[Self], plot_settings: PlotSettings
     ) -> Self:
-        data_values = [stat.data_stats for stat in stats]
-        parity_values = [stats.parity_stats for stat in stats]
-        return cls(
+        if all([stat.meta_statable for stat in stats]):
+            data_values = np.concatenate(
+                [stat.subcontainer_data_stats for stat in stats]
+            )
+            parity_values = np.concatenate(
+                [stat.subcontainer_parity_stats for stat in stats]
+            )
+        else:
+            data_values = np.array([stat.data_stats for stat in stats])
+            parity_values = np.array([stat.parity_stats for stat in stats])
+        new_object = cls(
             plot_settings=plot_settings,
-            data_stats=sum(data_values) / len(data_values),
-            parity_stats=sum(parity_values) / len(parity_values),
+            data_stats=np.sum(data_values) / len(data_values),
+            parity_stats=np.sum(parity_values) / len(parity_values),
+        )
+        new_object.subcontainer_data_stats = data_values
+        new_object.subcontainer_parity_stats = parity_values
+        new_object.meta_statable = True
+        return new_object
+
+    def plot(self) -> None:
+        super().plot()
+        single_value_to_file(
+            self.data_stats, self.plot_settings.path, "data_value"
+        )
+        single_value_to_file(
+            self.parity_stats, self.plot_settings.path, "parity_value"
         )
 
 
@@ -325,23 +381,25 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
         super().__init__(
             plot_settings, read_session, data_read_stat, parity_read_stat
         )
-        if len(self.data_stats) != 4096 * 8 or len(self.parity_stats) != 4096:
-            raise Exception(
-                "Unexpected length for data/parity_read_stat in "
-                "BitwiseStatistic"
-            )
+        #if len(self.data_stats) != 4096 * 8 or len(self.parity_stats) != 4096:
+        #    raise Exception(
+        #        "Unexpected length for data/parity_read_stat in "
+        #        "BitwiseStatistic"
+        #    )
 
     @classmethod
-    def from_merge(cls, stats: list[Self]) -> Self:
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ) -> Self:
         """
         Combines stats by adding each value in their lists
         (like adding two vectors)
         """
         data_read_stats_list = [
-            bitwise_statistic.data_read_stat for bitwise_statistic in stats
+            bitwise_statistic.data_stats for bitwise_statistic in stats
         ]
         parity_read_stats_list = [
-            bitwise_statistic.parity_read_stat for bitwise_statistic in stats
+            bitwise_statistic.parity_stats for bitwise_statistic in stats
         ]
 
         data_read_stats_sum = list(map(sum, zip(*data_read_stats_list)))
@@ -350,13 +408,17 @@ class BitwiseStatistic(SimpleStatistic, metaclass=ABCMeta):
             return float(x / len(stats))
 
         divide_function = div_and_float_cast
-        new_data_read_stats = list(map(divide_function, data_read_stats_sum))
+        new_data_read_stats = np.array(
+            list(map(divide_function, data_read_stats_sum))
+        )
         parity_read_stats_sum = list(map(sum, zip(*parity_read_stats_list)))
-        new_parity_read_stats = list(
-            map(divide_function, parity_read_stats_sum)
+        new_parity_read_stats = np.array(
+            list(map(divide_function, parity_read_stats_sum))
         )
 
-        return cls(None, new_data_read_stats, new_parity_read_stats)
+        return cls(
+            plot_settings, None, new_data_read_stats, new_parity_read_stats
+        )
 
 
 class ComparisonStatistic(Statistic, metaclass=ABCMeta):
@@ -379,6 +441,8 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
         None
     )
     mergable = False
+    data_single_value: np.float64 = None
+    parity_single_value: np.float64 = None
 
     def __init__(
         self, read_sessions: list[ReadSession], plot_settings: PlotSettings
@@ -390,7 +454,7 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
 
     def compare(self, read_sessions: list[ReadSession]) -> None:
         """
-        Produces ((k+1)*k)/2 pairs of ReadSession's
+        Produces ((k-1)*k)/2 pairs of ReadSession's
         Calls stat_func over each pair and gathers the produced values
         """
         data_compared_values = list()
@@ -398,8 +462,8 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
 
         # It may become to expensive to do this n*n,
         # if so replace n*n with n bootstrap choices
-        for idx_i in range(len(read_sessions)):
-            for idx_j in range(len(read_sessions)):
+        for idx_i in range(len(read_sessions)-1):
+            for idx_j in range(idx_i+1, len(read_sessions)):
                 if idx_i == idx_j:
                     # Don't compare ReadSession with itself
                     continue
@@ -427,10 +491,26 @@ class ComparisonStatistic(Statistic, metaclass=ABCMeta):
         # such proper implementation is postponed for now
         # TODO improve this implementation if theres spare time
         self.data_stats = np.array(data_compared_values).flatten()
+
         self.parity_stats = np.array(parity_compared_values).flatten()
+        self.data_single_value = (2 * np.sum(self.data_stats)) / (
+            (len(read_sessions) - 1) * len(read_sessions)
+        )
+        self.parity_single_value = (2 * np.sum(self.parity_stats)) / (
+            (len(read_sessions) - 1) * len(read_sessions)
+        )
 
     @classmethod
     def from_merge(
         cls, stats: list[Self], plot_settings: PlotSettings
     ) -> Self:
-        return super().from_merge(stats, plot_settings)
+        raise NotImplementedError()
+
+    def plot(self) -> None:
+        super().plot()
+        single_value_to_file(
+            self.data_single_value, self.plot_settings.path, "data_value"
+        )
+        single_value_to_file(
+            self.parity_single_value, self.plot_settings.path, "parity_value"
+        )

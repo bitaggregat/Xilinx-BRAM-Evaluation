@@ -10,11 +10,13 @@ from hdf5_wrapper import (
     IntradistanceStatistic,
     add_commit_to_hdf5_group,
 )
-from hdf5_wrapper.plotting import single_value_bar_plot
+from hdf5_wrapper.plotting import single_value_bar_plot, multi_boxplot
 from hdf5_wrapper.utility import PlotSettings, HeatmapBitDisplaySetting
 from hdf5_wrapper.stats import StatisticTypes
 from hdf5_wrapper.stat_container import StatContainers
+from hdf5_wrapper.stats import BitAliasingStatistic
 import matplotlib
+import copy
 import gc
 
 matplotlib.use("agg")
@@ -201,40 +203,12 @@ def main(arg_dict: dict[str, Any]):
     plot_settings = generate_plot_settings(arg_dict)
     select_stats(arg_dict)
     # Unpack from bram read hdf5
-    if arg_dict["do_stats_stripewise"]:
-        for stripe_name in [
-            "filter_uneven_stripes", "filter_even_stripes"
-        ]:
-            experiment = unpack_from_hdf5(arg_dict["read_hdf5"], **{stripe_name: True})
-
-            with h5py.File(arg_dict["out_hdf5"], "w") as hdf5_file:
-                add_commit_to_hdf5_group(hdf5_file)
-                hdf5_file.attrs["rng seed"] = arg_dict["seed"]
-                random.seed(arg_dict["seed"])
-
-                experiment_stats = ExperimentStat(
-                    experiment, plot_settings.with_expanded_path(f"Experiment_{stripe_name}")
-                )
-                # Start computing stats
-                # experiment_stats.add_to_hdf5_group(hdf5_file)
-            print("STARTING PLOTTING")
-            time.sleep(20)
-            experiment_stats.plot()
-            print("Experiment Stats: Done")
-            del experiment
-            del experiment_stats
-            gc.collect()
-
-    else:
-        experiment = unpack_from_hdf5(arg_dict["read_hdf5"])
-
-        if arg_dict["base_session_name"]:
-            reliability_intercomparison(
-                experiment=experiment,
-                base_session_name=arg_dict["base_session_name"],
-                title="Comparison of Reliability under Different Environmental Conditions",
-                path=Path(plot_settings.path, "reliability_intercomparison"),
-            )
+    bit_aliasing_value_dicts = dict()
+    for stripe_d in [
+        {"filter_uneven_stripes": True}, {"filter_even_stripes": True},
+        {}
+    ]:
+        experiment = unpack_from_hdf5(arg_dict["read_hdf5"], **stripe_d)
 
         with h5py.File(arg_dict["out_hdf5"], "w") as hdf5_file:
             add_commit_to_hdf5_group(hdf5_file)
@@ -242,11 +216,43 @@ def main(arg_dict: dict[str, Any]):
             random.seed(arg_dict["seed"])
 
             experiment_stats = ExperimentStat(
-                experiment, plot_settings.with_expanded_path("Experiment")
+                experiment, plot_settings.with_expanded_path(f"Experiment_{stripe_d}")
             )
             # Start computing stats
             # experiment_stats.add_to_hdf5_group(hdf5_file)
-        print("STARTING PLOTTING")
-        #time.sleep(20)
-        experiment_stats.plot()
-        print("Experiment Stats: Done")
+        for subowner in experiment_stats.subowners:
+            print(subowner.name)
+        bit_aliasing_values = {
+            subowner.name: copy.deepcopy(list(subowner.statistics[BitAliasingStatistic].statistics.values())[0].data_stats)
+            for subowner in experiment_stats.subowners
+        }
+        print("copied")
+        if stripe_d:
+            bit_aliasing_value_dicts[list(stripe_d.keys())[0]] = bit_aliasing_values
+        else:
+            bit_aliasing_value_dicts["full"] = bit_aliasing_values
+        del experiment
+        del experiment_stats
+        gc.collect()
+
+    for device in ["zcu102_eva_kit", "te0802", "read_bram_te0802_zu2cg"]:
+        if device == "zcu102_eva_kit":
+            one_stripes = bit_aliasing_value_dicts["filter_uneven_stripes"][device]
+            zero_stripes = bit_aliasing_value_dicts["filter_even_stripes"][device]
+            full_bram = bit_aliasing_value_dicts["full"][device]
+        else:
+            one_stripes = bit_aliasing_value_dicts["filter_even_stripes"][device]
+            zero_stripes = bit_aliasing_value_dicts["filter_uneven_stripes"][device]
+            full_bram = bit_aliasing_value_dicts["full"][device]
+        
+        multi_boxplot(
+            {
+                "Entire BRAM": full_bram,
+                "One biased stripes": one_stripes,
+                "Zero biased stripes": zero_stripes,
+                
+            },
+            plot_settings.path,
+            "Bit-aliasing (%)",
+            title=device
+        )

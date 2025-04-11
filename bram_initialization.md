@@ -1,7 +1,5 @@
 # Documentation on FPGA BRAMs for PUFs
 
-[[_TOC_]]
-
 ## General
 
 - BRAMs can have an initial value different from 0 after being switched on.  

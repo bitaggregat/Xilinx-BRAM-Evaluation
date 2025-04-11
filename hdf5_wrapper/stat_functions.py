@@ -57,7 +57,9 @@ def intradistance_bootstrap(
 
 
 def interdistance(
-    reads: list[Read], other_reads: list[Read]
+    reads: list[Read],
+    other_reads: list[Read],
+    only_use_first_element: bool = False,
 ) -> npt.NDArray[np.float64]:
     """
     Produces l*m interdistance values,
@@ -65,6 +67,10 @@ def interdistance(
 
     Can be used for Uniquess
     """
+    if only_use_first_element:
+        reads = reads[:1]
+        other_reads = other_reads[:1]
+
     return np.fromiter(
         (
             hamming(read_x.bits_flattened, read_y.bits_flattened)
@@ -171,7 +177,7 @@ def stable_bits_per_idxs(
 
     Arguments:
         reads: Read samples
-        bit_flip_type: Sets what kind of stable bits are analyzed 
+        bit_flip_type: Sets what kind of stable bits are analyzed
                         (See BitFlipType Enum)
 
     Returns:
@@ -189,6 +195,19 @@ def stable_bits_per_idxs(
                 )
                 or (bit_flip_type == BitFlipType.ONE and flip_prob == 1.0)
                 or (bit_flip_type == BitFlipType.ZERO and flip_prob == 0.0)
+                or (
+                    bit_flip_type == BitFlipType.UNSTABLE
+                    and flip_prob != 1.0
+                    and flip_prob != 0.0
+                )
+                or (
+                    bit_flip_type == BitFlipType.VERY_UNSTABLE
+                    and 0.25 <= flip_prob < 0.75
+                )
+                or (
+                    bit_flip_type == BitFlipType.RANDOM
+                    and 0.4 <= flip_prob < 0.6
+                )
             )
             else 0
             for flip_prob in prob_per_bit
@@ -223,7 +242,7 @@ def reliability(reads: list[Read]) -> np.float64:
 
 def hamming_weight(
     reads: list[Read], only_use_first_element: bool = False
-) -> npt.NDArray[np.float64]:
+) -> np.float64:
     """
     Computes hamming weight over bits of each read.
     This can be used to compute the Uniformity of BRAMs SUVs
@@ -236,10 +255,13 @@ def hamming_weight(
     """
     if only_use_first_element:
         reads = reads[:1]
-    return np.fromiter(
-        (
-            np.sum(read.bits_flattened) / len(read.bits_flattened)
-            for read in reads
-        ),
-        np.float64,
-    )
+        return np.sum(reads[0].bits_flattened) / len(reads[0].bits_flattened)
+    else:
+        hamming_weights = np.fromiter(
+            (
+                np.sum(read.bits_flattened) / len(read.bits_flattened)
+                for read in reads
+            ),
+            np.float64,
+        )
+        return np.average(hamming_weights)
