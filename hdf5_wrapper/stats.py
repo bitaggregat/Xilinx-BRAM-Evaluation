@@ -108,6 +108,12 @@ class BitFlipChanceStatistic(BitwiseStatistic):
     stat_func = staticmethod(bit_flip_chance)
     stat_func_kwargs = {}
 
+    # This list is used if multiple BitFlipChancesStatistic's are merged
+    # It contains bit flip probabilities of all merged stats 
+    # (with no relation to index)
+    # It only accounts for data_stats (NOT parity)
+    total_list_of_flip_chances: npt.NDArray[np.float32] = None
+
     # Alot of these count values will be used multiple times
     # Which is why we cache each of them as a class attribute
     @functools.cached_property
@@ -254,17 +260,37 @@ class BitFlipChanceStatistic(BitwiseStatistic):
                         description
         """
         histogram(
-            bit_stats=bit_stats,
-            xlabel="Probabilty of bit flipping to 1",
-            ylabel="Total frequency of probability",
-            title="Distribution of probability of "
-            "bit to flip to 1 of all bits",
+            bit_stats=bit_stats * 100,
+            xlabel="Probability of Bit Flip to 1 (%)",
+            ylabel="Log(Frequency of probability)",
+            title="",
             path=Path(
                 self.plot_settings.path,
                 f"bitflip_probability_distribution_of_{bit_type}_bits",
             ),
             bins=100,
+            log=True
         )
+
+    @classmethod
+    def from_merge(
+        cls, stats: list[Self], plot_settings: PlotSettings
+    ):
+        new_object = super().from_merge(stats, plot_settings)
+        
+        new_object.total_list_of_flip_chances = np.concatenate(
+            [
+                stat.data_stats if stat.total_list_of_flip_chances is None
+                else stat.total_list_of_flip_chances
+                for stat in stats
+            ],
+            axis=0, dtype=np.float32
+        )
+        print(
+            f"new length: {len(new_object.total_list_of_flip_chances)}"
+        )
+        return new_object
+    
 
     def _plot(self) -> None:
         super()._plot()
@@ -272,10 +298,14 @@ class BitFlipChanceStatistic(BitwiseStatistic):
         # self.flip_chance_to_1_per_bit_idx_plot(self.data_stats, "data")
         # self.flip_chance_to_1_per_bit_idx_plot(self.parity_stats, "parity")
 
-        self.create_flip_latex_table()
+        #self.create_flip_latex_table()
 
-        self.distribution_histogram(self.data_stats, "data")
-        self.distribution_histogram(self.parity_stats, "parity")
+        if self.total_list_of_flip_chances is None:
+            self.distribution_histogram(self.data_stats, "data")
+        else:
+            self.distribution_histogram(self.total_list_of_flip_chances, "data")
+
+        #self.distribution_histogram(self.parity_stats, "parity")
 
 
 class StableBitStatistic(BitwiseStatistic):
@@ -323,11 +353,11 @@ class StableBitStatistic(BitwiseStatistic):
                 raise Exception(
                     "Either bram count is 1 and data_sample is None, or" \
                     "data_sample was provided and bram_count > 1." \
-                    "A mixture of both cases implies and error."
+                    "A mixture of both cases implies an error."
                 )
             else:
                 self.data_sample = np.array([
-                    read_session.data_reads[0].bits[int(idx/8)][idx%8]
+                    read_session.data_reads[0].bits_flattened[idx]
                     for idx in self.data_bit_indices
                 ])
         else:
@@ -385,7 +415,7 @@ class StableBitStatistic(BitwiseStatistic):
             # The latter could falsify statistics
             # So we just cut them off
             length = int(len(self.data_sample)/8)
-            rounded_data_sample = self.data_sample[:length]
+            rounded_data_sample = self.data_sample[:length*8]
             data_sample_bytes = np.packbits(rounded_data_sample).tobytes()
         else:
             data_sample_bytes = b""
@@ -464,6 +494,20 @@ class ZeroStableBitStatistic(StableBitStatistic):
     plot_setting_additions = {
         "heatmap_cmap": ColorPresets.zero_flipping_bit,
         "title": "X := Zero Stable Bits",
+    }
+
+class NearlyStableBitStatistic(StableBitStatistic):
+    """
+    Attributes:
+        See parent classes
+    """
+
+    _hdf5_group_name = "Nearly-stable Bits"
+    description = "TODO"
+    stat_func_kwargs = {"bit_flip_type": BitFlipType.BOTH_NEARLY_STABLE}
+    plot_setting_additions = {
+        "heatmap_cmap": ColorPresets.zero_flipping_bit,
+        "title": "X := Nearly Stable Bits",
     }
 
 
@@ -660,3 +704,4 @@ class StatisticTypes(Enum):
     ReliabilityStatistic = ReliabilityStatistic
     UniquenessStatistic = UniquenessStatistic
     CombinedStableBitStatistic = CombinedStableBitStatistic
+    NearlyStableBitStatistic = NearlyStableBitStatistic

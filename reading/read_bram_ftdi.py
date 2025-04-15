@@ -193,7 +193,7 @@ def read_content(args: Any) -> None:
         #print(port)
         
         start_transmission(port)
-        goal = (4+1)*1024
+        goal = (4+1)*1024*2
         #print("awaiting data")
         
         raw_data = read_data(port, goal)

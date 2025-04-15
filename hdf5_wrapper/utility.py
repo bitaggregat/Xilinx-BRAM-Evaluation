@@ -99,6 +99,7 @@ class BitFlipType(Enum):
     UNSTABLE = auto()
     VERY_UNSTABLE = auto()
     RANDOM = auto()
+    BOTH_NEARLY_STABLE = auto()
 
 
 @dataclass
