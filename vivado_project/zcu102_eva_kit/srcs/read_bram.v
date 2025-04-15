@@ -1,194 +1,193 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2023/07/07 20:07:11
-// Design Name: 
-// Module Name: read_bram
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: Read one block RAM's memory, RAM config: 8*2k
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-module read_bram(
-    input           clk_in1_p,
-    input           clk_in1_n,
-    input           rst,
-    input           uart_rxd,
-    output          uart_txd,
-    output [7:0]    led
-    );
-    /*****************************Parameter*********************************/
-    parameter   WRITE_DEPTH =   4096 / 4;
-
-    /*****************************Register*********************************/
-    reg         r_uart_enable   ;
-    reg         r_bram_flag     ;
-    reg [1:0]   r_bram_cnt      ;  // BRAM have 2 cycles' latency, wait one more cycle for robustness
-    reg [9:0]   r_bram_addr     ;
-    reg [3:0]   count_in_batch  ;
-    reg [1:0]   r_exec_state    ;
-    reg [1:0]   r_next_state    ;
-    reg [7:0]   r_bram_dout     ;
-    reg [7:0]   r_led           ;
-    reg         batch_done      ;
-    reg [35:0]  bram_batch      ;
-
-    /*****************************Wire************************************/
-    wire        w_clk           ;
-    wire        w_reset        ;
-    wire        w_uart_busy     ;
-    wire [35:0] w_bram_dout     ;
-    wire [7:0]  w_uart_txdata   ;
-    wire        rx_received     ;
-    wire        send_enable     ;
-
-    /*************************Combinational Logic************************/
-    assign w_reset         =   rst                    ;
-    assign w_uart_txdata    =   r_bram_dout             ;
-    assign led              =   r_led                   ;
-    assign send_enable      =   1'b1                    ;
-
-    /****************************Processing*****************************/
-    always @(posedge w_clk) begin
-        if(w_reset || rx_received) begin
-            r_exec_state <= IDLE;
-        end else begin
-            r_exec_state <= r_next_state;
-        end
-    end
-
-    /*******************************FSM************************************/
-    parameter   IDLE = 2'b00,
-                READ = 2'b01,
-                SEND = 2'b10,
-                NEXT = 2'b11;
-                
-    parameter   NO_RESET = 1'b0,
-                RESETTING = 1'b1;
-    parameter TICKS_PER_BIT        = 35;
-    parameter TICKS_PER_BIT_SIZE   = 12;
-                
+module read_bram
+#(
+	parameter TICKS_PER_BIT = 50 //400e6/3e6
+)
+(
+    input clk_in1_p,
+    input clk_in1_n,
+    input uart_rx_i,
+    output uart_tx_o,
+    output [7:0] led_o
+);
     
-    always@(posedge w_clk)begin
-    case(r_exec_state)
-        IDLE: r_next_state = send_enable ? READ : IDLE;
-        READ: r_next_state = (r_bram_flag&&r_bram_cnt==2'd2) ? SEND : READ;
-        SEND: r_next_state = NEXT;
-        NEXT: r_next_state = (r_bram_addr==WRITE_DEPTH) ? IDLE : (w_uart_busy ? NEXT : (batch_done ? READ : SEND));
-        default: r_next_state = IDLE;
-    endcase
+    localparam STATE_WAIT_RX = 4'b0000;
+    localparam STATE_SEND_0 = 4'b0001;
+    localparam STATE_WAIT_0 = 4'b0011;
+    localparam STATE_SEND_1 = 4'b0010;
+    localparam STATE_WAIT_1 = 4'b0110;
+    localparam STATE_SEND_2 = 4'b0111;
+    localparam STATE_WAIT_2 = 4'b0101;
+    localparam STATE_SEND_3 = 4'b0100;
+    localparam STATE_WAIT_3 = 4'b1100;
+    localparam STATE_SEND_PAR = 4'b1101;
+    localparam STATE_WAIT_PAR = 4'b1111;
+    
+    reg [3:0] state = STATE_WAIT_RX, next_state = STATE_WAIT_RX;
+    reg tx_start;
+    reg [7:0] tx_data;
+    reg [35:0] batch_data;
+    reg [9:0] bram_addr;
+    reg [3:0] crc;
+    
+    wire fast_clk;
+    wire [7:0] rx_data;
+    wire rx_done;
+    wire tx_done;
+    wire [35:0] bram_data;
+    
+    reg [7:0] current_rx_data;
+    
+    //assign fast_clk = clk_i;
+    assign led_o = current_rx_data;
+    
+    // state transition
+    always @(posedge fast_clk)
+    begin
+        state <= next_state;
     end
-
-    always@(posedge w_clk)begin
-    case(r_exec_state)
-        IDLE: begin
-            r_led <= 8'b10000000;
-            r_bram_addr <= 9'd0;
-            r_bram_flag <= 1'b0;
-            count_in_batch <= 1'd0;
-            r_uart_enable <= 1'b0;
-            r_bram_cnt <= 2'd0;
-        end
-        READ: begin
-            r_led <= 8'b01000000;
-            if(!r_bram_flag)begin
-                r_bram_flag <= 1'b1;
-                r_bram_cnt <= 2'd0;
-                batch_done <= 1'b0;
-            end else if(r_bram_cnt==2'd2)begin
-                r_bram_flag <= 1'b0;
-                bram_batch <= w_bram_dout;
-            end else begin
-                r_bram_cnt <= r_bram_cnt + 2'd1;
+    
+    // determine next state
+    always @(*)
+    begin
+        next_state = 4'hx;
+        case(state)
+        STATE_WAIT_RX:
+            if (rx_done && rx_data==8'h73)// received 's'
+                next_state = STATE_SEND_0;
+                
+            else
+                next_state = STATE_WAIT_RX;
+        STATE_SEND_0:
+            next_state = STATE_WAIT_0;
+        STATE_WAIT_0:
+            if (tx_done)
+                next_state = STATE_SEND_1;
+            else
+                next_state = STATE_WAIT_0;
+        STATE_SEND_1:
+            next_state = STATE_WAIT_1;
+        STATE_WAIT_1:
+            if (tx_done)
+                next_state = STATE_SEND_2;
+            else
+                next_state = STATE_WAIT_1;
+        STATE_SEND_2:
+            next_state = STATE_WAIT_2;
+        STATE_WAIT_2:
+            if (tx_done)
+                next_state = STATE_SEND_3;
+            else
+                next_state = STATE_WAIT_2;
+        STATE_SEND_3:
+            next_state = STATE_WAIT_3;
+        STATE_WAIT_3:
+            if (tx_done)
+                next_state = STATE_SEND_PAR;
+            else
+                next_state = STATE_WAIT_3;
+        STATE_SEND_PAR:
+            next_state = STATE_WAIT_PAR;
+        STATE_WAIT_PAR:
+            if (tx_done)
+            begin
+                if (bram_addr == 10'h0)
+                    next_state = STATE_WAIT_RX;
+                else
+                    next_state = STATE_SEND_0;
             end
-        end
-        SEND: begin
-            r_led <= 8'b11000000;
-            r_uart_enable <= 1'b1;
-            // Custom protocol
-            // Helps us knowing where first byte of bram starts
-            case(count_in_batch)
-                0: r_bram_dout <= {6'b0, r_bram_addr[9:8]};    // index of data byte 1
-                1: r_bram_dout <= r_bram_addr[7:0];             // index of data byte 2
-                2: r_bram_dout <= 8'h3b;                        // delimiter character
-                3: r_bram_dout <= bram_batch[7:0];              // data byte 1
-                4: r_bram_dout <= bram_batch[15:8];             // data byte 2
-                5: r_bram_dout <= bram_batch[23:16];            // data byte 3
-                6: r_bram_dout <= bram_batch[31:24];            // data byte 4
-                7: r_bram_dout <= {4'b0000, bram_batch[35:32]}; // filler + 4 parity bits
-            endcase
-            if(count_in_batch == 7)begin
-                batch_done <= 1'b1;
-            end
-        end
-        NEXT: begin
-            r_led <= 8'b00100000;
-            if(r_bram_addr!=WRITE_DEPTH && !w_uart_busy && batch_done)begin
-                // Case:
-                // Data and parity byte have been send,
-                // -> Increase bram addr
-                r_uart_enable <= 1'b0;
-                count_in_batch <= 1'd0;
-                r_bram_addr <= r_bram_addr + 1;
-            end else if (r_bram_addr!=WRITE_DEPTH && !w_uart_busy)begin
-                // Case:
-                // Not all bytes have been send
-                count_in_batch <= count_in_batch + 1;
-                r_uart_enable <= 1'b0;
-            end else begin
-                r_uart_enable <= r_uart_enable;
-                r_bram_addr <= r_bram_addr;
-            end
-        end
-        default: r_led <= 8'b00000000;
-    endcase
+            else
+                next_state = STATE_WAIT_PAR;
+        endcase
     end
-
-    /****************************Instanation*****************************/
+    
+    // determine output
+    always @(posedge fast_clk)
+    begin
+        tx_data <= tx_data;
+        tx_start <= 1'b0;
+        bram_addr <= bram_addr;
+        batch_data <= batch_data;
+        crc <= crc;
+        case(next_state)
+        STATE_WAIT_RX:
+        begin
+            current_rx_data <= 8'hff;
+            bram_addr <= 10'h0;
+            crc <= 4'h0;
+        end
+        STATE_WAIT_0, STATE_WAIT_1, STATE_WAIT_2, STATE_WAIT_3, STATE_WAIT_PAR:
+            ; // defaults
+        STATE_SEND_0:
+        begin
+            if (bram_addr == 10'h0)
+                    current_rx_data <= rx_data;
+            batch_data <= bram_data;
+            tx_data <= bram_data[7:0];
+            tx_start <= 1'b1;
+            bram_addr <= bram_addr + 1;
+        end
+        STATE_SEND_1:
+        begin
+            tx_data <= batch_data[15:8];
+            tx_start <= 1'b1;
+            // generated by https://bues.ch/cms/hacking/crcgen
+            // with CRC width 4 bits, data width 36
+            crc[0] <= batch_data[1] ^ batch_data[5] ^ batch_data[6] ^ batch_data[8] ^ batch_data[12] ^ batch_data[13] ^ batch_data[15] ^ batch_data[19] ^ batch_data[20] ^ batch_data[22] ^ batch_data[26] ^ batch_data[27] ^ batch_data[29] ^ batch_data[33] ^ batch_data[34] ^ crc[1];
+            crc[1] <= batch_data[0] ^ batch_data[2] ^ batch_data[6] ^ batch_data[7] ^ batch_data[9] ^ batch_data[13] ^ batch_data[14] ^ batch_data[16] ^ batch_data[20] ^ batch_data[21] ^ batch_data[23] ^ batch_data[27] ^ batch_data[28] ^ batch_data[30] ^ batch_data[34] ^ batch_data[35] ^ crc[0] ^ crc[2];
+            crc[2] <= batch_data[0] ^ batch_data[3] ^ batch_data[5] ^ batch_data[6] ^ batch_data[7] ^ batch_data[10] ^ batch_data[12] ^ batch_data[13] ^ batch_data[14] ^ batch_data[17] ^ batch_data[19] ^ batch_data[20] ^ batch_data[21] ^ batch_data[24] ^ batch_data[26] ^ batch_data[27] ^ batch_data[28] ^ batch_data[31] ^ batch_data[33] ^ batch_data[34] ^ batch_data[35] ^ crc[0] ^ crc[3];
+            crc[3] <= batch_data[0] ^ batch_data[4] ^ batch_data[5] ^ batch_data[7] ^ batch_data[11] ^ batch_data[12] ^ batch_data[14] ^ batch_data[18] ^ batch_data[19] ^ batch_data[21] ^ batch_data[25] ^ batch_data[26] ^ batch_data[28] ^ batch_data[32] ^ batch_data[33] ^ batch_data[35] ^ crc[0];
+        end
+        STATE_SEND_2:
+        begin
+            tx_data <= batch_data[23:16];
+            tx_start <= 1'b1;
+        end
+        STATE_SEND_3:
+        begin
+            tx_data <= batch_data[31:24];
+            tx_start <= 1'b1;
+        end
+        STATE_SEND_PAR:
+        begin
+            tx_data <= {crc, batch_data[35:32]};
+            tx_start <= 1'b1;
+        end
+        endcase
+    end
+    
     clk_wiz_0 clock
     (
-        .clk_out1(w_clk),
+        .clk_out1(fast_clk),
         .clk_in1_p(clk_in1_p),
         .clk_in1_n(clk_in1_n)
     );
-        
-    new_uart_tx new_uart(
-        .CLK_in(w_clk),
-        .rst(w_reset),
-        .bps_sel(3'd1),     // 9600, DONT CHANGE
-        .check_sel(1'b0),   // Even
-        .din(w_uart_txdata),      
-        .req(r_uart_enable),
-        .busy(w_uart_busy),
-        .TX(uart_txd)
+    
+    uart_rx
+    #(
+        .CLK_PER_BIT(TICKS_PER_BIT)
+    ) rx (
+        .clk(fast_clk),
+        .rx(uart_rx_i),
+        .data(rx_data),
+        .rx_done(rx_done)
+        //.out_state(led_o[2:0])
     );
     
-    uart_rx 
+    uart_tx
     #(
-		.TICKS_PER_BIT(TICKS_PER_BIT),
-		.TICKS_PER_BIT_SIZE(TICKS_PER_BIT_SIZE)
-	) rx (	
-		.i_clk(w_clk),
-		.i_din(uart_rxd),
-		.i_enable(1'b1),
-		.o_recvdata(rx_received)
-	);
-
-
+        .CLK_PER_BIT(TICKS_PER_BIT)
+    ) tx (
+        .clk(fast_clk),
+        .tx_start(tx_start),
+        .data(tx_data),
+        .tx_done(tx_done),
+        .tx(uart_tx_o)
+    );
+    
     bram_read_test bram_wrap(
-    .clka(w_clk),
-    .addra(r_bram_addr),
-    .douta(w_bram_dout) 
+        .clka(fast_clk),
+        .addra(bram_addr),
+        .douta(bram_data) 
     );
 
 endmodule
