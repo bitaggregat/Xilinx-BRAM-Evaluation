@@ -42,19 +42,23 @@ resize_pblock [get_pblocks pblock_3] -add {SLICE_X79Y0:SLICE_X81Y59}
 resize_pblock [get_pblocks pblock_3] -add {RAMB18_X10Y0:RAMB18_X10Y23}
 resize_pblock [get_pblocks pblock_3] -add {RAMB36_X10Y0:RAMB36_X10Y11}
 create_pblock pblock_4
-resize_pblock [get_pblocks pblock_4] -add {SLICE_X70Y0:SLICE_X72Y59}
+resize_pblock [get_pblocks pblock_4] -add {SLICE_X70Y0:SLICE_X76Y59}
+resize_pblock [get_pblocks pblock_4] -add {DSP48E2_X14Y0:DSP48E2_X14Y23}
 resize_pblock [get_pblocks pblock_4] -add {RAMB18_X9Y0:RAMB18_X9Y23}
 resize_pblock [get_pblocks pblock_4] -add {RAMB36_X9Y0:RAMB36_X9Y11}
 create_pblock pblock_5
-resize_pblock [get_pblocks pblock_5] -add {SLICE_X64Y0:SLICE_X66Y59}
+resize_pblock [get_pblocks pblock_5] -add {SLICE_X62Y0:SLICE_X68Y59}
+resize_pblock [get_pblocks pblock_5] -add {DSP48E2_X12Y0:DSP48E2_X13Y23}
 resize_pblock [get_pblocks pblock_5] -add {RAMB18_X8Y0:RAMB18_X8Y23}
 resize_pblock [get_pblocks pblock_5] -add {RAMB36_X8Y0:RAMB36_X8Y11}
 create_pblock pblock_6
-resize_pblock [get_pblocks pblock_6] -add {SLICE_X58Y0:SLICE_X60Y59}
+resize_pblock [get_pblocks pblock_6] -add {SLICE_X53Y0:SLICE_X61Y59}
+resize_pblock [get_pblocks pblock_6] -add {DSP48E2_X10Y0:DSP48E2_X11Y23}
 resize_pblock [get_pblocks pblock_6] -add {RAMB18_X7Y0:RAMB18_X7Y23}
 resize_pblock [get_pblocks pblock_6] -add {RAMB36_X7Y0:RAMB36_X7Y11}
 create_pblock pblock_7
-resize_pblock [get_pblocks pblock_7] -add {SLICE_X46Y0:SLICE_X48Y59}
+resize_pblock [get_pblocks pblock_7] -add {SLICE_X44Y0:SLICE_X52Y59}
+resize_pblock [get_pblocks pblock_7] -add {DSP48E2_X8Y0:DSP48E2_X9Y23}
 resize_pblock [get_pblocks pblock_7] -add {RAMB18_X6Y0:RAMB18_X6Y23}
 resize_pblock [get_pblocks pblock_7] -add {RAMB36_X6Y0:RAMB36_X6Y11}
 create_pblock pblock_8
@@ -63,17 +67,19 @@ resize_pblock [get_pblocks pblock_8] -add {RAMB18_X5Y0:RAMB18_X5Y23}
 resize_pblock [get_pblocks pblock_8] -add {RAMB36_X5Y0:RAMB36_X5Y11}
 set_property SNAPPING_MODE ON [get_pblocks pblock_8]
 create_pblock pblock_16
-resize_pblock [get_pblocks pblock_16] -add {SLICE_X37Y60:SLICE_X39Y119}
+resize_pblock [get_pblocks pblock_16] -add {SLICE_X36Y60:SLICE_X43Y119}
+resize_pblock [get_pblocks pblock_16] -add {DSP48E2_X7Y24:DSP48E2_X7Y47}
 resize_pblock [get_pblocks pblock_16] -add {RAMB18_X5Y24:RAMB18_X5Y47}
 resize_pblock [get_pblocks pblock_16] -add {RAMB36_X5Y12:RAMB36_X5Y23}
 create_pblock pblock_9
-resize_pblock [get_pblocks pblock_9] -add {SLICE_X93Y60:SLICE_X95Y119}
+resize_pblock [get_pblocks pblock_9] -add {SLICE_X88Y60:SLICE_X95Y119}
+resize_pblock [get_pblocks pblock_9] -add {DSP48E2_X17Y24:DSP48E2_X17Y47}
 resize_pblock [get_pblocks pblock_9] -add {RAMB18_X12Y24:RAMB18_X12Y47}
 resize_pblock [get_pblocks pblock_9] -add {RAMB36_X12Y12:RAMB36_X12Y23}
 create_pblock pblock_bram_wrap
 set_property SNAPPING_MODE ON [get_pblocks pblock_bram_wrap]
 create_pblock pblock_10
-resize_pblock [get_pblocks pblock_10] -add {SLICE_X82Y60:SLICE_X84Y119}
+resize_pblock [get_pblocks pblock_10] -add {SLICE_X82Y60:SLICE_X87Y119}
 resize_pblock [get_pblocks pblock_10] -add {RAMB18_X11Y24:RAMB18_X11Y47}
 resize_pblock [get_pblocks pblock_10] -add {RAMB36_X11Y12:RAMB36_X11Y23}
 set_property SNAPPING_MODE ON [get_pblocks pblock_10]
@@ -90,11 +96,13 @@ resize_pblock [get_pblocks pblock_13] -add {SLICE_X64Y60:SLICE_X66Y119}
 resize_pblock [get_pblocks pblock_13] -add {RAMB18_X8Y24:RAMB18_X8Y47}
 resize_pblock [get_pblocks pblock_13] -add {RAMB36_X8Y12:RAMB36_X8Y23}
 create_pblock pblock_14
-resize_pblock [get_pblocks pblock_14] -add {SLICE_X58Y60:SLICE_X60Y119}
+resize_pblock [get_pblocks pblock_14] -add {SLICE_X54Y60:SLICE_X61Y119}
+resize_pblock [get_pblocks pblock_14] -add {DSP48E2_X11Y24:DSP48E2_X11Y47}
 resize_pblock [get_pblocks pblock_14] -add {RAMB18_X7Y24:RAMB18_X7Y47}
 resize_pblock [get_pblocks pblock_14] -add {RAMB36_X7Y12:RAMB36_X7Y23}
 create_pblock pblock_15
-resize_pblock [get_pblocks pblock_15] -add {SLICE_X46Y60:SLICE_X48Y119}
+resize_pblock [get_pblocks pblock_15] -add {SLICE_X46Y60:SLICE_X52Y119}
+resize_pblock [get_pblocks pblock_15] -add {DSP48E2_X9Y24:DSP48E2_X9Y47}
 resize_pblock [get_pblocks pblock_15] -add {RAMB18_X6Y24:RAMB18_X6Y47}
 resize_pblock [get_pblocks pblock_15] -add {RAMB36_X6Y12:RAMB36_X6Y23}
 create_pblock pblock_17
@@ -102,11 +110,13 @@ resize_pblock [get_pblocks pblock_17] -add {SLICE_X93Y120:SLICE_X95Y179}
 resize_pblock [get_pblocks pblock_17] -add {RAMB18_X12Y48:RAMB18_X12Y71}
 resize_pblock [get_pblocks pblock_17] -add {RAMB36_X12Y24:RAMB36_X12Y35}
 create_pblock pblock_18
-resize_pblock [get_pblocks pblock_18] -add {SLICE_X82Y120:SLICE_X84Y179}
+resize_pblock [get_pblocks pblock_18] -add {SLICE_X82Y120:SLICE_X88Y179}
+resize_pblock [get_pblocks pblock_18] -add {DSP48E2_X16Y48:DSP48E2_X16Y71}
 resize_pblock [get_pblocks pblock_18] -add {RAMB18_X11Y48:RAMB18_X11Y71}
 resize_pblock [get_pblocks pblock_18] -add {RAMB36_X11Y24:RAMB36_X11Y35}
 create_pblock pblock_19
-resize_pblock [get_pblocks pblock_19] -add {SLICE_X79Y120:SLICE_X81Y179}
+resize_pblock [get_pblocks pblock_19] -add {SLICE_X75Y120:SLICE_X81Y179}
+resize_pblock [get_pblocks pblock_19] -add {DSP48E2_X15Y48:DSP48E2_X15Y71}
 resize_pblock [get_pblocks pblock_19] -add {RAMB18_X10Y48:RAMB18_X10Y71}
 resize_pblock [get_pblocks pblock_19] -add {RAMB36_X10Y24:RAMB36_X10Y35}
 create_pblock pblock_20
@@ -122,11 +132,13 @@ resize_pblock [get_pblocks pblock_22] -add {SLICE_X58Y120:SLICE_X60Y179}
 resize_pblock [get_pblocks pblock_22] -add {RAMB18_X7Y48:RAMB18_X7Y71}
 resize_pblock [get_pblocks pblock_22] -add {RAMB36_X7Y24:RAMB36_X7Y35}
 create_pblock pblock_23
-resize_pblock [get_pblocks pblock_23] -add {SLICE_X46Y120:SLICE_X48Y179}
+resize_pblock [get_pblocks pblock_23] -add {SLICE_X46Y120:SLICE_X52Y179}
+resize_pblock [get_pblocks pblock_23] -add {DSP48E2_X9Y48:DSP48E2_X9Y71}
 resize_pblock [get_pblocks pblock_23] -add {RAMB18_X6Y48:RAMB18_X6Y71}
 resize_pblock [get_pblocks pblock_23] -add {RAMB36_X6Y24:RAMB36_X6Y35}
 create_pblock pblock_24
-resize_pblock [get_pblocks pblock_24] -add {SLICE_X37Y120:SLICE_X39Y179}
+resize_pblock [get_pblocks pblock_24] -add {SLICE_X36Y120:SLICE_X43Y179}
+resize_pblock [get_pblocks pblock_24] -add {DSP48E2_X7Y48:DSP48E2_X7Y71}
 resize_pblock [get_pblocks pblock_24] -add {RAMB18_X5Y48:RAMB18_X5Y71}
 resize_pblock [get_pblocks pblock_24] -add {RAMB36_X5Y24:RAMB36_X5Y35}
 create_pblock pblock_25
@@ -134,7 +146,8 @@ resize_pblock [get_pblocks pblock_25] -add {SLICE_X93Y180:SLICE_X95Y239}
 resize_pblock [get_pblocks pblock_25] -add {RAMB18_X12Y72:RAMB18_X12Y95}
 resize_pblock [get_pblocks pblock_25] -add {RAMB36_X12Y36:RAMB36_X12Y47}
 create_pblock pblock_26
-resize_pblock [get_pblocks pblock_26] -add {SLICE_X82Y180:SLICE_X84Y239}
+resize_pblock [get_pblocks pblock_26] -add {SLICE_X82Y180:SLICE_X90Y239}
+resize_pblock [get_pblocks pblock_26] -add {DSP48E2_X16Y72:DSP48E2_X16Y95}
 resize_pblock [get_pblocks pblock_26] -add {RAMB18_X11Y72:RAMB18_X11Y95}
 resize_pblock [get_pblocks pblock_26] -add {RAMB36_X11Y36:RAMB36_X11Y47}
 create_pblock pblock_27
@@ -166,7 +179,8 @@ resize_pblock [get_pblocks pblock_33] -add {SLICE_X93Y240:SLICE_X95Y299}
 resize_pblock [get_pblocks pblock_33] -add {RAMB18_X12Y96:RAMB18_X12Y119}
 resize_pblock [get_pblocks pblock_33] -add {RAMB36_X12Y48:RAMB36_X12Y59}
 create_pblock pblock_34
-resize_pblock [get_pblocks pblock_34] -add {SLICE_X82Y240:SLICE_X84Y299}
+resize_pblock [get_pblocks pblock_34] -add {SLICE_X82Y240:SLICE_X90Y299}
+resize_pblock [get_pblocks pblock_34] -add {DSP48E2_X16Y96:DSP48E2_X16Y119}
 resize_pblock [get_pblocks pblock_34] -add {RAMB18_X11Y96:RAMB18_X11Y119}
 resize_pblock [get_pblocks pblock_34] -add {RAMB36_X11Y48:RAMB36_X11Y59}
 set_property SNAPPING_MODE ON [get_pblocks pblock_34]
@@ -199,11 +213,13 @@ resize_pblock [get_pblocks pblock_41] -add {SLICE_X93Y300:SLICE_X95Y359}
 resize_pblock [get_pblocks pblock_41] -add {RAMB18_X12Y120:RAMB18_X12Y143}
 resize_pblock [get_pblocks pblock_41] -add {RAMB36_X12Y60:RAMB36_X12Y71}
 create_pblock pblock_42
-resize_pblock [get_pblocks pblock_42] -add {SLICE_X82Y300:SLICE_X84Y359}
+resize_pblock [get_pblocks pblock_42] -add {SLICE_X82Y300:SLICE_X89Y359}
+resize_pblock [get_pblocks pblock_42] -add {DSP48E2_X16Y120:DSP48E2_X16Y143}
 resize_pblock [get_pblocks pblock_42] -add {RAMB18_X11Y120:RAMB18_X11Y143}
 resize_pblock [get_pblocks pblock_42] -add {RAMB36_X11Y60:RAMB36_X11Y71}
 create_pblock pblock_43
-resize_pblock [get_pblocks pblock_43] -add {SLICE_X79Y300:SLICE_X81Y359}
+resize_pblock [get_pblocks pblock_43] -add {SLICE_X74Y300:SLICE_X81Y359}
+resize_pblock [get_pblocks pblock_43] -add {DSP48E2_X15Y120:DSP48E2_X15Y143}
 resize_pblock [get_pblocks pblock_43] -add {RAMB18_X10Y120:RAMB18_X10Y143}
 resize_pblock [get_pblocks pblock_43] -add {RAMB36_X10Y60:RAMB36_X10Y71}
 create_pblock pblock_44
@@ -223,7 +239,8 @@ resize_pblock [get_pblocks pblock_49] -add {SLICE_X91Y360:SLICE_X95Y419}
 resize_pblock [get_pblocks pblock_49] -add {RAMB18_X12Y144:RAMB18_X12Y167}
 resize_pblock [get_pblocks pblock_49] -add {RAMB36_X12Y72:RAMB36_X12Y83}
 create_pblock pblock_50
-resize_pblock [get_pblocks pblock_50] -add {SLICE_X82Y360:SLICE_X85Y419}
+resize_pblock [get_pblocks pblock_50] -add {SLICE_X82Y360:SLICE_X88Y419}
+resize_pblock [get_pblocks pblock_50] -add {DSP48E2_X16Y144:DSP48E2_X16Y167}
 resize_pblock [get_pblocks pblock_50] -add {RAMB18_X11Y144:RAMB18_X11Y167}
 resize_pblock [get_pblocks pblock_50] -add {RAMB36_X11Y72:RAMB36_X11Y83}
 create_pblock pblock_51
@@ -236,10 +253,12 @@ resize_pblock [get_pblocks pblock_52] -add {RAMB18_X9Y144:RAMB18_X9Y167}
 resize_pblock [get_pblocks pblock_52] -add {RAMB36_X9Y72:RAMB36_X9Y83}
 create_pblock pblock_53
 resize_pblock [get_pblocks pblock_53] -add {SLICE_X62Y360:SLICE_X67Y419}
+resize_pblock [get_pblocks pblock_53] -add {DSP48E2_X12Y144:DSP48E2_X12Y167}
 resize_pblock [get_pblocks pblock_53] -add {RAMB18_X8Y144:RAMB18_X8Y167}
 resize_pblock [get_pblocks pblock_53] -add {RAMB36_X8Y72:RAMB36_X8Y83}
 create_pblock pblock_54
-resize_pblock [get_pblocks pblock_54] -add {SLICE_X56Y360:SLICE_X61Y419}
+resize_pblock [get_pblocks pblock_54] -add {SLICE_X53Y360:SLICE_X61Y419}
+resize_pblock [get_pblocks pblock_54] -add {DSP48E2_X11Y144:DSP48E2_X11Y167}
 resize_pblock [get_pblocks pblock_54] -add {RAMB18_X7Y144:RAMB18_X7Y167}
 resize_pblock [get_pblocks pblock_54] -add {RAMB36_X7Y72:RAMB36_X7Y83}
 create_pblock pblock_47
@@ -269,7 +288,8 @@ resize_pblock [get_pblocks pblock_58] -add {RAMB18_X3Y72:RAMB18_X3Y95}
 resize_pblock [get_pblocks pblock_58] -add {RAMB36_X3Y36:RAMB36_X3Y47}
 set_property SNAPPING_MODE ON [get_pblocks pblock_58]
 create_pblock pblock_59
-resize_pblock [get_pblocks pblock_59] -add {SLICE_X16Y180:SLICE_X18Y239}
+resize_pblock [get_pblocks pblock_59] -add {SLICE_X14Y180:SLICE_X20Y239}
+resize_pblock [get_pblocks pblock_59] -add {DSP48E2_X2Y72:DSP48E2_X3Y95}
 resize_pblock [get_pblocks pblock_59] -add {RAMB18_X2Y72:RAMB18_X2Y95}
 resize_pblock [get_pblocks pblock_59] -add {RAMB36_X2Y36:RAMB36_X2Y47}
 set_property SNAPPING_MODE ON [get_pblocks pblock_59]
@@ -279,7 +299,8 @@ resize_pblock [get_pblocks pblock_60] -add {RAMB18_X1Y72:RAMB18_X1Y95}
 resize_pblock [get_pblocks pblock_60] -add {RAMB36_X1Y36:RAMB36_X1Y47}
 set_property SNAPPING_MODE ON [get_pblocks pblock_60]
 create_pblock pblock_61
-resize_pblock [get_pblocks pblock_61] -add {SLICE_X0Y180:SLICE_X4Y239}
+resize_pblock [get_pblocks pblock_61] -add {SLICE_X0Y180:SLICE_X5Y239}
+resize_pblock [get_pblocks pblock_61] -add {DSP48E2_X0Y72:DSP48E2_X0Y95}
 resize_pblock [get_pblocks pblock_61] -add {RAMB18_X0Y72:RAMB18_X0Y95}
 resize_pblock [get_pblocks pblock_61] -add {RAMB36_X0Y36:RAMB36_X0Y47}
 create_pblock pblock_62
@@ -291,7 +312,8 @@ resize_pblock [get_pblocks pblock_63] -add {SLICE_X22Y240:SLICE_X24Y299}
 resize_pblock [get_pblocks pblock_63] -add {RAMB18_X3Y96:RAMB18_X3Y119}
 resize_pblock [get_pblocks pblock_63] -add {RAMB36_X3Y48:RAMB36_X3Y59}
 create_pblock pblock_64
-resize_pblock [get_pblocks pblock_64] -add {SLICE_X16Y240:SLICE_X18Y299}
+resize_pblock [get_pblocks pblock_64] -add {SLICE_X12Y240:SLICE_X20Y299}
+resize_pblock [get_pblocks pblock_64] -add {DSP48E2_X2Y96:DSP48E2_X3Y119}
 resize_pblock [get_pblocks pblock_64] -add {RAMB18_X2Y96:RAMB18_X2Y119}
 resize_pblock [get_pblocks pblock_64] -add {RAMB36_X2Y48:RAMB36_X2Y59}
 create_pblock pblock_65
@@ -303,7 +325,8 @@ resize_pblock [get_pblocks pblock_66] -add {SLICE_X0Y240:SLICE_X4Y299}
 resize_pblock [get_pblocks pblock_66] -add {RAMB18_X0Y96:RAMB18_X0Y119}
 resize_pblock [get_pblocks pblock_66] -add {RAMB36_X0Y48:RAMB36_X0Y59}
 create_pblock pblock_67
-resize_pblock [get_pblocks pblock_67] -add {SLICE_X31Y300:SLICE_X33Y359}
+resize_pblock [get_pblocks pblock_67] -add {SLICE_X29Y300:SLICE_X35Y359}
+resize_pblock [get_pblocks pblock_67] -add {DSP48E2_X6Y120:DSP48E2_X6Y143}
 resize_pblock [get_pblocks pblock_67] -add {RAMB18_X4Y120:RAMB18_X4Y143}
 resize_pblock [get_pblocks pblock_67] -add {RAMB36_X4Y60:RAMB36_X4Y71}
 create_pblock pblock_68
@@ -333,7 +356,8 @@ resize_pblock [get_pblocks pblock_73] -add {SLICE_X20Y360:SLICE_X25Y419}
 resize_pblock [get_pblocks pblock_73] -add {RAMB18_X3Y144:RAMB18_X3Y167}
 resize_pblock [get_pblocks pblock_73] -add {RAMB36_X3Y72:RAMB36_X3Y83}
 create_pblock pblock_74
-resize_pblock [get_pblocks pblock_74] -add {SLICE_X14Y360:SLICE_X19Y419}
+resize_pblock [get_pblocks pblock_74] -add {SLICE_X12Y360:SLICE_X19Y419}
+resize_pblock [get_pblocks pblock_74] -add {DSP48E2_X2Y144:DSP48E2_X2Y167}
 resize_pblock [get_pblocks pblock_74] -add {RAMB18_X2Y144:RAMB18_X2Y167}
 resize_pblock [get_pblocks pblock_74] -add {RAMB36_X2Y72:RAMB36_X2Y83}
 create_pblock pblock_75
@@ -458,8 +482,24 @@ set_property PROHIBIT true [get_sites SLICE_X7Y239]
 set_property PROHIBIT true [get_sites SLICE_X8Y239]
 set_property PROHIBIT true [get_sites SLICE_X9Y239]
 create_pblock pblock_1
-resize_pblock [get_pblocks pblock_1] -add {SLICE_X92Y0:SLICE_X95Y59}
+resize_pblock [get_pblocks pblock_1] -add {SLICE_X88Y0:SLICE_X95Y59}
+resize_pblock [get_pblocks pblock_1] -add {DSP48E2_X17Y0:DSP48E2_X17Y23}
 resize_pblock [get_pblocks pblock_1] -add {RAMB18_X12Y0:RAMB18_X12Y23}
 resize_pblock [get_pblocks pblock_1] -add {RAMB36_X12Y0:RAMB36_X12Y11}
 
 
+
+set_property PROHIBIT true [get_sites SLICE_X1Y359]
+set_property PROHIBIT true [get_sites SLICE_X2Y359]
+set_property PROHIBIT true [get_sites SLICE_X3Y359]
+set_property PROHIBIT true [get_sites SLICE_X1Y300]
+set_property PROHIBIT true [get_sites SLICE_X2Y300]
+set_property PROHIBIT true [get_sites SLICE_X3Y300]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[0]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[1]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[2]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[3]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[4]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[5]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[6]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[7]_i_5}]
