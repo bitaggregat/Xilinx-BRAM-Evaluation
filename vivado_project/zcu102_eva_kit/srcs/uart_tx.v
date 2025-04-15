@@ -22,132 +22,107 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-module uart_rx
+module uart_tx
 #(
-	// CLK_PER_BIT has to be at least 2 or STATE_START_BIT has to be skipped
 	parameter CLK_PER_BIT = 1250,	// 12 MHz clock, 9600 baud
 	parameter CLK_COUNTER_LENGTH = $clog2(CLK_PER_BIT+1)
 )
 (
 	input clk, 
-	input rx,
-	output reg [7:0] data,
-	output reg rx_done
-	//output [2:0] out_state
+	input [7:0] data, 
+	input tx_start, 
+	output reg tx, 
+	output reg tx_done
 );
 	
-	localparam STATE_IDLE = 3'b000;
-	localparam STATE_START_BIT = 3'b001;
-	localparam STATE_DATA_BITS = 3'b011;
-	localparam STATE_STOP_BIT = 3'b010;
-	localparam STATE_DONE = 3'b110;
+	localparam STATE_IDLE = 3'h0;
+	localparam STATE_START_BIT = 3'h1;
+	localparam STATE_DATA_BITS = 3'h2;
+	localparam STATE_STOP_BIT = 3'h3;
+	localparam STATE_DONE = 3'h4;
 	
 	reg [2:0] state = STATE_IDLE;
 	reg [CLK_COUNTER_LENGTH-1:0] clk_counter;
 	reg [7:0] data_buf;
-	reg rx_buf;
-	//reg [3:0] rx_buf_extension;
 	reg [3:0] bit_counter;
-	
-	//assign out_state = state; 
-	
-	// use register for input since it's an clock domain crossing
-	always @(posedge clk)
-	begin
-		//rx_buf_extension <= {rx_buf_extension[2:0], rx};
-	    rx_buf <= rx;//_buf_extension[3];
-	end
 	
 	always @(posedge clk)
 	begin
 		case (state)
 		STATE_IDLE:
 		begin
-			rx_done <= 1'b0;
-			if (rx_buf == 1'b0)
+			tx <= 1'b1;
+			tx_done <= 1'b0;
+			if (tx_start)
 			begin
+				data_buf <= data;
 				state <= STATE_START_BIT;
-				clk_counter <= 1; // we want to count clk cycles, but it takes one cycle to start counting
+				clk_counter <= 0;
 			end
 		end
 		STATE_START_BIT:
 		begin
-			// wait for half bit duration
-			// so the data bits are always determined in the middle of the signal
-			if (clk_counter < CLK_PER_BIT/2-1)
-			begin
-				clk_counter <= clk_counter + 1;
-			end
-			else if (rx_buf == 1'b0) // check start bit again to reduce errors by noise
-			begin
-				state <= STATE_DATA_BITS;
-				bit_counter <= 4'b0;
-				clk_counter <= 1;
-			end
-			else
-			begin
-				// assume noise caused initial start bit and ignore it
-				state <= STATE_IDLE;
-			end
-			
-		end
-		STATE_DATA_BITS:
-		begin
-			// wait for next bit
+			tx <= 1'b0;
 			if (clk_counter < CLK_PER_BIT-1)
 			begin
 				clk_counter <= clk_counter + 1;
 			end
-			else 
+			else
 			begin
-				data_buf <= {rx_buf, data_buf[7:1]};
+				state <= STATE_DATA_BITS;
+				bit_counter <= 4'b0;
 				clk_counter <= 0;
+			end
+		end
+		STATE_DATA_BITS:
+		begin
+			tx <= data_buf[0];
+			if (clk_counter < CLK_PER_BIT-1)
+			begin
+				clk_counter <= clk_counter + 1;
+			end
+			else
+			begin
 				if (bit_counter < 7)
 				begin
+					data_buf <= data_buf >> 1;
 					bit_counter <= bit_counter + 1;
+					clk_counter <= 0;
 				end
 				else
 				begin
 					state <= STATE_STOP_BIT;
+					clk_counter <= 0;
 				end
 			end
 		end
 		STATE_STOP_BIT:
 		begin
-			// wait for stop bit
+			tx <= 1'b1;
 			if (clk_counter < CLK_PER_BIT-1)
 			begin
 				clk_counter <= clk_counter + 1;
 			end
-			else if (rx_buf == 1'b1)
-			begin
-				// data successful received
-				data <= data_buf;
-				state <= STATE_DONE;
-			end
 			else
 			begin
-				// stop bit not found -> ignore transfered data
-				state <= STATE_IDLE;
+				state <= STATE_DONE;
 			end
 		end
 		STATE_DONE:
 		begin
-			// use extra state for tx_done to be sure that data is stable
-			// else we might see metastable data values when triggering on posedge rx_done
-				rx_done <= 1'b1;
-				state <= STATE_IDLE;
+			tx <= 1'b1;
+			tx_done <= 1'b1;
+			state <= STATE_IDLE;
 		end
-		default
+		default:
 		begin
-			rx_done <= 1'b0;
+			// reset
+			tx <= 1'b1;
+			tx_done <= 1'b0;
 			data_buf <= 8'b0;
 			clk_counter <= 0;
-			bit_counter <= 3'h0;
 			state <= STATE_IDLE;
-			
 		end
 		endcase
 	end
-	
 endmodule

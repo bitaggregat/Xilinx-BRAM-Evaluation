@@ -1,35 +1,33 @@
-set_property PACKAGE_PIN D20 [get_ports rst]
-set_property IOSTANDARD LVCMOS33 [get_ports rst]
 
 #set_property IOSTANDARD LVCMOS18 [get_ports test_switch]
 #set_property PACKAGE_PIN P2 [get_ports test_switch]
 
-set_property PACKAGE_PIN B20 [get_ports uart_txd]
-set_property IOSTANDARD LVCMOS33 [get_ports uart_txd]
-set_property PACKAGE_PIN A22 [get_ports uart_rxd]
-set_property IOSTANDARD LVCMOS33 [get_ports uart_rxd]
+set_property PACKAGE_PIN B20 [get_ports uart_tx_o]
+set_property IOSTANDARD LVCMOS33 [get_ports uart_tx_o]
+set_property PACKAGE_PIN A22 [get_ports uart_rx_i]
+set_property IOSTANDARD LVCMOS33 [get_ports uart_rx_i]
 #set_property IOSTANDARD LVCMOS33 [get_ports sys_clk_p]
 #set_property PACKAGE_PIN G21 [get_ports sys_clk_p]
 #set_property IOSTANDARD LVCMOS18 [get_ports maxihpm0_lpd_aclk]
 #set_property PACKAGE_PIN U15 [get_ports maxihpm0_lpd_aclk]
 
-set_property IOSTANDARD LVCMOS33 [get_ports {led[7]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[6]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[5]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[4]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[3]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[2]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[7]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[6]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[0]}]
 
-set_property PACKAGE_PIN AL12 [get_ports {led[7]}]
-set_property PACKAGE_PIN AH14 [get_ports {led[6]}]
-set_property PACKAGE_PIN AH13 [get_ports {led[5]}]
-set_property PACKAGE_PIN AJ15 [get_ports {led[4]}]
-set_property PACKAGE_PIN AJ14 [get_ports {led[3]}]
-set_property PACKAGE_PIN AE13 [get_ports {led[2]}]
-set_property PACKAGE_PIN AF13 [get_ports {led[1]}]
-set_property PACKAGE_PIN AG14 [get_ports {led[0]}]
+set_property PACKAGE_PIN AL12 [get_ports {led_o[7]}]
+set_property PACKAGE_PIN AH14 [get_ports {led_o[6]}]
+set_property PACKAGE_PIN AH13 [get_ports {led_o[5]}]
+set_property PACKAGE_PIN AJ15 [get_ports {led_o[4]}]
+set_property PACKAGE_PIN AJ14 [get_ports {led_o[3]}]
+set_property PACKAGE_PIN AE13 [get_ports {led_o[2]}]
+set_property PACKAGE_PIN AF13 [get_ports {led_o[1]}]
+set_property PACKAGE_PIN AG14 [get_ports {led_o[0]}]
 
 
 
@@ -276,7 +274,6 @@ resize_pblock [get_pblocks pblock_59] -add {RAMB18_X2Y72:RAMB18_X2Y95}
 resize_pblock [get_pblocks pblock_59] -add {RAMB36_X2Y36:RAMB36_X2Y47}
 set_property SNAPPING_MODE ON [get_pblocks pblock_59]
 create_pblock pblock_60
-add_cells_to_pblock [get_pblocks pblock_60] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_60] -add {SLICE_X7Y180:SLICE_X9Y239}
 resize_pblock [get_pblocks pblock_60] -add {RAMB18_X1Y72:RAMB18_X1Y95}
 resize_pblock [get_pblocks pblock_60] -add {RAMB36_X1Y36:RAMB36_X1Y47}
@@ -322,9 +319,11 @@ resize_pblock [get_pblocks pblock_70] -add {SLICE_X7Y300:SLICE_X9Y359}
 resize_pblock [get_pblocks pblock_70] -add {RAMB18_X1Y120:RAMB18_X1Y143}
 resize_pblock [get_pblocks pblock_70] -add {RAMB36_X1Y60:RAMB36_X1Y71}
 create_pblock pblock_71
+add_cells_to_pblock [get_pblocks pblock_71] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_71] -add {SLICE_X0Y300:SLICE_X4Y359}
 resize_pblock [get_pblocks pblock_71] -add {RAMB18_X0Y120:RAMB18_X0Y143}
 resize_pblock [get_pblocks pblock_71] -add {RAMB36_X0Y60:RAMB36_X0Y71}
+set_property SNAPPING_MODE ON [get_pblocks pblock_71]
 create_pblock pblock_72
 resize_pblock [get_pblocks pblock_72] -add {SLICE_X29Y360:SLICE_X34Y419}
 resize_pblock [get_pblocks pblock_72] -add {RAMB18_X4Y144:RAMB18_X4Y167}
@@ -462,3 +461,5 @@ create_pblock pblock_1
 resize_pblock [get_pblocks pblock_1] -add {SLICE_X92Y0:SLICE_X95Y59}
 resize_pblock [get_pblocks pblock_1] -add {RAMB18_X12Y0:RAMB18_X12Y23}
 resize_pblock [get_pblocks pblock_1] -add {RAMB36_X12Y0:RAMB36_X12Y11}
+
+

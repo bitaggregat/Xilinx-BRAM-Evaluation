@@ -11,8 +11,6 @@ module bram_read_test(
     
     assign douta = {parity, data};
     
-// Documentation of the RAMB36E2 primitive and its ports is in
-// https://docs.amd.com/r/en-US/ug974-vivado-ultrascale-libraries/RAMB36E2
 RAMB36E2 #(
 // CASCADE_ORDER_A, CASCADE_ORDER_B: "FIRST", "MIDDLE", "LAST", "NONE"
 .CASCADE_ORDER_A("NONE"),
@@ -34,7 +32,6 @@ RAMB36E2 #(
 // EN_ECC_WRITE: Enable ECC encoder, "TRUE"/"FALSE"
 .EN_ECC_WRITE("FALSE"),
    // INITP_00 to INITP_0F: Initial contents of the parity memory array
-   // These values are some test strings (for verification) in ascii encoding
 	.INITP_00(256'h646174636173736f72636164696361746e756f63636174756f6261656c626161),
 	.INITP_01(256'h746661746e656d657369747265766461746e656d7473756a64616e6f69746964),
 	.INITP_02(256'h6d6c616c6c61726961746e656d656572676174736e696167616e696167617265),
@@ -198,7 +195,7 @@ RAMB36E2 #(
 .RDADDRCHANGEA("FALSE"),
 .RDADDRCHANGEB("FALSE"),
 // READ_WIDTH_A/B, WRITE_WIDTH_A/B: Read/write width per port
-.READ_WIDTH_A(36), // 0-36
+.READ_WIDTH_A(36), // 0-9
 .READ_WIDTH_B(0), // 0-9
 .WRITE_WIDTH_A(0), // 0-9
 .WRITE_WIDTH_B(0), // 0-9
