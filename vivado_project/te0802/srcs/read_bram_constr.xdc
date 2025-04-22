@@ -528,13 +528,11 @@ set_property PROHIBIT true [get_sites RAMB36_X2Y21]
 set_property PROHIBIT true [get_sites RAMB36_X2Y22]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y12]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y13]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y14]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y15]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y16]
 
@@ -643,7 +641,6 @@ set_property PROHIBIT true [get_sites RAMB36_X0Y9]
 set_property PROHIBIT true [get_sites RAMB36_X0Y10]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y24]
 
 set_property PROHIBIT true [get_sites RAMB36_X0Y25]
 
@@ -666,7 +663,6 @@ set_property PROHIBIT true [get_sites RAMB36_X0Y33]
 set_property PROHIBIT true [get_sites RAMB36_X0Y34]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y24]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y25]
 
@@ -689,7 +685,6 @@ set_property PROHIBIT true [get_sites RAMB36_X1Y33]
 set_property PROHIBIT true [get_sites RAMB36_X1Y34]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y24]
 
 set_property PROHIBIT true [get_sites RAMB36_X2Y25]
 
@@ -719,3 +714,8 @@ set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_d
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[7]_i_5}]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[4]_i_2}]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[5]_i_2}]
+
+
+
+
+
