@@ -55,7 +55,7 @@ resize_pblock [get_pblocks pblock_4] -add {RAMB18_X2Y0:RAMB18_X2Y23}
 resize_pblock [get_pblocks pblock_4] -add {RAMB36_X2Y0:RAMB36_X2Y11}
 set_property SNAPPING_MODE ON [get_pblocks pblock_4]
 create_pblock pblock_5
-resize_pblock [get_pblocks pblock_5] -add {SLICE_X9Y0:SLICE_X14Y59}
+resize_pblock [get_pblocks pblock_5] -add {SLICE_X6Y0:SLICE_X14Y59}
 resize_pblock [get_pblocks pblock_5] -add {RAMB18_X1Y0:RAMB18_X1Y23}
 resize_pblock [get_pblocks pblock_5] -add {RAMB36_X1Y0:RAMB36_X1Y11}
 set_property SNAPPING_MODE ON [get_pblocks pblock_5]
@@ -75,6 +75,7 @@ resize_pblock [get_pblocks pblock_8] -add {RAMB18_X4Y24:RAMB18_X4Y47}
 resize_pblock [get_pblocks pblock_8] -add {RAMB36_X4Y12:RAMB36_X4Y23}
 set_property SNAPPING_MODE ON [get_pblocks pblock_8]
 create_pblock pblock_9
+add_cells_to_pblock [get_pblocks pblock_9] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_9] -add {SLICE_X29Y60:SLICE_X33Y119}
 resize_pblock [get_pblocks pblock_9] -add {RAMB18_X3Y24:RAMB18_X3Y47}
 resize_pblock [get_pblocks pblock_9] -add {RAMB36_X3Y12:RAMB36_X3Y23}
@@ -115,8 +116,7 @@ resize_pblock [get_pblocks pblock_16] -add {RAMB18_X2Y48:RAMB18_X2Y71}
 resize_pblock [get_pblocks pblock_16] -add {RAMB36_X2Y24:RAMB36_X2Y35}
 set_property SNAPPING_MODE ON [get_pblocks pblock_16]
 create_pblock pblock_17
-add_cells_to_pblock [get_pblocks pblock_17] [get_cells -quiet [list bram_wrap]]
-resize_pblock [get_pblocks pblock_17] -add {SLICE_X9Y120:SLICE_X14Y179}
+resize_pblock [get_pblocks pblock_17] -add {SLICE_X6Y120:SLICE_X14Y179}
 resize_pblock [get_pblocks pblock_17] -add {RAMB18_X1Y48:RAMB18_X1Y71}
 resize_pblock [get_pblocks pblock_17] -add {RAMB36_X1Y24:RAMB36_X1Y35}
 set_property SNAPPING_MODE ON [get_pblocks pblock_17]
@@ -275,138 +275,76 @@ set_property SNAPPING_MODE ON [get_pblocks pblock_18]
 
 
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y3]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y7]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y8]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y9]
 
-set_property PROHIBIT true [get_sites RAMB36_X2Y10]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y3]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y7]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y9]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y10]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y3]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y7]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y8]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y9]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y10]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y12]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y13]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y14]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y15]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y16]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y17]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y18]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y19]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y20]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y21]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y22]
 
 
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y13]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y14]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y15]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y16]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y17]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y19]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y20]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y21]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y22]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y12]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y13]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y14]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y15]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y16]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y17]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y18]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y19]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y20]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y21]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y22]
 
 
 
@@ -424,13 +362,9 @@ set_property PROHIBIT true [get_sites RAMB36_X3Y22]
 
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y11]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y23]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y12]
 
 
 
@@ -522,114 +456,149 @@ set_property PROHIBIT true [get_sites RAMB36_X4Y12]
 
 
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y26]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y27]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y28]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y29]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y30]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y31]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y32]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y33]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y34]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y24]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y25]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y26]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y27]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y28]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y29]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y30]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y31]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y32]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y33]
 
-set_property PROHIBIT true [get_sites RAMB36_X0Y34]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y3]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y7]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y8]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y9]
 
-set_property PROHIBIT true [get_sites RAMB36_X5Y10]
 
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y3]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y7]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y8]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y9]
 
-set_property PROHIBIT true [get_sites RAMB36_X4Y10]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y11]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y0]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y1]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y2]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y3]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y4]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y5]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y6]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y7]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y8]
 
-set_property PROHIBIT true [get_sites RAMB36_X3Y9]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -798,6 +767,274 @@ set_property PROHIBIT true [get_sites RAMB36_X2Y33]
 
 set_property PROHIBIT true [get_sites RAMB36_X2Y34]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y35]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y24]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y25]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y26]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y27]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y28]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y29]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y30]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y31]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y32]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y33]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y34]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y24]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y25]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y26]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y27]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y28]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y29]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y30]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y31]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y32]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y33]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y34]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X2Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X1Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y0]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y1]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y2]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y3]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y4]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y5]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y6]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y7]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y8]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y9]
+
+set_property PROHIBIT true [get_sites RAMB36_X0Y10]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y12]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y13]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y14]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y15]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y16]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y17]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y18]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y19]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y20]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y21]
+
+set_property PROHIBIT true [get_sites RAMB36_X5Y22]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y12]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y13]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y14]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y15]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y16]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y17]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y18]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y19]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y20]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y21]
+
+set_property PROHIBIT true [get_sites RAMB36_X4Y22]
+
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y12]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y13]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y14]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y15]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y16]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y17]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y18]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y19]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y20]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y21]
+
+set_property PROHIBIT true [get_sites RAMB36_X3Y22]
+
+set_property PROHIBIT true [get_sites SLICE_X29Y119]
+set_property PROHIBIT true [get_sites SLICE_X30Y119]
+set_property PROHIBIT true [get_sites SLICE_X31Y119]
+set_property PROHIBIT true [get_sites SLICE_X32Y119]
+set_property PROHIBIT true [get_sites SLICE_X33Y119]
+set_property PROHIBIT true [get_sites SLICE_X29Y60]
+set_property PROHIBIT true [get_sites SLICE_X30Y60]
+set_property PROHIBIT true [get_sites SLICE_X31Y60]
+set_property PROHIBIT true [get_sites SLICE_X32Y60]
+set_property PROHIBIT true [get_sites SLICE_X33Y60]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[2]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[5]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[6]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[0]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[1]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[7]_i_3}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[3]_i_2}]
+set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[4]_i_2}]

@@ -122,6 +122,10 @@ partial_bram_bs="${vivado_project_path}/${run_dir}/child_1_impl_1/bram_wrap_bram
 modified_bs="temp_bs.bin"
 from_root="$(pwd)"
 
+# Initialize log file for python
+python_log="${output_path}/python_${pblock}_$(date +"%F-%T").log"
+
+
 # Initialize tmux vivado session, used for:
 # - flashing bs
 # - measuring temperature
@@ -164,7 +168,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position" > "${output_path}/${pblock}/${ram_block}/vivado.log"
 
         # create modified bs:
-        python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+";
+        python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+" >> "${python_log}";
 
         cp "${full_bs_with_initial_value_00}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
         cp "${full_bs_with_initial_value_ff}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
@@ -205,7 +209,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
         # Readout process
-        python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}";
+        python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}"  >> "${python_log}";
         
         measure_temperature "${temperature_file_path_00}";
 
@@ -214,7 +218,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
             # BRAM init 
             flash_bitstreams "${full_bs_with_initial_value_ff_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
             # Readout process
-            python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}";
+            python3 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}"  >> "${python_log}";
                 
             measure_temperature "${temperature_file_path_ff}";
         fi
