@@ -208,6 +208,10 @@ def stable_bits_per_idxs(
                     bit_flip_type == BitFlipType.RANDOM
                     and 0.4 <= flip_prob < 0.6
                 )
+                or (
+                    bit_flip_type == BitFlipType.BOTH_NEARLY_STABLE
+                    and (0.99 < flip_prob or 0.01 > flip_prob)
+                )
             )
             else 0
             for flip_prob in prob_per_bit

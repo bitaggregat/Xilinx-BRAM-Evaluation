@@ -27,7 +27,7 @@ class Read:
         bits: SUV as numpy array. Has shape (x, 8)
     """
 
-    raw_read: bytes
+    raw_read: bytes | None
     # Not noted in type hint because numpy type hinting best practice
     bits: npt.NDArray[np.int8]
 
@@ -50,7 +50,8 @@ class Read:
 
     @classmethod
     def from_raw(
-        cls, raw_read: bytes, remove_signature_bits: bool = False
+        cls, raw_read: bytes, remove_signature_bits: bool = False, 
+        cache_raw_read: bool = False
     ) -> Self:
         """
         Creates Read object from raw read.
@@ -61,7 +62,10 @@ class Read:
         bits = np.unpackbits(uint8_read).reshape(len(raw_read), 8)
         if remove_signature_bits:
             bits = np.concatenate([bits[32:32*64], bits[33*64:-32]], axis=0)
-        return cls(raw_read, bits)
+        if cache_raw_read:
+            return cls(raw_read, bits)
+        else:
+            return cls(None, bits)
 
     def filter_stripe(self, filter_even_stripes: bool) -> Self:
         new_bit_parts = []
@@ -123,6 +127,7 @@ class ReadSession:
         hdf5_group: h5py.Group,
         filter_even_stripes: bool = False,
         filter_uneven_stripes: bool = False,
+        cache_raw_reads: bool = False
     ) -> "ReadSession":
         """
         Parses this object from a hdf5 subgroup,
@@ -130,9 +135,9 @@ class ReadSession:
         """
         data_read_dataset = hdf5_group["data_reads"]
         if filter_even_stripes or filter_uneven_stripes:
-            data_reads = [Read.from_raw(bytes(read), remove_signature_bits=True) for read in data_read_dataset]
+            data_reads = [Read.from_raw(bytes(read), remove_signature_bits=True, cache_raw_read=cache_raw_reads) for read in data_read_dataset]
         else:
-            data_reads = [Read.from_raw(bytes(read)) for read in data_read_dataset]
+            data_reads = [Read.from_raw(bytes(read), cache_raw_read=cache_raw_reads) for read in data_read_dataset]
         if filter_even_stripes:
             data_reads = [
                 read.filter_stripe(filter_even_stripes=True)
@@ -146,7 +151,7 @@ class ReadSession:
 
         parity_read_dataset = hdf5_group["parity_reads"]
         parity_reads = [
-            Read.from_raw(bytes(read)) for read in parity_read_dataset
+            Read.from_raw(bytes(read), cache_raw_read=cache_raw_reads) for read in parity_read_dataset
         ]
 
         temperatures = [

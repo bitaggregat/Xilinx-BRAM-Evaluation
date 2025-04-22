@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.figure as pltf
 import numpy.typing as npt
 import numpy as np
+import seaborn as sn
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import time
@@ -199,7 +200,9 @@ def histogram(
     )
     ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
     fig.tight_layout()
+    fig.set_size_inches(8, 3.4, forward=True)
     fig.savefig(path.with_suffix(".svg"), format="svg")
+
     clear_plt(fig=fig)
 
 

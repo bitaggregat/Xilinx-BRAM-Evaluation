@@ -33,7 +33,8 @@ from .stats import (
     RandomBitStatistic,
     ReliabilityStatistic,
     UniquenessStatistic,
-    CombinedStableBitStatistic
+    CombinedStableBitStatistic,
+    NearlyStableBitStatistic
 )
 from .utility import PlotSettings
 from .plotting import multi_bit_heatmap, multi_bit_heatmap2 
@@ -549,7 +550,8 @@ class BramBlockStat(MultiStatisticOwner):
         VeryUnstableBitStatistic,
         RandomBitStatistic,
         ReliabilityStatistic,
-        CombinedStableBitStatistic
+        CombinedStableBitStatistic,
+        NearlyStableBitStatistic
     ]
 
 
@@ -574,7 +576,8 @@ class PBlockStat(StatAggregator):
         RandomBitStatistic,
         ReliabilityStatistic,
         UniquenessStatistic,
-        CombinedStableBitStatistic
+        CombinedStableBitStatistic,
+        NearlyStableBitStatistic
     ]
     subowner_type = BramBlockStat
     subowner_identifier = "BRAM Statistics"
