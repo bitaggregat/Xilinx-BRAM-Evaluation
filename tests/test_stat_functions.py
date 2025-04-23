@@ -16,34 +16,34 @@ from hdf5_wrapper.utility import BitFlipType
 
 class TestStatFunctions(unittest.TestCase):
     reads_homogene_00 = [
-        Read.from_raw(b"\x00\x00\x00"),
-        Read.from_raw(b"\x00\x00\x00"),
+        Read.from_raw(b"\x00\x00\x00", cache_raw_read=True),
+        Read.from_raw(b"\x00\x00\x00", cache_raw_read=True),
     ]
     reads_homogene_ff = [
-        Read.from_raw(b"\xff\xff\xff"),
-        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
     ]
     reads_heterogene = [
-        Read.from_raw(b"\xff\x00\xff"),
-        Read.from_raw(b"\x00\xff\x00"),
+        Read.from_raw(b"\xff\x00\xff", cache_raw_read=True),
+        Read.from_raw(b"\x00\xff\x00", cache_raw_read=True),
     ]
     reads_heterogene_similar = [
-        Read.from_raw(b"\xff\xff\xff"),
-        Read.from_raw(b"\xf0\x0f\xf0"),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
+        Read.from_raw(b"\xf0\x0f\xf0", cache_raw_read=True),
     ]
 
     def test_bit_stabilization_count_over_time(self) -> None:
         reads = [
-            Read.from_raw(b"\xbe\xee"),
-            Read.from_raw(b"\xae\xef"),
-            Read.from_raw(b"\xbe\xfe"),
-            Read.from_raw(b"\xae\xef"),
-            Read.from_raw(b"\xbe\xfe"),
-            Read.from_raw(b"\xbe\xef"),
-            Read.from_raw(b"\xbe\xee"),
-            Read.from_raw(b"\xbe\xee"),
-            Read.from_raw(b"\xbe\xee"),
-            Read.from_raw(b"\xbe\xef"),
+            Read.from_raw(b"\xbe\xee", cache_raw_read=True),
+            Read.from_raw(b"\xae\xef", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xfe", cache_raw_read=True),
+            Read.from_raw(b"\xae\xef", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xfe", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xef", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xee", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xee", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xee", cache_raw_read=True),
+            Read.from_raw(b"\xbe\xef", cache_raw_read=True),
         ]
         # Index of read from which bit became stable:
         #   0000|0000|0005|0009
@@ -70,8 +70,8 @@ class TestStatFunctions(unittest.TestCase):
         nptest.assert_array_equal(result, expected_result)
 
     def test_bit_flip_chance(self) -> None:
-        test_reads = [Read.from_raw(b"\xf0")] * 5000 + [
-            Read.from_raw(b"\xff")
+        test_reads = [Read.from_raw(b"\xf0", cache_raw_read=True)] * 5000 + [
+            Read.from_raw(b"\xff", cache_raw_read=True)
         ] * 5000
 
         expected_result = np.array(
@@ -83,16 +83,16 @@ class TestStatFunctions(unittest.TestCase):
 
     def test_stable_bits_per_idxs(self) -> None:
         reads = [
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xa8"),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xa8", cache_raw_read=True),
         ]
         stable_bits_both = stable_bits_per_idxs(
             reads, bit_flip_type=BitFlipType.BOTH
@@ -114,16 +114,16 @@ class TestStatFunctions(unittest.TestCase):
 
     def test_hamming_weight(self) -> None:
         reads = [
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\x18"),
-            Read.from_raw(b"\x37"),
-            Read.from_raw(b"\xff"),
-            Read.from_raw(b"\x52"),
-            Read.from_raw(b"\x55"),
-            Read.from_raw(b"\x93"),
-            Read.from_raw(b"\xc4"),
-            Read.from_raw(b"\xfe"),
-            Read.from_raw(b"\xf3"),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\x18", cache_raw_read=True),
+            Read.from_raw(b"\x37", cache_raw_read=True),
+            Read.from_raw(b"\xff", cache_raw_read=True),
+            Read.from_raw(b"\x52", cache_raw_read=True),
+            Read.from_raw(b"\x55", cache_raw_read=True),
+            Read.from_raw(b"\x93", cache_raw_read=True),
+            Read.from_raw(b"\xc4", cache_raw_read=True),
+            Read.from_raw(b"\xfe", cache_raw_read=True),
+            Read.from_raw(b"\xf3", cache_raw_read=True),
         ]
         expected = np.array(
             [0.5, 0.25, 5 / 8, 1, 3 / 8, 0.5, 0.5, 3 / 8, 7 / 8, 6 / 8]
@@ -136,16 +136,16 @@ class TestStatFunctions(unittest.TestCase):
 
     def test_reliability(self) -> None:
         reads_1 = [
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\x18"),
-            Read.from_raw(b"\x37"),
-            Read.from_raw(b"\xff"),
-            Read.from_raw(b"\x52"),
-            Read.from_raw(b"\x55"),
-            Read.from_raw(b"\x93"),
-            Read.from_raw(b"\xc4"),
-            Read.from_raw(b"\xfe"),
-            Read.from_raw(b"\xf3"),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\x18", cache_raw_read=True),
+            Read.from_raw(b"\x37", cache_raw_read=True),
+            Read.from_raw(b"\xff", cache_raw_read=True),
+            Read.from_raw(b"\x52", cache_raw_read=True),
+            Read.from_raw(b"\x55", cache_raw_read=True),
+            Read.from_raw(b"\x93", cache_raw_read=True),
+            Read.from_raw(b"\xc4", cache_raw_read=True),
+            Read.from_raw(b"\xfe", cache_raw_read=True),
+            Read.from_raw(b"\xf3", cache_raw_read=True),
         ]
         expected_1 = (
             1
@@ -155,16 +155,16 @@ class TestStatFunctions(unittest.TestCase):
         self.assertEqual(expected_1, reliability(reads_1))
 
         reads_2 = [
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xaa"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xab"),
-            Read.from_raw(b"\xa8"),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xaa", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xab", cache_raw_read=True),
+            Read.from_raw(b"\xa8", cache_raw_read=True),
         ]
         expected_2 = 1 - sum([0, 0, 0, 0, 0, 1 / 8, 1 / 8, 1 / 8, 1 / 8]) / 9
         self.assertEqual(expected_2, reliability(reads_2))

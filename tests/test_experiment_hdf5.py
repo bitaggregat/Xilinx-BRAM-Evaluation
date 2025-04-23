@@ -95,28 +95,28 @@ class TestExperiment(unittest.TestCase):
 
 class TestRead(unittest.TestCase):
     reads_homogene_00 = [
-        Read.from_raw(b"\x00\x00\x00"),
-        Read.from_raw(b"\x00\x00\x00"),
+        Read.from_raw(b"\x00\x00\x00", cache_raw_read=True),
+        Read.from_raw(b"\x00\x00\x00", cache_raw_read=True),
     ]
     reads_homogene_ff = [
-        Read.from_raw(b"\xff\xff\xff"),
-        Read.from_raw(b"\xff\xff\xff"),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
     ]
     reads_heterogene = [
-        Read.from_raw(b"\xff\x00\xff"),
-        Read.from_raw(b"\x00\xff\x00"),
+        Read.from_raw(b"\xff\x00\xff", cache_raw_read=True),
+        Read.from_raw(b"\x00\xff\x00", cache_raw_read=True),
     ]
     reads_heterogene_similar = [
-        Read.from_raw(b"\xff\xff\xff"),
-        Read.from_raw(b"\xf0\x0f\xf0"),
+        Read.from_raw(b"\xff\xff\xff", cache_raw_read=True),
+        Read.from_raw(b"\xf0\x0f\xf0", cache_raw_read=True),
     ]
 
     def test_bits_flattened(self) -> None:
         for read, np_array in [
-            (Read.from_raw(b"\x00\x00\x00"), np.zeros((24,))),
-            (Read.from_raw(b"\xff\xff\xff"), np.ones((24,))),
+            (Read.from_raw(b"\x00\x00\x00", cache_raw_read=True), np.zeros((24,))),
+            (Read.from_raw(b"\xff\xff\xff", cache_raw_read=True), np.ones((24,))),
             (
-                Read.from_raw(b"\xf0\x0f\xf0"),
+                Read.from_raw(b"\xf0\x0f\xf0", cache_raw_read=True),
                 np.array(
                     [
                         1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
