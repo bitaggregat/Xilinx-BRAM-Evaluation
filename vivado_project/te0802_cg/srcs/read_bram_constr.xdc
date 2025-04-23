@@ -55,6 +55,7 @@ resize_pblock [get_pblocks pblock_4] -add {RAMB18_X2Y0:RAMB18_X2Y23}
 resize_pblock [get_pblocks pblock_4] -add {RAMB36_X2Y0:RAMB36_X2Y11}
 set_property SNAPPING_MODE ON [get_pblocks pblock_4]
 create_pblock pblock_5
+add_cells_to_pblock [get_pblocks pblock_5] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_5] -add {SLICE_X6Y0:SLICE_X14Y59}
 resize_pblock [get_pblocks pblock_5] -add {RAMB18_X1Y0:RAMB18_X1Y23}
 resize_pblock [get_pblocks pblock_5] -add {RAMB36_X1Y0:RAMB36_X1Y11}
@@ -75,7 +76,6 @@ resize_pblock [get_pblocks pblock_8] -add {RAMB18_X4Y24:RAMB18_X4Y47}
 resize_pblock [get_pblocks pblock_8] -add {RAMB36_X4Y12:RAMB36_X4Y23}
 set_property SNAPPING_MODE ON [get_pblocks pblock_8]
 create_pblock pblock_9
-add_cells_to_pblock [get_pblocks pblock_9] [get_cells -quiet [list bram_wrap]]
 resize_pblock [get_pblocks pblock_9] -add {SLICE_X29Y60:SLICE_X33Y119}
 resize_pblock [get_pblocks pblock_9] -add {RAMB18_X3Y24:RAMB18_X3Y47}
 resize_pblock [get_pblocks pblock_9] -add {RAMB36_X3Y12:RAMB36_X3Y23}
@@ -774,7 +774,6 @@ set_property PROHIBIT true [get_sites RAMB36_X1Y25]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y26]
 
-set_property PROHIBIT true [get_sites RAMB36_X1Y27]
 
 set_property PROHIBIT true [get_sites RAMB36_X1Y28]
 
@@ -1038,3 +1037,5 @@ set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_d
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[7]_i_3}]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[3]_i_2}]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A6 I5:A5} [get_cells {tx/tx_data[4]_i_2}]
+
+

@@ -104,7 +104,7 @@ def get_crc(crc_prev, data):
             return (self.x[i//8] >> (i%8)) & 1
         def __setitem__(self, i, x):
             #self.x = (self.x | (1 << i)) if x else (self.x & ~(1 << i))
-            self.x = self.x[:i//8] + ((self.x[i//8] | (1 << i)) if x else (self.x[i//8] & ~(1 << i))).to_bytes() + self.x[i//8+1:]
+            self.x = self.x[:i//8] + ((self.x[i//8] | (1 << i)) if x else (self.x[i//8] & ~(1 << i))).to_bytes(1, "big") + self.x[i//8+1:]
     
     crc_prev = bitwrapper(crc_prev)
     data = bitwrapper(data)
@@ -122,8 +122,8 @@ def process_batch(batch, prev_crc) -> Tuple[bytes, bytes, bytes]:
     tmp = batch[4]
     data = batch[:4]
     
-    parity = (tmp & 0xF).to_bytes()
-    sent_crc = (tmp >> 4).to_bytes()
+    parity = (tmp & 0xF).to_bytes(1, "big")
+    sent_crc = (tmp >> 4).to_bytes(1, "big")
 
     crc = get_crc(prev_crc, data+parity)
     if sent_crc != crc:
