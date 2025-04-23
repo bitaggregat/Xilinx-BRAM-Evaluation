@@ -57,9 +57,11 @@ function measure_temperature(){
 #   bramless_partial_bs: Reconfigures fpga to deactivate bram
 #   modified_bs: Reactivates bram but without values
 #   wait_time: Time that will be waited (in s) before reactivating the bram
+#   flash_full_bs: Will be interpreted as boolean. Full bitstream will only be flashed if this argument is True
 #######################################
 function flash_bitstreams(){
     if [ "${5}" = true ]; then
+        echo "Flashing full BS ${1} to device"
     	tmux send-keys -t "${vivado_session}" "set_property PROGRAM.FILE ${1} [current_hw_device]" C-m "program_hw_devices [current_hw_device]" C-m
     	wait_for_tmux_vivado
     fi
@@ -164,11 +166,11 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     # Synthethize and save bitstreams if bs dir does not exist
 #    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
     if [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin" ]; then
-	echo -e "All files already generated"
-	# comment the above line out and remove the comment from the following line to supress output
-	#:
+	    echo -e "All files already generated"
+	    # comment the above line out and remove the comment from the following line to supress output
+	    #:
     else
-	echo -e "Some files missing. Generating them..."
+	    echo -e "Some files missing. Generating them..."
         mkdir -p "${output_path}/${pblock}/${ram_block}/bs"
 
         # Create bitstreams using predefined tcl script
@@ -176,7 +178,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         "${vivado_path}" -mode batch -source tcl_scripts/synthesize_for_bram_block_x.tcl -tclargs "$project_xpr" "$pblock" "$bram_row_x_position" "$bram36_min_y_position" "$bram36_max_y_position" "$current_bram_y_position" > "${output_path}/${pblock}/${ram_block}/vivado.log"
 
         # create modified bs:
-        python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+" >> "${python_log}";
+        python3 initialize_bram/create_partial_initialization_bitstream.py -pb "${partial_bram_bs}" -ob "${modified_bs}" -a "heuristic" -ar "XCUS+" | tee "${python_log}";
 
         cp "${full_bs_with_initial_value_00}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit"
         cp "${full_bs_with_initial_value_ff}" "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit"
@@ -217,7 +219,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
         # BRAM init
         flash_bitstreams "${full_bs_with_initial_value_00_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
         # Readout process
-        python3.11 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}"  >> "${python_log}";
+        python3.11 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/${read}" | tee "${python_log}";
         
         measure_temperature "${temperature_file_path_00}";
 
@@ -226,7 +228,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
             # BRAM init 
             flash_bitstreams "${full_bs_with_initial_value_ff_local}" "${bramless_partial_bs_local}" "${modified_bs_local}" "${wait_time}";
             # Readout process
-            python3.11 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}"  >> "${python_log}";
+            python3.11 "reading/read_bram_ftdi.py" -d "${uart_sn}" -o "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/${read}" | tee "${python_log}";
                 
             measure_temperature "${temperature_file_path_ff}";
         fi
