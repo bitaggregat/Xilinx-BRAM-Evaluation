@@ -11,6 +11,9 @@
 # Ignore build-folder
 build/*
 !build/.keep
+# Ignore plot and config file paths
+plots/*
+config_files/*
 ###########################################################################
 ##	VIVADO
 ###########################################################################
