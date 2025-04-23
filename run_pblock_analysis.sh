@@ -160,8 +160,14 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
         
     # Synthethize and save bitstreams if bs dir does not exist
-    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/bs"
+#    if [ ! -d "${output_path}/${pblock}/${ram_block}/bs" ]; then
+    if [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_00.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_ff.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_bramless_partial.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_partial_bram_bs.bit" ] && [ -f "${output_path}/${pblock}/${ram_block}/bs/${ram_block}_modified_partial.bin" ]; then
+	echo -e "All files already generated"
+	# comment the above line out and remove the comment from the following line to supress output
+	#:
+    else
+	echo -e "Some files missing. Generating them..."
+        mkdir -p "${output_path}/${pblock}/${ram_block}/bs"
 
         # Create bitstreams using predefined tcl script
         #echo "${vivado_path} -mode batch -source synthesize_for_bram_block_x.tcl -tclargs ${project_xpr} ${pblock} ${bram_row_x_position} ${bram36_min_y_position} ${bram36_max_y_position} ${current_bram_y_position}"
@@ -187,7 +193,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
 
 
     # Create temperature file for "previous_value_00"
-    mkdir "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}"
+    mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}"
     temperature_file_path_00="${output_path}/${pblock}/${ram_block}/previous_value_00_t=${wait_time}/temperature.txt";
     if [ ! -f "${temperature_file_path_00}" ]; then
         touch "${temperature_file_path_00}";
@@ -195,7 +201,7 @@ for current_bram_y_position in $(seq "$bram36_min_y_position" "$bram36_max_y_pos
     fi
     # Create temperature file for "previous_value_ff"
     if [ -n "${use_previous_value_ff}" ]; then
-        mkdir "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}"
+        mkdir -p "${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}"
         temperature_file_path_ff="${output_path}/${pblock}/${ram_block}/previous_value_ff_t=${wait_time}/temperature.txt";
         if [ ! -f "${temperature_file_path_ff}" ]; then
             touch "${temperature_file_path_ff}";
