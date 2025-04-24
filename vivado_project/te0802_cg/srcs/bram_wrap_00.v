@@ -2,14 +2,14 @@
 
 module bram_wrap_00(
     input clka,
-    input [10:0] addra,
+    input [9:0] addra,
     output [35:0] douta
     );
     
-    wire [17:0] data;
-    wire [1:0] parity;
+    wire [31:0] data;
+    wire [3:0] parity;
     
-    assign douta = {18'b0, parity, data};
+    assign douta = {parity, data};
     
 RAMB36E2 #(
 // CASCADE_ORDER_A, CASCADE_ORDER_B: "FIRST", "MIDDLE", "LAST", "NONE"
@@ -32,7 +32,7 @@ RAMB36E2 #(
 // EN_ECC_WRITE: Enable ECC encoder, "TRUE"/"FALSE"
 .EN_ECC_WRITE("FALSE"),
    // INITP_00 to INITP_0F: Initial contents of the parity memory array
-	.INITP_00(256'h0000000000000000000000000000000000000000000000000000000000000000),
+	.INITP_00(256'h0000000000000000000000000000000000000000000000000000000000000404),
 	.INITP_01(256'h0000000000000000000000000000000000000000000000000000000000000000),
 	.INITP_02(256'h0000000000000000000000000000000000000000000000000000000000000000),
 	.INITP_03(256'h0000000000000000000000000000000000000000000000000000000000000000),
@@ -196,8 +196,8 @@ RAMB36E2 #(
 .RDADDRCHANGEA("FALSE"),
 .RDADDRCHANGEB("FALSE"),
 // READ_WIDTH_A/B, WRITE_WIDTH_A/B: Read/write width per port
-.READ_WIDTH_A(0), // 0-9
-.READ_WIDTH_B(18), // 0-9
+.READ_WIDTH_A(36), // 0-9
+.READ_WIDTH_B(0), // 0-9
 .WRITE_WIDTH_A(0), // 0-9
 .WRITE_WIDTH_B(0), // 0-9
 // RSTREG_PRIORITY_A, RSTREG_PRIORITY_B: Reset or enable priority ("RSTREG", "REGCE")
@@ -226,8 +226,8 @@ RAMB36E2_inst (
 //.RDADDRECC(RDADDRECC), // 9-bit output: ECC Read Address
 //.SBITERR(SBITERR), // 1-bit output: Single bit error status
 // Port A Data outputs: Port A data
-.DOUTBDOUT(data), // 32-bit output: Port A Data/LSB data
-.DOUTPBDOUTP(parity), // 4-bit output: Port A parity/LSB parity
+.DOUTADOUT(data), // 32-bit output: Port A Data/LSB data
+.DOUTPADOUTP(parity), // 4-bit output: Port A parity/LSB parity
 // Port B Data outputs: Port B data
 //.DOUTBDOUT(DOUTBDOUT), // 32-bit output: Port B data/MSB data
 //.DOUTPBDOUTP(DOUTPBDOUTP), // 4-bit output: Port B parity/MSB parity
@@ -253,16 +253,15 @@ RAMB36E2_inst (
 //.INJECTDBITERR(INJECTDBITERR), // 1-bit input: Inject a double-bit error
 //.INJECTSBITERR(INJECTSBITERR),
 // Port A Address/Control Signals inputs: Port A address and control signals
-.ADDRBWRADDR({addra[10:0], 4'b0}), // 15-bit input: A/Read port address
-//.ADDRENB(1'b1),
-.ENBWREN(1'b1), // 1-bit input: Active-High A/Read port address enable
-.CLKBWRCLK(clka), // 1-bit input: A/Read port clock
-//.ENARDEN(1'b1), // 1-bit input: Port A enable/Read enable
+.ADDRARDADDR({addra[9:0], 5'b0}), // 15-bit input: A/Read port address
+//.ADDRENA(1'b1), // 1-bit input: Active-High A/Read port address enable
+.CLKARDCLK(clka), // 1-bit input: A/Read port clock
+.ENARDEN(1'b1), // 1-bit input: Port A enable/Read enable
 //.REGCEAREGCE(REGCEAREGCE), // 1-bit input: Port A register enable/Register enable
 //.RSTRAMARSTRAM(RSTRAMARSTRAM), // 1-bit input: Port A set/reset
 //.RSTREGARSTREG(RSTREGARSTREG), // 1-bit input: Port A register set/reset
 //.SLEEP(SLEEP), // 1-bit input: Sleep Mode
-//.WEA(4'b0) // 4-bit input: Port A write enable
+.WEA(4'b0) // 4-bit input: Port A write enable
 // Port A Data inputs: Port A data
 //.DINADIN(DINADIN), // 32-bit input: Port A data/LSB data
 //.DINPADINP(DINPADINP), // 4-bit input: Port A parity/LSB parity
@@ -274,7 +273,7 @@ RAMB36E2_inst (
 //.REGCEB(REGCEB), // 1-bit input: Port B register enable
 //.RSTRAMB(RSTRAMB), // 1-bit input: Port B set/reset
 //.RSTREGB(RSTREGB), // 1-bit input: Port B register set/reset
-.WEBWE(4'b0) // 8-bit input: Port B write enable/Write enable
+//.WEBWE(WEBWE), // 8-bit input: Port B write enable/Write enable
 // Port B Data inputs: Port B data
 //.DINBDIN(DINBDIN), // 32-bit input: Port B data/MSB data
 //.DINPBDINP(DINPBDINP) // 4-bit input: Port B parity/MSB parity

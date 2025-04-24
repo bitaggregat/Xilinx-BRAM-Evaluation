@@ -2,7 +2,7 @@
 
 module return_00 (
     input clka,
-    input [10:0] addra,
+    input [9:0] addra,
     output [35:0] douta
     );
     

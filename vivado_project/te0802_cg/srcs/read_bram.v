@@ -25,7 +25,7 @@ module read_bram
     reg tx_start;
     reg [7:0] tx_data;
     reg [35:0] batch_data;
-    reg [10:0] bram_addr;
+    reg [9:0] bram_addr;
     reg [3:0] crc;
     
     wire fast_clk;
@@ -89,7 +89,7 @@ module read_bram
         STATE_WAIT_PAR:
             if (tx_done)
             begin
-                if (bram_addr == 11'h0)
+                if (bram_addr == 10'h0)
                     next_state = STATE_WAIT_RX;
                 else
                     next_state = STATE_SEND_0;
@@ -111,14 +111,14 @@ module read_bram
         STATE_WAIT_RX:
         begin
             current_rx_data <= 8'hff;
-            bram_addr <= 11'h0;
+            bram_addr <= 10'h0;
             crc <= 4'h0;
         end
         STATE_WAIT_0, STATE_WAIT_1, STATE_WAIT_2, STATE_WAIT_3, STATE_WAIT_PAR:
             ; // defaults
         STATE_SEND_0:
         begin
-            if (bram_addr == 11'h0)
+            if (bram_addr == 10'h0)
                     current_rx_data <= rx_data;
             batch_data <= bram_data;
             tx_data <= bram_data[7:0];
