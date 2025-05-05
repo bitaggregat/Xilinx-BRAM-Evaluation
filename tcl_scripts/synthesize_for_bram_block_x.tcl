@@ -25,7 +25,9 @@ open_run synth_1 -name synth_1 -pr_config [current_pr_configuration]
 # Assign partial design to pblock
 add_cells_to_pblock [get_pblocks $pblock] [get_cells -quiet [list bram_wrap]]
 # Prohibit all bram blocks for given row $x
+
 for {set i $y_min_pos} {$i <= $y_max_pos} {incr i} {
+    puts [format "prohibit RAMB36_X%sY%s" $x_pos $i]
     set_property PROHIBIT true [get_sites [format "RAMB36_X%sY%s" $x_pos $i]]
 }
 # Then unprohibit bram 36 block of index $bram_y_index
