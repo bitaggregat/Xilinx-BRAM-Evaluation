@@ -457,7 +457,7 @@ def bytes_to_file(
 def object_to_json_file(
     value: Any, path: Path, description: str
 ) -> None:
-    with open(Path(path, description), mode="w") as f:
+    with open(Path(path, description).with_suffix(".json"), mode="w") as f:
         json.dump(value, f)
 
 def multi_bit_heatmap(

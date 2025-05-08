@@ -11,7 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from .experiment_hdf5 import Read, ReadSession
 from .interfaces import HDF5Convertible, Plottable
-from .plotting import box_plot, single_value_to_file
+from .plotting import box_plot, single_value_to_file, object_to_json_file
 from .utility import PlotSettings
 
 
@@ -101,14 +101,23 @@ class MetaStatistic(HDF5Convertible, Plottable):
             )
 
     def _plot(self) -> None:
-        self.meta_stat_latex_table(
-            Path(self.plot_settings.path, f"{self.bit_type}_meta_stats")
-        )
-        box_plot(
-            bit_stats=self.values,
-            path=self.plot_settings.path,
-            ylabel="TODO",
-            title=f"{self.bit_type}_boxplot",
+        
+        json_dict = {
+            "entity": self.plot_settings.entity_name,
+            "stats": {
+                stat_key + " (%)": float(self.stats[stat_key])
+                for stat_key in [
+                    "Minimum",
+                    "Maximum",
+                    "Median",
+                    "Mean",  
+                ]
+            }
+        }
+        object_to_json_file(
+            json_dict,
+            self.plot_settings.path,
+            description=f"{self.plot_settings.entity_name}_meta_stats"
         )
 
 
@@ -202,7 +211,7 @@ class Statistic(HDF5Convertible, Plottable, metaclass=ABCMeta):
             meta_stats = self.meta_stats
             for bit_type, bit_stats in [
                 ("Data", self.data_stats),
-                ("Parity", self.parity_stats),
+                #("Parity", self.parity_stats),
             ]:
                 meta_stats[bit_type].plot()
 

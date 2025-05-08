@@ -259,6 +259,15 @@ class BitFlipChanceStatistic(BitwiseStatistic):
             bit_type: Either "parity" or "data". Will be inserted into
                         description
         """
+        json_dict = {
+            "data": [float(value) for value in bit_stats]
+        }
+        object_to_json_file(
+            json_dict, 
+            path=self.plot_settings.path, 
+            description=f"{self.plot_settings.entity_name}_bitflip_distribution_histogram"
+        )
+        '''
         histogram(
             bit_stats=bit_stats * 100,
             xlabel="Probability of Bit Flip to 1 (%)",
@@ -268,9 +277,10 @@ class BitFlipChanceStatistic(BitwiseStatistic):
                 self.plot_settings.path,
                 f"bitflip_probability_distribution_of_{bit_type}_bits",
             ),
-            bins=100,
+            bins=101,
             log=True
         )
+        '''
 
     @classmethod
     def from_merge(
@@ -284,7 +294,7 @@ class BitFlipChanceStatistic(BitwiseStatistic):
                 else stat.total_list_of_flip_chances
                 for stat in stats
             ],
-            axis=0, dtype=np.float32
+            axis=0, dtype=np.float64
         )
         print(
             f"new length: {len(new_object.total_list_of_flip_chances)}"
@@ -377,37 +387,6 @@ class StableBitStatistic(BitwiseStatistic):
             cmap=self.plot_settings.heatmap_cmap,
         )
         '''
-        for bit_type, bit_stats in [
-            ("data", self.data_stats),
-            ("parity", self.parity_stats),
-        ]:
-            
-            histogram(
-                bit_stats,
-                xlabel="TODO",
-                ylabel="TODO",
-                title="Distribution of Counts of Stable Bits per Bit Index",
-                path=Path(
-                    self.plot_settings.path,
-                    f"{bit_type}_stable_bit_idx_count_distribution",
-                ),
-                bins=self.plot_settings.bram_count,
-                log=False,
-            )
-            '''
-            per_bit_idx_histogram(
-                bit_stats,
-                xlabel="TODO",
-                ylabel="TODO",
-                title="Distribution of stable bits per bit idx",
-                path=Path(
-                    self.plot_settings.path,
-                    f"{bit_type}_stable_bit_idx_distribution",
-                ),
-            )
-            '''
-
-
 
         if len(self.data_sample) > 0:
             # The number of stable bits may not be dividable by 8
@@ -422,7 +401,7 @@ class StableBitStatistic(BitwiseStatistic):
         bytes_to_file(data_sample_bytes,
                     path=self.plot_settings.path, description="data_sample")
         object_to_json_file(self.data_bit_indices,
-                    path=self.plot_settings.path, description="idx.json")
+                    path=self.plot_settings.path, description=f"{self.plot_settings.entity_name}_idx")
         
         single_value_to_file(len(data_sample_bytes)*8,
             path=self.plot_settings.path,description="data_stable_bit_count")
@@ -650,12 +629,15 @@ class BitAliasingStatistic(BitwiseStatistic):
 
     def plot(self) -> None:
         super().plot()
-        bit_heatmaps(
-            self.data_stats,
-            self.parity_stats,
-            self.plot_settings.heatmap_bit_display_setting,
-            "Bit-aliasing per Bit Index",
+
+        json_dict = {
+            "label": self.plot_settings.entity_name,
+            "data": list(self.data_stats)
+        }
+        object_to_json_file(
+            json_dict,
             self.plot_settings.path,
+            description=f"{self.plot_settings.entity_name}_bit_aliasing_list"
         )
 
 
