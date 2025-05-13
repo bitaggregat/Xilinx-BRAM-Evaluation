@@ -1,3 +1,7 @@
+// Read BRAM Top module:
+// - Reads content of BRAM
+// - Waits for starting signal (8'h73, 's') from UART rx_i 
+// - Sends entire content from BRAM + CRCs via UART tx_o upon receiving 's'
 module read_bram
 #(
 	parameter TICKS_PER_BIT = 50 //400e6/3e6

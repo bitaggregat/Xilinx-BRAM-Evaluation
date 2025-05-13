@@ -1,5 +1,9 @@
 `timescale 1ns / 1ps
-
+// BRAM module:
+// - wrapper around BRAM instance
+// - uses 36 bit data width (32 data and 4 parity bits)
+// - this is expected to be used as a partial/dynamic configuration module
+// - initializes BRAM with zeroes
 module bram_wrap_00(
     input clka,
     input [9:0] addra,
