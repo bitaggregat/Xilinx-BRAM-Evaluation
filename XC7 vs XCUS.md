@@ -16,7 +16,7 @@ With one exception:
 
 ## Configuration Registers
 
-The configuration registers where almost the same.
+The configuration registers were almost the same.
 Exceptions:
 
 - the "RBCRC_SW" register is mentioned in XC7 documentation but not in XCUS documentation
@@ -44,4 +44,4 @@ Each Configuration Register has an Address.
 ## Conclusion
 
 Tools/Code that handles 7-Series bitstream can also be used for UltraScale bitstream **on Configuration Packet** level.  
-A abstraction layer is necessary when modifying/interpreting the content of registers or the configuration data/logic (frame data).
+An abstraction layer is necessary when modifying/interpreting the content of registers or the configuration data/logic (frame data).
