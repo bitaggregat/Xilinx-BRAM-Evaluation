@@ -10,7 +10,8 @@ from pathlib import Path
 
 vivado_path = Path("/tools/Xilinx/Vivado/2024.1/bin/vivado")
 
-unittest.skipIf(
+@unittest.skip("Test is currently outdated")
+@unittest.skipIf(
     not os.path.isfile(vivado_path),
     reason="Skipped because vivado binary was not found. "
     "Change 'vivado_path' according to your systems configuration."

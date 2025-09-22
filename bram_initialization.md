@@ -42,7 +42,7 @@
 - Partial Bitstreams are needed
   - The device writes 0 as a default value to the BRAM on startup
     - Using the process described above with full bitstreams would therefore not work
-    - This was verified once in this project ([click for further information](/initialize_bram/full_bitstream_initialization/full_bitsream_initialization.md))
+    - This was verified once in this project
   - Partial bitstreams can be loaded without fully restarting the device
 
 ### Bitstream Handler
@@ -101,17 +101,22 @@
 Scripts have been written in order to ease and partially automatize the steps mentioned in [General Approach](###General Approach).  
 Sadly tools do not always support all FPGA devices, which is why the instructions and tools may differ depending on the used device.  
 
-#### Basys3 (xc7a35tcpg236-1)
+#### te0802 and zcu102 (US+ ZynqMP Boards)
 
 - Step 1 is contained in [a vivado project](/vivado_project/README.md) of this repository
-- Step 2 - 5 can be done by calling [```initialize_bram.py```](initialize_bram/initialize_bram.md)
-- Step 6 can be done via [```read_bram_ftdi.py```](reading/README.md)
+- Step 2 - 7 can be done automatically by using ```run_pblock_analysis.sh```
 
-Note: All these scripts named above can be called with ```-h``` for usage information.
+##### run_pblock_analysis
 
-#### te0802
-
-WIP
+- Prerequisite: Define Pblocks around target BRAMs (already done in the provided Vivado projects)
+- Calling ```run_pblock_analysis.sh``` can be made easier by using a config file, like the provided ```config.sh``` in this repo
+  - More config files may be generated via ```pblock_run_configs/config_files_generator.py```
+- ```run_pblock_analysis.sh``` calls other smaller scripts for subtasks:
+  - Flashing and generating bitstreams is done via Vivado (and tcl scripts)
+  - Creating the manipulated bitstream is done via ```initialize_bram/create_partial_initialization_bitstream.py```
+  - Reading from the Digilent UART adapter is done via ```reading/read_bram_ftdi.py```  
+  - Note: All these scripts named above can be called with ```-h``` for usage information.
+- Running multiple calls of ```run_pblock_analysis.sh``` may be done by calling ```run_device_analysis.sh``` with multiple pblock config files
 
 ## Measurements
 

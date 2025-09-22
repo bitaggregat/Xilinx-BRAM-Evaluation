@@ -213,7 +213,6 @@ def read_content(args: Any) -> None:
             data += temp_data
             parity += temp_parity.hex()[1]
 
-        parity = "".join([parity[i + 1] + parity[i] for i in range(0, len(parity), 2)])
         if args["output_path"] is not None:
             data_path, parity_path = prepare_paths(args["output_path"])
             print(data_path)
